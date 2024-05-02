@@ -1,0 +1,71 @@
+// Import required fonts
+
+@font-face { /* where FontName and fontname represents the name of the font you want to add */
+    font-family: 'Inter';
+    src: url([[font:theme|Inter.ttf]]) format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face { /* where FontName and fontname represents the name of the font you want to add */
+    font-family: 'Remui';
+    src: url([[font:theme|Remui.eot]]);
+    src:
+        url([[font:theme|Remui.eot]]) format('embedded-opentype'),
+        url([[font:theme|Remui.woff]]) format('woff'),
+        url([[font:theme|Remui.ttf]]) format('truetype'),
+        url([[font:theme|Remui.svg]]) format('svg');
+    font-weight: normal;
+    font-style: normal;
+    font-display: block;
+}
+
+// modification smartch
+@font-face { /* where FontName and fontname represents the name of the font you want to add */
+    font-family: 'FFF-Hero-Black';
+    src: url([[font:theme|FFF-Hero-Black.ttf]]) format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face { /* where FontName and fontname represents the name of the font you want to add */
+    font-family: 'FFF-Hero-Bold';
+    src: url([[font:theme|FFF-Hero-Bold.ttf]]) format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face { /* where FontName and fontname represents the name of the font you want to add */
+    font-family: 'FFF-Hero-Book';
+    src: url([[font:theme|FFF-Hero-Book.ttf]]) format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face { /* where FontName and fontname represents the name of the font you want to add */
+    font-family: 'FFF-Hero-Light';
+    src: url([[font:theme|FFF-Hero-Light.ttf]]) format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face { /* where FontName and fontname represents the name of the font you want to add */
+    font-family: 'FFF-Equipe-Black';
+    src: url([[font:theme|FFF-Equipe-Black.ttf]]) format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face { /* where FontName and fontname represents the name of the font you want to add */
+    font-family: 'FFF-Equipe-Bold';
+    src: url([[font:theme|FFF-Equipe-Bold.ttf]]) format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face { /* where FontName and fontname represents the name of the font you want to add */
+    font-family: 'FFF-Equipe-Light';
+    src: url([[font:theme|FFF-Equipe-Light.ttf]]) format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face { /* where FontName and fontname represents the name of the font you want to add */
+    font-family: 'FFF-Equipe-Regular';
+    src: url([[font:theme|FFF-Equipe-Regular.ttf]]) format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
