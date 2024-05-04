@@ -116,7 +116,8 @@ trait get_smartch_info
             FROM mdl_smartch_slider s
             WHERE s.sliderarray = 0', null);
         $imageposition = reset($imagefixelist);
-        $data->urlimagefixe = '/theme/remui/views/readimage.php?path=' . $imageposition->imagefixe;
+        $url = new moodle_url('/theme/remui/views/readimage.php?path=' . $imageposition->imagefixe);
+        $data->urlimagefixe = $url->out(true);
         // $data->urlimagefixe = $imageposition->imagefixe;
 
         //on va chercher les autres images
@@ -126,16 +127,12 @@ trait get_smartch_info
             ORDER BY s.sliderarray ASC', null);
         $otherimages = [];
         foreach ($allimages as $image) {
-            $urlimage = '/theme/remui/views/readimage.php?path=' . $image->imagefixe;
+            $url = new moodle_url('/theme/remui/views/readimage.php?path=' . $image->imagefixe);
+            $urlimage = $url->out(true);
             array_push($otherimages, $urlimage);
         }
         $data->otherimages = $otherimages;
 
-        // $slider = $DB->get_record('smartch_slider', ['id' => 1]);
-        // $data->urlimagefixe = $slider->imagefixe;
-        // $data->urlimage1 = $slider->image1;
-        // $data->urlimage2 = $slider->image2;
-        // $data->urlimage3 = $slider->image3;
 
         return json_encode($data);
     }

@@ -4,6 +4,7 @@ require_once(__DIR__ . '/../../../config.php');
 require_once('./utils.php');
 
 require_login();
+isPortailRH();
 
 global $USER, $DB, $CFG;
 
@@ -73,13 +74,14 @@ $offset = ($pageno - 1) * $no_of_records_per_page;
 
 
 if ($search != "") {
-    $queryusers = 'SELECT c.id, c.name
+    $querycohorts = 'SELECT c.id, c.name
             FROM mdl_cohort c
-            AND lower(c.name) LIKE "%' . $search . '%" 
+            WHERE lower(c.name) LIKE "%' . $search . '%" 
             LIMIT ' . $offset . ', ' . $no_of_records_per_page;
     $total_pages_sql = 'SELECT COUNT(*) count 
             FROM mdl_cohort c
-            AND lower(c.name) LIKE "%' . $search . '%"';
+            WHERE lower(c.name) LIKE "%' . $search . '%"';
+            echo $queryusers;
 } else {
     $querycohorts = 'SELECT c.id, c.name
             FROM mdl_cohort c
@@ -165,7 +167,14 @@ if (count($cohorts) > 0) {
     $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_pagination', $templatecontextpagination);
 }
 
-//affichage de la table de tous les utilisateurs
+
+$content .= '<div class="row mb-3">
+    <div class="col-md-12">
+    <a class="smartch_btn" href="'.new moodle_url('/theme/remui/views/createcohort.php').'">Nouveau groupe</a>
+    </div>
+</div>';
+
+//affichage de la table de toutes les cohortes
 $content .= '<div class="row">
         <div class="col-sm-12 col-md-12 col-lg-12 col-xl-12">
             <table class="smartch_table">
@@ -189,7 +198,8 @@ foreach ($cohorts as $cohort) {
     $formations = $DB->get_record_sql('SELECT COUNT(*) count
     FROM mdl_enrol e
     JOIN mdl_cohort c ON e.customint1 = c.id
-    WHERE e.enrol = "cohort"', null);
+    WHERE e.enrol = "cohort"
+    AND c.id = ' . $cohort->id, null);
 
 
     $content .= '<tr>

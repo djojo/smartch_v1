@@ -62,6 +62,14 @@ function getMainRole($userid = null)
     return $rolename;
 }
 
+function isPortailRH(){
+    $portail = getConfigPortail();
+    if($portail == "portailRH"){
+        return true;
+    } else {
+        redirect('/');
+    }
+}
 function getConfigPortail(){
     global $DB;
 
@@ -434,6 +442,37 @@ function longTitlesModules($chaine)
         $chaine = substr($chaine, 0, 50) . '...';
     }
     return $chaine;
+}
+
+require_once("$CFG->dirroot/enrol/cohort/locallib.php");
+require_once($CFG->dirroot.'/group/lib.php');
+
+function syncCohortWithCourse($cohortid, $courseid){
+    global $DB;
+
+    //on va chercher la cohorte
+    $cohort = $DB->get_record('cohort', ['id' => $cohortid]);
+
+    //on créer le groupe dans le cours
+    $groupdata = new stdClass();
+    $groupdata->courseid = $courseid;
+    $groupdata->name = $cohort->name;
+    $groupdata->description = "Groupe lié via la cohorte " . $cohort->name;
+    $groupdata->descriptionformat = FORMAT_HTML;  // Utilisez la constante appropriée pour le format de description
+
+    $groupid = groups_create_group($groupdata);
+
+    //on créer la methode d'inscription
+    $enrol = $DB->get_record('enrol', array('enrol'=>'cohort', 'courseid'=>$courseid, 'customint1'=>$cohortid));
+    if (!$enrol) {
+        $enrolid = $DB->insert_record('enrol', array('enrol'=>'cohort', 'courseid'=>$courseid, 'status'=>0, 'customint1'=>$cohortid, 'customint2'=>$groupid, 'roleid'=>5));
+    } else {
+        $enrolid = $enrol->id;
+    }
+
+    //on synchronise le cours avec la cohorte
+    $trace = new \null_progress_trace();
+    enrol_cohort_sync($trace, $courseid);
 }
 
 function extraireNomEquipe($entree)

@@ -16,7 +16,7 @@ isAdmin();
 
 $context = context_system::instance();
 
-$PAGE->set_url(new moodle_url('/theme/remui/views/create.php'));
+$PAGE->set_url(new moodle_url('/theme/remui/views/createcourse.php'));
 $PAGE->set_context(\context_system::instance());
 $PAGE->set_title('Créer une nouvelle formation');
 

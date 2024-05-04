@@ -202,15 +202,30 @@ if ($course->category == $freecat->id) {
 }
 
 
+//On créer l'url pour le retour
+$portail = getConfigPortail();
+
+if($portail == "portailformation"){
+    $backurl = new moodle_url('/theme/remui/views/adminformations.php');
+} else if($portail == "portailrh"){
+    //on va chercher la cohort
+    $enrol = $DB->get_record_sql('SELECT * 
+    FROM mdl_enrol
+    WHERE customint2 = ' . $teamid, null);
+    $backurl = new moodle_url('/theme/remui/views/cohort?id=.php' . $enrol->customint1);
+}
+
 //le context du template header pour le retour
 $templatecontextheader = (object)[
-    'url' => new moodle_url('/theme/remui/views/adminformations.php'),
+    'url' => $backurl,
     'coursename' => $course->fullname,
     // 'coursename' => $course->fullname . ' (Vue pour le ' . $rolename . ')',
     'textcontent' => 'Retour aux parcours'
 
 ];
 $content .= $OUTPUT->render_from_template('theme_remui/smartch_course_header', $templatecontextheader);
+
+
 
 
 

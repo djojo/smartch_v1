@@ -1,16 +1,27 @@
 <?php
 
+use tool_brickfield\local\areas\mod_choice\option;
+
 require_once(__DIR__ . '/../../../config.php');
 require_once('./utils.php');
+// require_once($CFG->dirroot.'/enrol/cohort/lib.php');
+// require_once($CFG->dirroot.'/group/lib.php');
 
 require_login();
+isPortailRH();
 
 global $USER, $DB, $CFG;
 
-// $courseid = required_param('courseid', PARAM_INT);
-// $course = $DB->get_record('course', ['id' => $courseid]);
-// var_dump($course);
-// die();
+$cohortid = required_param('cohortid', PARAM_INT);
+$cohort = $DB->get_record('cohort', ['id' => $cohortid]);
+$courseid = optional_param('courseid', null, PARAM_INT);
+if($courseid){
+
+    //on sync la cohorte avec le cours
+    syncCohortWithCourse($cohortid, $courseid);
+    
+}
+
 $content = '';
 $paginationtitle = '';
 $prevurl = '';
@@ -24,7 +35,7 @@ isStudent();
 $context = context_system::instance();
 $PAGE->set_url(new moodle_url('/theme/remui/views/cohorts.php'));
 $PAGE->set_context(\context_system::instance());
-$PAGE->set_title("Groupes");
+$PAGE->set_title("Formations du groupe");
 
 echo '<style>
 
@@ -95,18 +106,23 @@ if ($search != "") {
             OR lower(u.username) LIKE "%' . $search . '%"
             OR lower(u.email) LIKE "%' . $search . '%")';
 } else {
-    $querycohorts = 'SELECT c.id, c.name
-            FROM mdl_cohort c
-            JOIN mdl_
+    $querycourses = 'SELECT c.id, c.fullname as name
+            FROM mdl_enrol e
+            JOIN mdl_cohort co ON e.customint1 = co.id
+            JOIN mdl_course c ON c.id = e.courseid
+            WHERE co.id = ' . $cohortid . '
             LIMIT ' . $offset . ', ' . $no_of_records_per_page . '
             ';
     $total_pages_sql = 'SELECT COUNT(*) count 
-            FROM mdl_cohort c';
+            FROM mdl_enrol e
+            JOIN mdl_cohort co ON e.customint1 = co.id
+            JOIN mdl_course c ON c.id = e.courseid
+            WHERE co.id = ' . $cohortid . '';
 }
 
-$cohorts = $DB->get_records_sql($querycohorts, null);
+$courses = $DB->get_records_sql($querycourses, null);
 
-$allcohorts = $DB->get_records('cohort', null);
+// $allcourses = $DB->get_records('course', null);
 
 $result = $DB->get_records_sql($total_pages_sql, null);
 $total_rows = reset($result)->count;
@@ -114,8 +130,8 @@ $total_pages = ceil($total_rows / $no_of_records_per_page);
 
 //le header avec bouton de retour au panneau admin
 $templatecontextheader = (object)[
-    'url' => new moodle_url('/theme/remui/views/adminmenu.php'),
-    'textcontent' => 'Retour au panneau d\'administration'
+    'url' => new moodle_url('/theme/remui/views/cohorts.php'),
+    'textcontent' => 'Retour aux groupes'
 ];
 $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_back', $templatecontextheader);
 
@@ -124,8 +140,8 @@ $content .= '<div class="row" style="margin:30px 0;"></div>';
 
 //barre de recherche des parcours
 $templatecontext = (object)[
-    'formurl' => new moodle_url('/theme/remui/views/cohorts.php'),
-    'textcontent' => "Groupes ",
+    'formurl' => new moodle_url('/theme/remui/views/cohort.php'),
+    'textcontent' => $cohort->name,
     'lang_search' => "Rechercher",
     'params' => $params,
     'search' => $search
@@ -134,9 +150,9 @@ $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_search', $
 
 
 //La pagination
-if (count($cohorts) == 0) {
+if (count($courses) == 0) {
     $paginationtitle .= 'Aucun résultat';
-} else if (count($cohorts) == 1) {
+} else if (count($courses) == 1) {
     $paginationtitle .= '1 résultat';
 } else {
     $paginationtitle .= $total_rows . ' résultats - page ' . $pageno . ' sur ' . $total_pages . '';
@@ -149,7 +165,7 @@ if ($pageno == 1) {
 } else {
     $previous = true;
     $newpage = $pageno - 1;
-    $prevurl = new moodle_url('/theme/remui/views/cohorts.php?pageno=' . $newpage) . $filter;
+    $prevurl = new moodle_url('/theme/remui/views/cohort.php?pageno=' . $newpage) . $filter;
 }
 
 if ($pageno == $total_pages) {
@@ -157,7 +173,7 @@ if ($pageno == $total_pages) {
 } else {
     $next = true;
     $newpage = $pageno + 1;
-    $nexturl = new moodle_url('/theme/remui/views/cohorts.php?pageno=' . $newpage) . $filter;
+    $nexturl = new moodle_url('/theme/remui/views/cohort.php?pageno=' . $newpage) . $filter;
 }
 
 //la pagination en haut
@@ -176,7 +192,7 @@ $templatecontextpagination = (object)[
     'formurl' => new moodle_url('/theme/remui/views/cohorts.php')
 ];
 
-if (count($cohorts) > 0) {
+if (count($courses) > 0) {
     $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_pagination', $templatecontextpagination);
 }
 
@@ -187,19 +203,20 @@ $content .= '<div class="row">
                 <thead>
                     <tr>
                         <th>Nom</th>
-                        <th>Utilisateurs</th>
+                        <th>Progression</th>
                         <th>Options</th>
                     </tr>
                 </thead>
                 <tbody>';
-foreach ($cohorts as $cohort) {
+foreach ($courses as $course) {
 
-    //on compte le nombre d'utilisateurs dans la cohorte
-    $users = $DB->get_record_sql('SELECT COUNT(*) count 
-    FROM mdl_cohort c
-    JOIN mdl_cohort_members cm ON cm.cohortid = c.id
-    WHERE c.id = '. $cohort->id, null);
+    //on va chercher l'enrollement
+    $enrol = $DB->get_record_sql('SELECT * 
+    FROM mdl_enrol
+    WHERE customint1 = ' . $cohort->id . '
+    AND courseid = ' . $course->id, null);
 
+    $cohortgroupid = $enrol->customint2;
 
     $content .= '<tr>
                     <td style="text-transform:capitalize;">
@@ -208,12 +225,13 @@ foreach ($cohorts as $cohort) {
                             <path d="M28 19C28 21.2091 26.2091 23 24 23C21.7909 23 20 21.2091 20 19C20 16.7909 21.7909 15 24 15C26.2091 15 28 16.7909 28 19Z" stroke="#004687" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M24 26C20.134 26 17 29.134 17 33H31C31 29.134 27.866 26 24 26Z" stroke="#004687" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        <span style="margin-left: 10px;"><a href="' . new moodle_url('/theme/remui/views/cohort.php') . '?cohortid=' . $cohort->id . '">' . $cohort->name . '</a></span>
+                        <span style="margin-left: 10px;"><a href="' . new moodle_url('/theme/remui/views/cohort.php') . '?id=' . $course->id . '">' . $course->name . '</a></span>
                     </td>
-                    <td>'.$users->count.'</td>
                     <td>
-                        <a class="smartch_table_btn" href="' . new moodle_url('/theme/remui/views/cohort.php') . '?cohortid=' . $cohort->id . '">Consulter</a>
-                        <a class="smartch_table_btn" href="' . new moodle_url('/cohort/assign.php') . '?id=' . $cohort->id . '">Membres</a>
+                        <a class="smartch_table_btn" href="' . new moodle_url('/theme/remui/views/adminteam.php') . '?teamid=' . $cohortgroupid . '">Voir la progression</a>
+                    </td>
+                    <td>
+                        <a class="smartch_table_btn" href="' . new moodle_url('/theme/remui/views/cohorts.php') . '?teamid=' . $cohortgroupid . '">Supprimer l\'association du cours</a>
                     </td>
                 </tr>';
 }
@@ -227,6 +245,36 @@ $content .= '</tbody>
 if (count($cohorts) > 0) {
     $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_pagination', $templatecontextpagination);
 }
+
+//on va chercher les formations qui ne sont pas lié au groupe
+$nonlinkedcourses = $DB->get_records_sql('SELECT c.*
+FROM mdl_course c
+JOIN mdl_enrol e ON e.courseid <> c.id
+WHERE e.enrol = "cohort"
+AND c.fullname <> ""
+AND format != "site"', null);
+
+// $courses = $DB->get_records_sql('SELECT c.*
+// FROM mdl_course c', null);
+
+$content .= '<h3 style="letter-spacing:1px;max-width:70%;cursor:pointer;" class="smartch_title FFF-Hero-Bold FFF-Blue mt-5">Ajouter une formation au groupe</h3>';
+$content .= '<form class="mt-5" action="" method="post">';
+$content .= '<input type="hidden" name="cohortid" value="'.$cohortid.'"/>';
+$content .= '<select name="courseid" class="smartch_select">';
+foreach($nonlinkedcourses as $course) {
+    //On vérifie si il n'y a pas déjà un sync
+    $inlist = $DB->get_record_sql('SELECT * 
+    FROM mdl_course c
+    JOIN mdl_enrol e ON e.courseid = c.id 
+    WHERE e.courseid = ' . $course->id . '
+    AND e.customint1 = ' . $cohortid, null);
+    if(!$inlist){
+        $content .= '<option value="'.$course->id.'">'.$course->fullname.'</option>';
+    }
+}
+$content .= '</select>';
+$content .= '<button class="smartch_btn ml-5" type="submit">Ajouter</button>';
+$content .= '</form>';
 
 // $content .= html_writer::end_div(); //container
 
