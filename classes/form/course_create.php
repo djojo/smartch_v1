@@ -26,7 +26,6 @@ class create extends moodleform
             array('context' => $context)
         )->setValue(array('text' => ""));
         $mform->setType('summary', PARAM_RAW);
-        
 
         $sectionsoptions = [];
         for ($i = 1; $i <= 20; $i++) {
@@ -42,8 +41,16 @@ class create extends moodleform
             $catoptions[$cat->id] = $cat->name;
         }
         $mform->addElement('select', 'categoryid', "Catégorie", $catoptions);
-
         
+        $mform->addElement('text', 'coursetype', "Type de formation");
+        $mform->addElement('text', 'coursediplome', "Diplôme");
+        $mform->addElement('text', 'courseduration', "Durée de la formation (h)");
+
+        // $coursetypeoptions = array(
+        //     'short' => 'Formation courte',
+        //     'long' => 'Formation longue'
+        // );
+        // $mform->addElement('select', 'subscribemethod', "Méthode d'inscription", $coursetypeoptions);
 
         $typeoptions = array(
             'classe' => 'Mode classe',

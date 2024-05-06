@@ -242,7 +242,7 @@ $content .= '</tbody>
     </div>';
 
 //la pagination en bas
-if (count($cohorts) > 0) {
+if (count($courses) > 0) {
     $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_pagination', $templatecontextpagination);
 }
 
@@ -254,8 +254,6 @@ WHERE e.enrol = "cohort"
 AND c.fullname <> ""
 AND format != "site"', null);
 
-// $courses = $DB->get_records_sql('SELECT c.*
-// FROM mdl_course c', null);
 
 $content .= '<h3 style="letter-spacing:1px;max-width:70%;cursor:pointer;" class="smartch_title FFF-Hero-Bold FFF-Blue mt-5">Ajouter une formation au groupe</h3>';
 $content .= '<form class="mt-5" action="" method="post">';
