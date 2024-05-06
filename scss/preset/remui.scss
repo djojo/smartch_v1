@@ -929,7 +929,7 @@ object{
     width: 100%;
     margin-bottom: 30px;
     border-radius: 5px;
-    box-shadow: 0 7px 14px 0 rgb(59 65 94 / 10%), 0 3px 6px 0 rgb(0 0 0 / 7%);
+    // box-shadow: 0 7px 14px 0 rgb(59 65 94 / 10%), 0 3px 6px 0 rgb(0 0 0 / 7%);
   }
   
   .smartch_table td,
@@ -944,9 +944,12 @@ object{
     text-transform: uppercase;
   }
   
-  .smartch_table tbody tr:nth-of-type(odd) {
-    background-color: gainsboro;
+  tr{
+    border-bottom: 1px solid #f8f9fa;
   }
+//   .smartch_table tbody tr:nth-of-type(odd) {
+//     background-color: gainsboro;
+//   }
 
 
 //EDIT COURSE

@@ -64,7 +64,8 @@ function getMainRole($userid = null)
 
 function isPortailRH(){
     $portail = getConfigPortail();
-    if($portail == "portailRH"){
+    
+    if($portail == "portailrh"){
         return true;
     } else {
         redirect('/');

@@ -65,7 +65,8 @@ if ($mform->is_cancelled()) {
     redirect($CFG->wwwroot . '/theme/remui/views/adminmenu.php');
 } else if ($fromform = $mform->get_data()) {
 
-    // var_dump($fromform);
+    
+
 
     $newcourse = new stdClass();
     $newcourse->fullname = $fromform->fullname;
@@ -90,15 +91,15 @@ if ($mform->is_cancelled()) {
     $course = create_course($newcourse);
 
     //on récupère l'image
-    $file = $mform->get_new_filename('image');
-    if ($file) {
-        // $fullpath = "moooooodle/" . GUIDv4() . $file;
-        // $success = $mform->save_file('image', $CFG->dataroot . '/' . $fullpath, true);
-        // if (!$success) {
-        //     echo "Erreur lors de l'enregistrement de l'image...";
-        // }
-        // $newdocument->image = $fullpath;
-    }
+    // $file = $mform->get_new_filename('image');
+    // if ($file) {
+    //     $fullpath = "moooooodle/" . GUIDv4() . $file;
+    //     $success = $mform->save_file('image', $CFG->dataroot . '/' . $fullpath, true);
+    //     if (!$success) {
+    //         echo "Erreur lors de l'enregistrement de l'image...";
+    //     }
+    //     $newdocument->image = $fullpath;
+    // }
 
     //on va chercher le field personalisé du cours
     $field = $DB->get_record_sql('
@@ -121,25 +122,18 @@ if ($mform->is_cancelled()) {
         $DB->insert_record('customfield_data', $customfieldsubscribe);
     }
 
-    //On regarde si on doit une cohorte dans le cours
-    if ($fromform->cohortid) {
-        //on va chercher la cohorte
-
-        //On créer le sync
-        $sync = new stdClass();
-        $sync->enroll = "cohort";
-        $sync->status = 0;
-        $sync->sortorder = 2;
-        $sync->roleid = 5;//role student
-        $sync->customint1 = $course->id;//courseid
-        $sync->customint2 = 0;//groupid
-        $DB->insert_record('enroll', $sync);
-    
-        //on applique le sync
-        $trace = new \null_progress_trace();
-        enrol_cohort_sync($trace, $course->id);
-        
+    //on va chercher les départements
+    $cohorts = $DB->get_records_sql('SELECT c.*
+    FROM mdl_cohort c', null);
+    foreach($cohorts as $cohort){
+        //si on a choisi le département
+        if($cohort->id = $_POST['cohort'.$cohort->id]){
+            //On associe le departement
+            syncCohortWithCourse($cohort->id, $course->id);
+        }
     }
+
+
 
     // Go to course page
     redirect($CFG->wwwroot . '/course/view.php?id=' . $course->id);
@@ -147,9 +141,6 @@ if ($mform->is_cancelled()) {
 
 
 $mform->display();
-
-
-echo '<h1>Cohortes du cours</h1>';
 
 echo html_writer::end_div();
 
