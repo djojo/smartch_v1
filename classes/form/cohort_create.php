@@ -14,17 +14,17 @@ class create extends moodleform
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
         
-        $courses = $DB->get_records_sql('SELECT * 
-        FROM mdl_course
-        WHERE format <> "site"
-        AND fullname != ""', NULL);
+        // $courses = $DB->get_records_sql('SELECT * 
+        // FROM mdl_course
+        // WHERE format <> "site"
+        // AND fullname != ""', NULL);
 
-        $courseoptions = [];
-        $courseoptions["none"] = "Aucune formation";
-        foreach($courses as $course){
-            $courseoptions[$course->id] = $course->fullname;
-        }
-        $mform->addElement('select', 'courseid', "Synchroniser avec une formation", $courseoptions);
+        // $courseoptions = [];
+        // $courseoptions["none"] = "Aucune formation";
+        // foreach($courses as $course){
+        //     $courseoptions[$course->id] = $course->fullname;
+        // }
+        // $mform->addElement('select', 'courseid', "Synchroniser avec une formation", $courseoptions);
 
         $this->add_action_buttons();
     }

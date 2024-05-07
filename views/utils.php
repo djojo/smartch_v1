@@ -339,6 +339,35 @@ function displayHeaderActivity($backurl, $coursetitle, $activityname, $isactivit
 //     return $content;
 // }
 
+function displayNotification($texte)
+{
+    echo '<div id="notification" style="z-index: 300;display: flex; position: fixed; justify-content: center; top: 100px; left: 0; width: 100vw;">
+        <div style="font-weight:bold;position:relative;background: white; padding: 5px 100px; border-radius: 15px; color: #004686; border: 1px solid #004686;">
+            '.$texte.'
+            <svg style="position: absolute; left: 10px; top: 8px;" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18ZM13.7071 8.70711C14.0976 8.31658 14.0976 7.68342 13.7071 7.29289C13.3166 6.90237 12.6834 6.90237 12.2929 7.29289L9 10.5858L7.70711 9.29289C7.31658 8.90237 6.68342 8.90237 6.29289 9.29289C5.90237 9.68342 5.90237 10.3166 6.29289 10.7071L8.29289 12.7071C8.68342 13.0976 9.31658 13.0976 9.70711 12.7071L13.7071 8.70711Z" fill="#004687"/>
+            </svg>
+
+        </div>  
+        </div>';
+
+    echo '
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+setTimeout(function() {
+    const notif = $("#notification");
+    notif.hide({
+      duration: 300, 
+      easing: "linear", // Fonction danimation (par exemple, "linear", "swing", "easeInOut")
+      complete: function() {
+        notif.remove();
+      }
+    });
+  }, 2000);
+  
+        </script>';
+}
+
 function displayMessageSent()
 {
     echo '<div id="notification" style="z-index: 300;display: flex; position: fixed; justify-content: center; top: 100px; left: 0; width: 100vw;">
@@ -474,6 +503,31 @@ function syncCohortWithCourse($cohortid, $courseid){
     //on synchronise le cours avec la cohorte
     $trace = new \null_progress_trace();
     enrol_cohort_sync($trace, $courseid);
+}
+
+function desyncCohortWithCourse($cohortid, $courseid){
+    global $DB;
+
+    //on va chercher la cohorte
+    // $cohort = $DB->get_record('cohort', ['id' => $cohortid]);
+
+    //on va chercher le groupe de la cohorte dans le cours
+    $enrol = $DB->get_record_sql('SELECT * 
+    FROM mdl_enrol
+    WHERE customint1 = ' . $cohortid . '
+    AND courseid = ' . $courseid, null);
+
+    $cohortgroupid = $enrol->customint2;
+
+    //on supprime le groupe
+    groups_delete_group($cohortgroupid);
+
+    //on supprime la methode d'inscription
+    $enrol = $DB->get_record('enrol', array('enrol'=>'cohort', 'courseid'=>$courseid, 'customint1'=>$cohortid));
+    if ($enrol) {
+        $DB->delete_records('enrol', ['id'=>$enrol->id]);
+    }
+
 }
 
 function extraireNomEquipe($entree)
@@ -1355,7 +1409,7 @@ ORDER BY u.lastname ASC';
                     //     $totalsectionsplannings--;
                     // }
                 } else if ($activity->activityname && $activity->activitytype != "folder") {
-                    $grade = get_module_grade_by_user_scorm_V2($groupmember->id, $activity->activityid);
+                    $grade = getModuleGrade($groupmember->id, $activity->activityid);
                     array_push($membertable, $grade);
                 }
             }
@@ -1569,7 +1623,7 @@ ORDER BY u.lastname ASC';
                     //     $totalsectionsplannings--;
                     // }
                 } else if ($activity->activityname && $activity->activitytype != "folder") {
-                    $grade = get_module_grade_by_user_scorm_V2($groupmember->id, $activity->activityid);
+                    $grade = getModuleGrade($groupmember->id, $activity->activityid);
                     array_push($membertable, $grade);
                 }
             }
@@ -1701,7 +1755,7 @@ function getActivityCompletionStatus($activityid, $userid = null, $type = null)
         $logs = $DB->get_records_sql('SELECT * FROM mdl_smartch_activity_log WHERE activity = ' . $activityid . ' AND userid = ' . $user->id, null);
 
         //on va chercher si il y a un score
-        $grade = get_module_grade_by_user_scorm_V2($user->id, $activityid);
+        $grade = getModuleGrade($user->id, $activityid);
 
         $query = 'SELECT cmc.id, cmc.completionstate
         FROM mdl_course_modules_completion cmc
@@ -1764,7 +1818,7 @@ function getActivityCompletionStatusRapport($activityid, $userid = null)
         // $logs = $DB->get_records_sql('SELECT * FROM mdl_smartch_activity_log WHERE activity = ' . $activityid . ' AND userid = ' . $user->id, null);
 
         //on va chercher si il y a un score
-        // $grade = get_module_grade_by_user_scorm_V2($user->id, $activityid);
+        // $grade = getModuleGrade($user->id, $activityid);
 
         $query = 'SELECT cmc.id, cmc.completionstate
         FROM mdl_course_modules_completion cmc
@@ -1809,6 +1863,40 @@ function getActivityCompletionStatusRapport($activityid, $userid = null)
         // }
     } else {
         return '';
+    }
+}
+function getModuleGrade($userid, $activityid)
+{
+    global $DB;
+
+    $query = 'SELECT gi.courseid, g.rawgrade, cm.id AS moduleid, gi.itemname AS modulename, gi.itemmodule
+    FROM mdl_grade_items gi
+    JOIN mdl_grade_grades g ON gi.id = g.itemid
+    JOIN mdl_course_modules cm ON cm.course = gi.courseid AND cm.instance = gi.iteminstance
+    JOIN mdl_modules md ON cm.module = md.id AND md.name = gi.itemmodule
+    WHERE gi.itemtype = "mod" AND g.userid = ' . $userid . ' AND cm.id = ' . $activityid;
+
+    $result = $DB->get_record_sql($query, null);
+
+    if($result){
+        //le score
+        $grade = $result->rawgrade;
+        $score = $grade;
+
+        //le score max
+        // $rawgrademax = $result->rawgrademax;
+
+        // if(!empty($rawgrademax)){
+        //     //le score sur 100
+        //     $score = floor($grade/$rawgrademax) * 100;
+        // } else{
+        //     $score = floor($grade)* 10;
+        //     // $score = $grade;
+        // }
+        
+        return $score;
+    } else{
+        return null;
     }
 }
 

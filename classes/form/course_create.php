@@ -7,7 +7,10 @@ class create extends moodleform
     //Add elements to form
     public function definition()
     {
-        global $CFG, $DB;
+        global $CFG, $DB, $PAGE;
+
+        $context = $PAGE->context;
+
         $mform = $this->_form; // Don't forget the underscore!
 
         $mform->addElement('text', 'fullname', 'Nom de la formation');
@@ -62,8 +65,9 @@ class create extends moodleform
         $cohorts = $DB->get_records_sql('SELECT c.*
         FROM mdl_cohort c', null);
 
+        // $cohortscontent = '<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>';
         $cohortscontent = '
-        <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+        
         <style>
         .dropdown {
             position: relative;
@@ -148,7 +152,7 @@ class create extends moodleform
             <div class="form-check d-flex align-items-center p-0">
                 <div class="d-flex align-items-center align-self-start">
                   <div class="dropdown" data-control="checkbox-dropdown">
-                    <label class="dropdown-label">Select</label>
+                    <label class="dropdown-label">Sélectionnez</label>
                     
                     <div class="dropdown-list">
                       <a href="#" data-toggle="check-all" class="dropdown-option">

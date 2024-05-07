@@ -194,7 +194,7 @@ foreach ($groupmembers as $groupmember) {
         //   $totalsectionsplannings--;
         // }
       } else if ($activity->activityname && $activity->activitytype != "folder") {
-        $grade = get_module_grade_by_user_scorm_V2($groupmember->id, $moduleid);
+        $grade = getModuleGrade($groupmember->id, $moduleid);
         $content .= '<td>' . $grade . '</td>';
       }
     }
