@@ -1903,6 +1903,8 @@ function getModuleGrade($userid, $activityid)
 function get_module_grade_by_user_scorm_V2($user_id, $activity_id)
 {
 
+    global $DB;
+
     $query = 'SELECT gi.courseid, g.rawgrade, cm.id AS moduleid, gi.itemname AS modulename, gi.itemmodule
         FROM mdl_grade_items gi
         INNER JOIN mdl_grade_grades g ON gi.id = g.itemid
@@ -1910,30 +1912,29 @@ function get_module_grade_by_user_scorm_V2($user_id, $activity_id)
         INNER JOIN mdl_modules md ON cm.module = md.id AND md.name = gi.itemmodule
         WHERE gi.itemtype = "mod" AND g.userid = ' . $user_id . ' AND cm.id = ' . $activity_id;
 
-    global $DB;
+    $result = $DB->get_record_sql($query, null);
 
-    $results = $DB->get_records_sql($query, null);
-
-    $grade = null;
-    $result = reset($results);
-    if ($result) {
+    if($result){
+        //le score
         $grade = $result->rawgrade;
-    }
+        $score = $grade;
 
-    if ($grade) {
+        //le score max
+        // $rawgrademax = $result->rawgrademax;
 
-        if ($result->itemmodule == "quiz") {
-            return floor($grade) . "/10";
-        } else if (strpos(strtolower($result->itemmodule), 'scorm') !== false && strpos(strtolower($result->modulename), 'quiz') !== false) {
-            return floor($grade) . "/100";
-        } else if ($result->itemmodule == "scorm") {
-            return floor($grade);
-        } else {
-            return "";
-        }
-    } else {
-        return "";
+        // if(!empty($rawgrademax)){
+        //     //le score sur 100
+        //     $score = floor($grade/$rawgrademax) * 100;
+        // } else{
+        //     $score = floor($grade)* 10;
+        //     // $score = $grade;
+        // }
+        
+        return $score;
+    } else{
+        return null;
     }
+    
 }
 
 
@@ -2013,6 +2014,68 @@ function getCourseActivitiesStats($courseid)
     return $results;
 }
 
+function getCourseActivitiesPlanningStats($courseid)
+{
+    global $DB;
+    $results = $DB->get_records_sql("SELECT cm.id as id, activity.summary as summary,
+    activity.activityname, c.id AS courseid, c.fullname AS coursename,
+    cm.instance AS activityid, m.id as activitytypeid, m.name AS activitytype, cm.section as moduleid
+    FROM mdl_course_modules cm
+    JOIN mdl_course c ON c.id = cm.course
+    JOIN mdl_modules m ON m.id = cm.module
+    LEFT JOIN (
+        SELECT a.id, a.name AS activityname, 'scorm' AS activitytype, a.intro AS summary
+        FROM mdl_scorm a
+        UNION
+        SELECT a.id, a.name AS activityname, 'forum' AS activitytype, a.intro AS summary
+        FROM mdl_forum a
+        UNION
+        SELECT a.id, a.name AS activityname, 'label' AS activitytype, a.intro AS summary
+        FROM mdl_label a
+        UNION
+        SELECT a.id, a.name AS activityname, 'url' AS activitytype, a.intro AS summary
+        FROM mdl_url a
+        UNION
+        SELECT a.id, a.name AS activityname, 'page' AS activitytype, a.intro AS summary
+        FROM mdl_page a
+        UNION
+        SELECT a.id, a.name AS activityname, 'quiz' AS activitytype, a.intro AS summary
+        FROM mdl_quiz a
+        UNION
+        SELECT a.id, a.name AS activityname, 'data' AS activitytype, a.intro AS summary
+        FROM mdl_data a
+        UNION
+        SELECT a.id, a.name AS activityname, 'assign' AS activitytype, a.intro AS summary
+        FROM mdl_assign a
+        UNION
+        SELECT a.id, a.name AS activityname, 'folder' AS activitytype, a.intro AS summary
+        FROM mdl_folder a
+        UNION
+        SELECT a.id, a.name AS activityname, 'resource' AS activitytype, a.intro AS summary
+        FROM mdl_resource a
+        UNION
+        SELECT a.id, a.name AS activityname, 'lesson' AS activitytype, a.intro AS summary
+        FROM mdl_lesson a
+        UNION
+        SELECT a.id, a.name AS activityname, 'feedback' AS activitytype, a.intro AS summary
+        FROM mdl_feedback a
+        UNION
+        SELECT a.id, a.name AS activityname, 'bigbluebuttonbn' AS activitytype, a.intro AS summary
+        FROM mdl_bigbluebuttonbn a
+        UNION
+        SELECT a.id, a.name AS activityname, 'book' AS activitytype, a.intro AS summary
+        FROM mdl_book a
+        UNION
+        SELECT a.id, a.name AS activityname, 'face2face' AS activitytype, a.intro AS summary
+        FROM mdl_face2face a
+        
+    ) activity ON activity.id = cm.instance AND activity.activitytype = m.name
+    WHERE activity.activitytype = 'face2face'
+    AND c.id = " . $courseid, null);
+
+    return $results;
+}
+ 
 function getModulesStatus($courseid, $sessionid = null, $userid = null)
 {
     global $DB, $USER;
@@ -2022,12 +2085,12 @@ function getModulesStatus($courseid, $sessionid = null, $userid = null)
 
     //les activités 
     $activities = getCourseActivitiesStats($courseid);
+    
     $complete = 0;
     foreach ($activities as $activity) {
         if ($activity->id) {
             $query = 'SELECT cmc.id, cmc.completionstate
             FROM mdl_course_modules_completion cmc
-            
             WHERE cmc.userid = ' . $userid . ' AND cmc.coursemoduleid = ' . $activity->id;
             $arr = $DB->get_records_sql($query, null);
             $arrobject = reset($arr);
@@ -2041,7 +2104,7 @@ function getModulesStatus($courseid, $sessionid = null, $userid = null)
     }
 
     $totalactivities = count($activities);
-
+    
     if ($sessionid) {
         //on va chercher les plannings
         global $DB;
@@ -2053,17 +2116,36 @@ function getModulesStatus($courseid, $sessionid = null, $userid = null)
             WHERE c.id = ' . $courseid . ' AND sp.sessionid = ' . $sessionid . '
             ORDER BY sp.startdate ASC', null);
 
+        
+
+        $planningactivities = 0;
+        $planningcomplete = 0;
         foreach ($plannings as $planning) {
-            $totalactivities++;
+            
+            $planningactivities++;
             if ($planning->startdate < time()) {
-                $complete++;
+                $planningcomplete++;
             }
         }
-    }
 
+        //on va chercher le nombre d'activités de type planning dans le ruban
+        $activitiesplanning = getCourseActivitiesPlanningStats($courseid);
+        //on compte le nombre maximum d'activité planning qu'on peut rajouter
+        if($planningactivities > count($activitiesplanning)){
+            $planningactivities = count($activitiesplanning);
+        }
+        //si le nombre de planning est le meme que que le ruban
+        if(count($plannings) == count($activitiesplanning)){
+            $complete += $planningcomplete;
+        }
+        $totalactivities += $planningactivities;
+    }
 
     $modulesfinished = $complete;
     $modulestocome = $totalactivities - $modulesfinished;
+    if($modulestocome < 0){
+        $modulestocome = 0;
+    }
 
     return array($modulesfinished, $modulestocome);
 }
@@ -2095,72 +2177,93 @@ function getCompletionPourcent($courseid, $userid = null)
     if (!$userid) {
         $userid = $USER->id;
     }
-    //les activités 
-    $activities = getCourseActivitiesStats($courseid);
-    $complete = 0;
-    foreach ($activities as $activity) {
-        if($activity->id){
-            $query = 'SELECT DISTINCT cmc.id, cmc.completionstate
-            FROM mdl_course_modules_completion cmc
-            WHERE cmc.userid = ' . $userid . ' AND cmc.coursemoduleid = ' . $activity->id;
-            $arr = $DB->get_records_sql($query, null);
-            $arrobject = reset($arr);
-            if ($arrobject) {
-                if ($arrobject->completionstate >= 1) {
-                    // L'activité est complétée
-                    $complete++;
-                }
-            }
-        }
-        
-    }
 
-    $totalactivities = count($activities);
-
-    //on va chercher la session du cours
-    $groups = $DB->get_records_sql('SELECT DISTINCT g.id, g.name FROM mdl_groups g
-    JOIN mdl_groups_members gm ON gm.groupid = g.id
-    WHERE gm.userid = ' . $userid . ' AND g.courseid = ' . $courseid, null);
-
-    if ($totalactivities > 0) {
-
-        //si l'utilisateur à un groupe
-        if (count($groups) > 0) {
-            $group = reset($groups);
-            $groupid = $group->id;
-            //on va chercher les informations de session 
-            $sessions = $DB->get_records_sql('SELECT * FROM mdl_smartch_session WHERE groupid = ' . $group->id, null);
-            $session = reset($sessions);
-
-            if ($session) {
-                //les sessions
-                global $DB;
-                $plannings = $DB->get_records_sql('SELECT DISTINCT sp.id, sp.sectionid, sp.startdate, sp.enddate, sp.geforplanningid
-            FROM mdl_smartch_planning sp
-            JOIN mdl_smartch_session ss ON ss.id = sp.sessionid
-            JOIN mdl_groups g ON g.id = ss.groupid
-            JOIN mdl_course c ON c.id = g.courseid
-            WHERE c.id = ' . $courseid . ' AND sp.sessionid = ' . $session->id . '
-            ORDER BY sp.startdate ASC', null);
-
-                foreach ($plannings as $planning) {
-                    if ($planning->startdate < time()) {
-                        $complete++;
-                    }
-                    $totalactivities++;
-                }
-            }
-        }
-    }
-
-    if ($totalactivities == 0) {
-        $pourcent = 0;
-        // $pourcent = "N/A";
-    } else {
-        $pourcent = ceil($complete / $totalactivities * 100);
-    }
-
+    $modulesstatus = getModulesStatus($courseid, null, $userid);
+    $pourcent = $modulesstatus[0]/($modulesstatus[0]+$modulesstatus[1])*100;
     return $pourcent;
+    
+
+
+
+    // //les activités 
+    // $activities = getCourseActivitiesStats($courseid);
+    // $complete = 0;
+    // foreach ($activities as $activity) {
+    //     if($activity->id){
+    //         $query = 'SELECT DISTINCT cmc.id, cmc.completionstate
+    //         FROM mdl_course_modules_completion cmc
+    //         WHERE cmc.userid = ' . $userid . ' AND cmc.coursemoduleid = ' . $activity->id;
+    //         $arr = $DB->get_records_sql($query, null);
+    //         $arrobject = reset($arr);
+    //         if ($arrobject) {
+    //             if ($arrobject->completionstate >= 1) {
+    //                 // L'activité est complétée
+    //                 $complete++;
+    //             }
+    //         }
+    //     }
+        
+    // }
+
+    // $totalactivities = count($activities);
+
+    // //on va chercher la session du cours
+    // $groups = $DB->get_records_sql('SELECT DISTINCT g.id, g.name FROM mdl_groups g
+    // JOIN mdl_groups_members gm ON gm.groupid = g.id
+    // WHERE gm.userid = ' . $userid . ' AND g.courseid = ' . $courseid, null);
+
+    // if ($totalactivities > 0) {
+
+    //     //si l'utilisateur à un groupe
+    //     if (count($groups) > 0) {
+    //         $group = reset($groups);
+    //         $groupid = $group->id;
+    //         //on va chercher les informations de session 
+    //         $sessions = $DB->get_records_sql('SELECT * FROM mdl_smartch_session WHERE groupid = ' . $group->id, null);
+    //         $session = reset($sessions);
+
+    //         if ($session) {
+    //             //les sessions
+    //             global $DB;
+    //             $plannings = $DB->get_records_sql('SELECT DISTINCT sp.id, sp.sectionid, sp.startdate, sp.enddate, sp.geforplanningid
+    //             FROM mdl_smartch_planning sp
+    //             JOIN mdl_smartch_session ss ON ss.id = sp.sessionid
+    //             JOIN mdl_groups g ON g.id = ss.groupid
+    //             JOIN mdl_course c ON c.id = g.courseid
+    //             WHERE c.id = ' . $courseid . ' AND sp.sessionid = ' . $session->id . '
+    //             ORDER BY sp.startdate ASC', null);
+
+    //             $planningcomplete = 0;
+    //             $planningactivities = 0;
+    //             foreach ($plannings as $planning) {
+    //                 if ($planning->startdate < time()) {
+    //                     $planningcomplete++;
+    //                 }
+    //                 $totalactivities++;
+    //             }
+    //             //on va chercher le nombre d'activités de type planning dans le ruban
+    //             $activitiesplanning = getCourseActivitiesPlanningStats($courseid);
+    //             //on compte le nombre maximum d'activité planning qu'on peut rajouter
+    //             if($planningactivities > count($activitiesplanning)){
+    //                 $planningactivities = count($activitiesplanning);
+    //             }  
+    //             //si le nombre de planning est le meme que que le ruban
+    //             if(count($plannings) == count($activitiesplanning)){
+    //                 $complete += $planningcomplete;
+    //             }
+    //             $totalactivities += $planningactivities;
+    //         }
+    //     }
+    // }
+
+    // if ($totalactivities == 0) {
+    //     $pourcent = 0;
+    //     // $pourcent = "N/A";
+    // } else {
+    //     $pourcent = ceil($complete / $totalactivities * 100);
+    // }
+
+    // return $pourcent;
 }
 
 function getTeamProgress($courseid, $groupid)
@@ -2177,7 +2280,8 @@ function getTeamProgress($courseid, $groupid)
     LEFT JOIN mdl_enrol AS e ON e.courseid = c.instanceid AND ue.enrolid = e.id 
     LEFT JOIN mdl_user u ON u.id = ue.userid
     LEFT JOIN mdl_groups_members gm ON u.id = gm.userid
-    WHERE gm.groupid = ' . $groupid . ' 
+    WHERE gm.groupid = ' . $groupid . '
+    AND e.courseid = ' . $courseid . ' 
     AND r.shortname = "student"
     ORDER BY u.lastname ASC';
 
@@ -2192,6 +2296,7 @@ function getTeamProgress($courseid, $groupid)
         $min = "N/A";
         $max = "N/A";
     } else {
+        // var_dump($teamates);
         foreach ($teamates as $mate) {
             $prog = getCompletionPourcent($courseid, $mate->id);
 

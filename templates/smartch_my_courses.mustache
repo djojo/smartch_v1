@@ -282,8 +282,12 @@ fading();
                     //alert(courses.length)
                     
                     courses.forEach(el=>{
-                        if(el.freecategory){
-                            html += '<div onmouseover="animateUp(this.childNodes[1])" onmouseout="resetAnimation(this.childNodes[1])" onclick="location.href=`'+el.url+'`" class="fff-course-thumbnail-box" style="opacity:0;background-position: center;background-image:url('+el.img+');"><div class="smartch_layer_thumbnail"></div><h5 class="fff-course-thumbnail-title">'+el.fullname+'<br><span style="font-size: 0.8rem;font-family: \'FFF-Equipe-Regular\';">'+el.category+'</span></h5></div>';
+                        {{! console.log(el.notavailable); }}
+                        if(el.notavailable){
+                            html += '<div onmouseout="resetAnimation(this.childNodes[1])" class="fff-course-thumbnail-box" style="opacity:0;background-position: center;background-image:url('+el.img+');"><div class="smartch_layer_thumbnail"></div><h5 class="fff-course-thumbnail-title">'+el.fullname+'<br><span style="font-size: 0.8rem;font-family: \'FFF-Equipe-Regular\';">Pas encore accessible</span><br><span style="font-size: 0.8rem;font-family: \'FFF-Equipe-Regular\';">'+el.date1+'</span></h5></div>';
+                        } else if(el.freecategory){
+                            {{! html += '<div onmouseover="animateUp(this.childNodes[1])" onmouseout="resetAnimation(this.childNodes[1])" onclick="location.href=`'+el.url+'`" class="fff-course-thumbnail-box" style="opacity:0;background-position: center;background-image:url('+el.img+');"><div class="smartch_layer_thumbnail"></div><h5 class="fff-course-thumbnail-title">'+el.fullname+'<br><span style="font-size: 0.8rem;font-family: \'FFF-Equipe-Regular\';">'+el.category+'</span></h5></div>'; }}
+                            html += '<div onmouseover="animateUp(this.childNodes[1])" onmouseout="resetAnimation(this.childNodes[1])" onclick="location.href=`'+el.url+'`" class="fff-course-thumbnail-box" style="opacity:0;background-position: center;background-image:url('+el.img+');"><div class="smartch_layer_thumbnail"></div><h5 class="fff-course-thumbnail-title">'+el.fullname+'<br><span style="font-size: 0.8rem;font-family: \'FFF-Equipe-Regular\';">Formation gratuite</span></h5></div>';
                         } else {
                             if(data.rolename == "teacher" || data.rolename == "editingteacher" ){
                             //on va chercher les equipes associés au cours

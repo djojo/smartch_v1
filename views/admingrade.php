@@ -6,7 +6,6 @@ require_once(__DIR__ . '/../../../config.php');
 
 include $CFG->dirroot . '/theme/remui/views/utils.php';
 
-
 global $USER, $DB, $CFG;
 
 $content =  '';
@@ -36,7 +35,7 @@ $content .= '<div style="margin:10px 0;">Extraction du carnet de note le ' . use
 
 
 //on va chercher les membres du groupe
-$querygroupmembers = 'SELECT u.id, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
+$querygroupmembers = 'SELECT DISTINCT u.id, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
 FROM mdl_role_assignments AS ra 
 LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
 LEFT JOIN mdl_role AS r ON ra.roleid = r.id 
@@ -87,16 +86,19 @@ foreach ($sections as $section) {
         break; // Sortir de la boucle dès que l'élément est trouvé
       }
     }
-    if ($activity->activitytype == 'face2face') {
-      //On va chercher le nombre de planning dans cette section
-      if ($totalsectionsplannings > 0) {
-        //si il reste des plannings dans cette section à mettre
-        $totalsectionsplannings--;
+    if(isset($activity)){
+      if ($activity->activitytype == 'face2face') {
+        //On va chercher le nombre de planning dans cette section
+        if ($totalsectionsplannings > 0) {
+          //si il reste des plannings dans cette section à mettre
+          $totalsectionsplannings--;
+          $nbmodule++;
+        }
+      } else if ($activity->activityname && $activity->activitytype != "folder") {
         $nbmodule++;
       }
-    } else if ($activity->activityname && $activity->activitytype != "folder") {
-      $nbmodule++;
     }
+    
   }
   $sectionname = $section->name;
   if ($sectionname == "") {
@@ -133,17 +135,20 @@ foreach ($sections as $section) {
         break; // Sortir de la boucle dès que l'élément est trouvé
       }
     }
-    // $content .= '<td style="writing-mode: vertical-rl; text-orientation: upright;">' . $activity->activityname . '</td>';
-    if ($activity->activitytype == 'face2face') {
-      //On va chercher le nombre de planning dans cette section
-      // if ($totalsectionsplannings > 0) {
-      //   $totalsectionsplannings--;
-      //   $content .= '<td>' . $activity->activityname . '</td>';
-      //   // $content .= '<td>Planning</td>';
-      // }
-    } else if ($activity->activityname && $activity->activitytype != "folder") {
-      $content .= '<td>' . $activity->activityname . '</td>';
+    if($activity){
+      // $content .= '<td style="writing-mode: vertical-rl; text-orientation: upright;">' . $activity->activityname . '</td>';
+      if ($activity->activitytype == 'face2face') {
+        //On va chercher le nombre de planning dans cette section
+        // if ($totalsectionsplannings > 0) {
+        //   $totalsectionsplannings--;
+        //   $content .= '<td>' . $activity->activityname . '</td>';
+        //   // $content .= '<td>Planning</td>';
+        // }
+      } else if ($activity->activityname && $activity->activitytype != "folder") {
+        $content .= '<td>' . $activity->activityname . '</td>';
+      }
     }
+    
   }
 }
 
@@ -193,7 +198,7 @@ foreach ($groupmembers as $groupmember) {
         //   //si il reste des plannings dans cette section à mettre
         //   $totalsectionsplannings--;
         // }
-      } else if ($activity->activityname && $activity->activitytype != "folder") {
+      } else if ($activity->activityname && $activity->activitytype != "folder" && $moduleid) {
         $grade = getModuleGrade($groupmember->id, $moduleid);
         $content .= '<td>' . $grade . '</td>';
       }
@@ -315,5 +320,4 @@ $dompdf->loadHtml($html);
 $dompdf->setPaper('A4', 'landscape');
 $dompdf->render();
 $dompdf->stream('Rapport-' . $course->fullname . '-' . date("d-m-Y") . '.pdf', array("Attachment" => false));
-// $dompdf->stream("", array("Attachment" => false));
 exit(0);

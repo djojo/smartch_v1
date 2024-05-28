@@ -547,11 +547,13 @@ if (!$userid) {
 
     // $actsccc = getCourseActivitiesStats($courseid);
     $selecteduser = $DB->get_record('user', ['id' => $userid]);
+    // $pourcent = $modulesstatus[0]/($modulesstatus[0]+$modulesstatus[1])*100;
 
     $templatecontextstats = (object)[
         'title1' => 'Score de ',
         'title2' => $selecteduser->firstname . ' ' . $selecteduser->lastname,
         'timespent' => $timespent,
+        // 'progress' => $pourcent,
         'progress' => getCompletionPourcent($courseid, $selecteduser->id),
         'modulesfinished' => $modulesstatus[0],
         'modulestocome' => $modulesstatus[1]

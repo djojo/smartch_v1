@@ -65,8 +65,8 @@ class create extends moodleform
         $cohorts = $DB->get_records_sql('SELECT c.*
         FROM mdl_cohort c', null);
 
-        // $cohortscontent = '<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>';
-        $cohortscontent = '
+        $cohortscontent = '<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>';
+        $cohortscontent .= '
         
         <style>
         .dropdown {

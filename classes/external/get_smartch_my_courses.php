@@ -131,7 +131,6 @@ trait get_smartch_my_courses
         $freecat = $DB->get_record_sql('SELECT * from mdl_course_categories WHERE name = "Formation gratuite"', null);
 
         foreach ($courses as $course) {
-
             
             //si on est sur une formation gratuite
             if ($course->category == $freecat->id) {
@@ -139,7 +138,6 @@ trait get_smartch_my_courses
             } else {
                 $freecategory = false;
             }
-
 
             $el['fullname'] = $course->fullname;
 
@@ -157,6 +155,40 @@ trait get_smartch_my_courses
                     //on affiche la catégorie
                     $el['category'] = $DB->get_record('course_categories', ['id' => $course->category])->name;
                 } else {
+
+
+                    // STARTDATE
+                    //on va chercher le champs perso type de certification
+                    $diplomeresult = $DB->get_record_sql('
+                    SELECT cd.value 
+                    FROM mdl_customfield_data cd
+                    JOIN mdl_customfield_field cf ON cf.id = cd.fieldid
+                    WHERE cd.instanceid = ' . $course->id . ' AND cf.shortname = "diplome"', null);
+                    if ($diplomeresult) {
+                        $diplome = $diplomeresult->value;
+
+                        if($diplome == "Certifications Fédérales"){
+
+                            //on va chercher l'enrollement dans la formation
+                            $enrol = $DB->get_record_sql('SELECT * 
+                            FROM mdl_enrol
+                            WHERE courseid =  ' . $course->id . '
+                            AND customint1 = ' . $USER->id, null);
+
+                            //on grise la formation si elle n'a pas commencé
+                            // $el['notavailable'] = $enrol->enrolstartdate . 'ok ' . $enrol->enrolenddate;
+                            $certification = true;
+                            // $el['notavailable'] = true;
+                            // if($enrol->enrolstartdate){
+                            //     $el['date1'] = 'À partir du  ' . userdate($enrol->enrolstartdate, '%d/%m/%Y');
+                            // }
+                            
+
+                        }
+                    }
+
+
+                    // DATES
                     //on va chercher la session et on met les dates à la place de la catégorie
                     $allsessions = $DB->get_records_sql('SELECT ss.id, ss.startdate, ss.enddate
                     FROM mdl_groups g
@@ -164,11 +196,23 @@ trait get_smartch_my_courses
                     JOIN mdl_smartch_session ss ON ss.groupid = g.id
                     WHERE gm.userid = ' . $USER->id . ' AND g.courseid = ' . $course->id, null);
                     if (count($allsessions) > 1) {
-                        //on affiche la catégorie
+                        //on affiche la catégorie 
                         $el['category'] = $DB->get_record('course_categories', ['id' => $course->category])->name;
                     } else {
                         $session = reset($allsessions);
-                        if ($session) {
+                        if($certification){
+                            //si la session n'a pas commencé
+                            if($session->startdate < time()){
+                                $el['notavailable'] = true;
+                                if($session->startdate){
+                                    $el['date1'] = 'À partir du  ' . userdate($session->startdate, '%d/%m/%Y');
+                                } else {
+                                    $el['date1'] = 'Date manquante';
+                                }
+                                
+                                $el['date2'] = '';
+                            }
+                        } else if ($session) {
                             $el['date1'] = 'Du  ' . userdate($session->startdate, '%d/%m/%Y');
                             $el['date2'] = 'Au ' . userdate($session->enddate, '%d/%m/%Y');
                         } else {
