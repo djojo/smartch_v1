@@ -112,7 +112,7 @@ if ($search != '') {
 $no_of_records_per_page = 5;
 $offset = ($pageno - 1) * $no_of_records_per_page;
 
-
+$filtersql = "";
 if (!empty($search)) {
     $filtersql = ' AND c.fullname LIKE "%' . $search . '%"';
 }
@@ -272,7 +272,7 @@ if (count($courses) > 0) {
 }
 
 //on va chercher les formations qui ne sont pas lié au groupe
-$nonlinkedcourses = $DB->get_records_sql('SELECT c.*
+$nonlinkedcourses = $DB->get_records_sql('SELECT DISTINCT c.*
 FROM mdl_course c
 JOIN mdl_enrol e ON e.courseid <> c.id
 WHERE c.fullname <> ""

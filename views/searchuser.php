@@ -17,12 +17,10 @@ $arrayusers = [];
 //On va chercher les utilisateurs qui ne sont pas dans le groupe
 $users = $DB->get_records_sql('SELECT u.id, u.firstname, u.lastname, u.email
 FROM mdl_user u
--- JOIN mdl_cohort_members cm ON cm.userid = u.id
-WHERE 
--- cm.id <> '.$cohortid.'OR 
-u.firstname LIKE "%'.$search.'%"
+WHERE u.deleted = 0 AND u.suspended = 0
+AND (u.firstname LIKE "%'.$search.'%"
 OR u.lastname LIKE "%'.$search.'%"
-OR u.email LIKE "%'.$search.'%"
+OR u.email LIKE "%'.$search.'%")
 LIMIT 0, 10', null);
 
 foreach($users as $user){

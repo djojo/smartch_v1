@@ -530,6 +530,7 @@ function syncCohortWithCourse($cohortid, $courseid, $startdate = null, $enddate 
     $session = new stdClass();
     $session->startdate = strtotime($startdate);
     $session->enddate = strtotime($enddate);
+    $session->externalid = 0;
     // $session->courseid = $courseid;
     $session->groupid = $groupid;
     $DB->insert_record('smartch_session', $session);

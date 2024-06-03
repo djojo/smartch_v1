@@ -24,15 +24,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-// require_once("../../utils.php");
-
-// global $USER;
-// var_dump($USER);
-
 
 global $CFG, $PAGE, $COURSE;
 
-// $u = $USER;
 
 require_once($CFG->dirroot . '/theme/remui/layout/common.php');
 
@@ -42,6 +36,16 @@ if (
     \theme_remui\toolbox::get_setting('enabledashboardcoursestats') &&
     $PAGE->pagelayout == 'mydashboard' && $PAGE->pagetype == 'my-index'
 ) {
+
+    //modification smartch
+    require_once($CFG->dirroot . '/theme/remui/views/utils.php');
+    $configportail = getConfigPortail();
+   
+
+    if($configportail == "portailformation"){
+        $templatecontext['isPortailFormation'] = true;
+    }
+    
     $templatecontext['isdashboardstatsshow'] = true;
 
 

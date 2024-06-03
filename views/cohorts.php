@@ -26,7 +26,7 @@ isAdminFormation();
 $action = optional_param('action', null, PARAM_TEXT);
 $cohortid = optional_param('cohortid', null, PARAM_INT);
 
-if($action && $cohortid){
+if($action == "delete" && $cohortid){
     deleteCohort($cohortid);
     redirect(new moodle_url('/theme/remui/views/cohorts.php'));
 }
@@ -92,7 +92,6 @@ if ($search != "") {
     $total_pages_sql = 'SELECT COUNT(*) count 
             FROM mdl_cohort c
             WHERE lower(c.name) LIKE "%' . $search . '%"';
-            echo $queryusers;
 } else {
     $querycohorts = 'SELECT c.id, c.name
             FROM mdl_cohort c

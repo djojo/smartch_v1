@@ -22,7 +22,7 @@ $action = optional_param('action', null, PARAM_TEXT);
 if($userid){
     $user = $DB->get_record('user', ['id'=>$userid]);
 }
-
+$messagenotif = null;
 if($userid && $action == "sync"){
     $exist = $DB->get_record('cohort_members', ['userid' => $userid, 'cohortid' => $cohortid]);
     if (!$exist){
@@ -117,6 +117,7 @@ $queryusers = 'SELECT u.id, u.firstname, u.lastname, u.email
         JOIN mdl_cohort_members cm ON cm.cohortid = co.id
         JOIN mdl_user u ON u.id = cm.userid
         WHERE co.id = ' . $cohortid . '
+        AND u.deleted = 0 AND u.suspended = 0
         '.$filtersql.'
         LIMIT ' . $offset . ', ' . $no_of_records_per_page . '
         ';
@@ -125,6 +126,7 @@ $total_pages_sql = 'SELECT COUNT(*) count
         JOIN mdl_cohort_members cm ON cm.cohortid = co.id
         JOIN mdl_user u ON u.id = cm.userid
         WHERE co.id = ' . $cohortid . '
+        AND u.deleted = 0 AND u.suspended = 0
         '.$filtersql.'';
 
 

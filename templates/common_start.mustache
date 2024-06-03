@@ -90,22 +90,13 @@
             </div>
             
             {{#isdashboardstatsshow}}
-                {{! <div class="row">
-                    <div class="col-md-12"> }}
-                {{! <div class="fff-dashboard"> }}
-                    <!--<div class="container">-->
-                        {{> theme_remui/smartch_info }}
-                        {{> theme_remui/smartch_my_courses }}
-                        {{> theme_remui/smartch_dashboard_stats }}
-                        {{> theme_remui/smartch_pub }}
-                        {{> theme_remui/smartch_calendar}}
-                   
-                    <!-- </div>-->
-                    <!--{{> theme_remui/smartch_recommended }}-->
-                    <!--{{> theme_remui/dashboard_stats }}-->
-                {{! </div> }}
-                    {{! </div>
-                </div> }}
+                {{> theme_remui/smartch_info }}
+                {{> theme_remui/smartch_my_courses }}
+                {{> theme_remui/smartch_dashboard_stats }}
+                {{> theme_remui/smartch_pub }}
+                {{#isPortailFormation}}
+                    {{> theme_remui/smartch_calendar}}
+                {{/isPortailFormation}}
             {{/isdashboardstatsshow}}
             
 
