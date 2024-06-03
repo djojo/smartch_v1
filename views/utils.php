@@ -477,7 +477,29 @@ function longTitlesModules($chaine)
 require_once("$CFG->dirroot/enrol/cohort/locallib.php");
 require_once($CFG->dirroot.'/group/lib.php');
 
-function syncCohortWithCourse($cohortid, $courseid){
+function deleteCohort($cohortid){
+    global $DB;
+    //on va chercher tous les cours synchro avec la cohorte
+    $querycourses = 'SELECT c.id, c.fullname as name, ss.startdate, ss.enddate
+    FROM mdl_enrol e
+    JOIN mdl_cohort co ON e.customint1 = co.id
+    JOIN mdl_course c ON c.id = e.courseid
+    JOIN mdl_smartch_session ss ON ss.groupid = e.customint2
+    WHERE co.id = ' . $cohortid;
+
+    $courses = $DB->get_records_sql($querycourses, null);
+
+    //on supprime la sync + le groupe + la session
+    foreach($courses as $course){
+        desyncCohortWithCourse($cohortid, $course->id);
+    }
+
+    //On supprime la cohorte
+    $cohort = $DB->get_record('cohort', ['id' => $cohortid]);
+    cohort_delete_cohort($cohort);
+}
+
+function syncCohortWithCourse($cohortid, $courseid, $startdate = null, $enddate = null){
     global $DB;
 
     //on va chercher la cohorte
@@ -503,6 +525,34 @@ function syncCohortWithCourse($cohortid, $courseid){
     //on synchronise le cours avec la cohorte
     $trace = new \null_progress_trace();
     enrol_cohort_sync($trace, $courseid);
+
+    //on créer la session
+    $session = new stdClass();
+    $session->startdate = strtotime($startdate);
+    $session->enddate = strtotime($enddate);
+    // $session->courseid = $courseid;
+    $session->groupid = $groupid;
+    $DB->insert_record('smartch_session', $session);
+}
+
+function smartchModal($title = null, $url = null, $btntext = null)
+{
+    echo '<div class="smartch_modal_container">';
+    echo '<div class="smartch_modal" style="text-align:center;">';
+
+    echo '<svg style="width:50px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+        </svg>';
+
+    echo '<h5 id="modal_title" style="text-align:center;margin:30px 0;">' . $title . '</h5>';
+
+    echo '<div style="display:flex;align-items:center;justify-content:center;">';
+    echo '<a onclick="document.querySelector(\'.smartch_modal_container\').style.display=\'none\'" class="smartch_btn">Annuler</a>';
+    echo '<a style="margin-left:20px;" id="modal_btn" href="' . $url . '" class="smartch_btn">' . $btntext . '</a>';
+    echo '</div>';
+
+    echo '</div>'; // crea_modal_container
+    echo '</div>'; // crea_modal
 }
 
 function desyncCohortWithCourse($cohortid, $courseid){
@@ -527,6 +577,9 @@ function desyncCohortWithCourse($cohortid, $courseid){
     if ($enrol) {
         $DB->delete_records('enrol', ['id'=>$enrol->id]);
     }
+
+    //on supprime la session
+    $DB->delete_records('smartch_session', ['groupid' => $cohortgroupid]);
 
 }
 

@@ -61,7 +61,7 @@ echo $content;
 
 if ($mform->is_cancelled()) {
     // Go back to index.php page
-    redirect($CFG->wwwroot . '/theme/remui/views/adminmenu.php');
+    redirect($CFG->wwwroot . '/theme/remui/views/cohorts.php');
 } else if ($fromform = $mform->get_data()) {
 
     // var_dump($fromform);
@@ -77,7 +77,7 @@ if ($mform->is_cancelled()) {
     //on créer la cohorte
     $createdcohortid = $DB->insert_record('cohort', $newcohort);
 
-    if($fromform->courseid != "none"){
+    if($fromform->courseid != "none" && $fromform->courseid){
         syncCohortWithCourse($createdcohortid, $fromform->courseid);
     }
     

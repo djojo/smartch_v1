@@ -20,7 +20,16 @@ $nexturl = '';
 //On va chercher le rôle le plus haut de l'utilisateur
 $rolename = getMainRole();
 
-isStudent();
+isPortailRH();
+isAdminFormation();
+
+$action = optional_param('action', null, PARAM_TEXT);
+$cohortid = optional_param('cohortid', null, PARAM_INT);
+
+if($action && $cohortid){
+    deleteCohort($cohortid);
+    redirect(new moodle_url('/theme/remui/views/cohorts.php'));
+}
 
 $context = context_system::instance();
 $PAGE->set_url(new moodle_url('/theme/remui/views/cohorts.php'));
@@ -47,6 +56,8 @@ echo '<style>
 </style>';
 
 echo $OUTPUT->header();
+
+smartchModal();
 
 // echo html_writer::start_div('container');
 
@@ -115,9 +126,6 @@ $content .= '<div class="row mb-3">
     <a class="smartch_btn" href="'.new moodle_url('/theme/remui/views/createcohort.php').'">Nouveau groupe</a>
     </div>
 </div>';
-
-
-
 
 //barre de recherche des parcours
 $templatecontext = (object)[
@@ -228,6 +236,11 @@ foreach ($cohorts as $cohort) {
                             '.$formations->count.' Formations associés
                         </a>
                     </td>
+                    <td>
+                        <a class="smartch_table_btn" onclick="deleteFromGroup(\'' . new moodle_url('/theme/remui/views/cohorts.php') . '?cohortid=' . $cohort->id . '&action=delete\', \'group\')">
+                            Supprimer le groupe
+                        </a>
+                    </td>
                 </tr>';
 }
 
@@ -239,6 +252,8 @@ $content .= '</tbody>
 //la pagination en bas
 if (count($cohorts) > 0) {
     $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_pagination', $templatecontextpagination);
+} else {
+    $content .= nothingtodisplay("Aucun groupe pour l'instant...");
 }
 
 // $content .= html_writer::end_div(); //container
@@ -262,4 +277,16 @@ echo '<script>
         el.setAttribute("selected", "selected");
     });
 
+</script>';
+
+echo '<script>
+function deleteFromGroup(url, name){
+    let text = "Voulez vous vraiment supprimer le groupe ?";
+    let btntext = "Supprimer"
+    document.querySelector("#modal_title").innerHTML = text;
+    document.querySelector("#modal_btn").innerHTML = btntext;
+    document.querySelector("#modal_btn").href = url;
+    document.querySelector(".smartch_modal_container").style.display = "flex";
+
+}
 </script>';

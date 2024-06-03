@@ -45,8 +45,8 @@ class create extends moodleform
         }
         $mform->addElement('select', 'categoryid', "Catégorie", $catoptions);
         
-        $mform->addElement('text', 'coursetype', "Type de formation");
-        $mform->addElement('text', 'coursediplome', "Diplôme");
+        // $mform->addElement('text', 'coursetype', "Type de formation");
+        // $mform->addElement('text', 'coursediplome', "Diplôme");
         $mform->addElement('text', 'courseduration', "Durée de la formation (h)");
 
         // $coursetypeoptions = array(
@@ -55,11 +55,17 @@ class create extends moodleform
         // );
         // $mform->addElement('select', 'subscribemethod', "Méthode d'inscription", $coursetypeoptions);
 
+        // $typeoptions = array(
+        //     'classe' => 'Mode classe',
+        //     'ampitheatre' => 'Mode Ampithéatre'
+        // );
+        // $mform->addElement('select', 'subscribemethod', "Méthode d'inscription", $typeoptions);
+
         $typeoptions = array(
-            'classe' => 'Mode classe',
-            'ampitheatre' => 'Mode Ampithéatre'
+            '0' => 'Non publié',
+            '1' => 'Publié'
         );
-        $mform->addElement('select', 'subscribemethod', "Méthode d'inscription", $typeoptions);
+        $mform->addElement('select', 'visible', "Visibilité", $typeoptions);
 
         //on va chercher les départements
         $cohorts = $DB->get_records_sql('SELECT c.*

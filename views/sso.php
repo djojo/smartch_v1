@@ -133,7 +133,7 @@ if ($validation) {
 </div>
 <form style="display:flex;align-items:center;margin:20px 0;" action="' . new moodle_url('/theme/remui/views/sso.php') . '" method="post">
     <div style="margin-right:30px;">
-        <input type="text" style="max-width: 200px;" class="form-control" name="codesso" />
+        <input type="text" style="max-width: 200px;" class="form-control" name="codesso" autocomplete="off" />
     </div>
     <div><input class="smartch_btn" type="submit" value="Envoyer" /></div>
 </form>

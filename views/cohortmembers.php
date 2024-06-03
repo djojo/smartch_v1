@@ -203,6 +203,8 @@ $templatecontextpagination = (object)[
 
 if (count($users) > 0) {
     $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_pagination', $templatecontextpagination);
+} else {
+    $content .= nothingtodisplay("Aucun membre pour l'instant...");
 }
 
 //affichage de la table de tous les utilisateurs

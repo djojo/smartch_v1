@@ -51,7 +51,7 @@
                     {{#paramscategory}}
                         <input type="hidden" name="{{paramname}}" value="{{paramvalue}}"/>
                     {{/paramscategory}}
-                    <input class="smartch_input" type="text" name="search" placeholder="{{lang_search}}" value="{{search}}"/>
+                    <input class="smartch_input" type="text" name="search" placeholder="{{lang_search}}" value="{{search}}" autocomplete="off"/>
 
                     {{! <input /> }}
                     <a onmouseover="this.style.display='none'; document.getElementsByClassName('smartch_submit_hover')[0].style.display='inline-block'" class="smartch_submit"  onclick="document.getElementById('search-form').submit()" >

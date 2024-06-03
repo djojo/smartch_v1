@@ -15,18 +15,29 @@ global $USER, $DB, $CFG;
 $cohortid = required_param('cohortid', PARAM_INT);
 $cohort = $DB->get_record('cohort', ['id' => $cohortid]);
 $courseid = optional_param('courseid', null, PARAM_INT);
+$startdate = optional_param('startdate', null, PARAM_TEXT);
+$enddate = optional_param('enddate', null, PARAM_TEXT);
 $action = optional_param('action', null, PARAM_TEXT);
+
+// var_dump($startdate);
+// die();
 
 
 if($courseid && $action == "sync"){
-    
-    //on sync la cohorte avec le cours
-    syncCohortWithCourse($cohortid, $courseid);
+    if(!$startdate || !$enddate){
+        $messagenotif = "Vous devez rentrer des dates correctes.";
+    } else {
+        $course = $DB->get_record('course', ['id'=>$courseid]);
+        //on sync la cohorte avec le cours
+        syncCohortWithCourse($cohortid, $courseid, $startdate, $enddate);
+        $messagenotif = $course->fullname . " est synchronisé avec le groupe";
+    }
 } else if($courseid && $action == "desync"){
-    // var_dump("ok");
-    // die();
+    $course = $DB->get_record('course', ['id'=>$courseid]);
     //on desync la cohorte avec le cours
     desyncCohortWithCourse($cohortid, $courseid);
+    $messagenotif = $course->fullname . " est désynchronisé avec le groupe";
+    
 }
 
 $content = '';
@@ -38,6 +49,10 @@ $nexturl = '';
 $rolename = getMainRole();
 
 isStudent();
+
+if($messagenotif){
+    displayNotification($messagenotif);
+}
 
 $context = context_system::instance();
 $PAGE->set_url(new moodle_url('/theme/remui/views/cohort.php'));
@@ -64,6 +79,8 @@ echo '<style>
 </style>';
 
 echo $OUTPUT->header();
+
+
 
 // echo html_writer::start_div('container');
 
@@ -100,10 +117,11 @@ if (!empty($search)) {
     $filtersql = ' AND c.fullname LIKE "%' . $search . '%"';
 }
 
-$querycourses = 'SELECT c.id, c.fullname as name
+$querycourses = 'SELECT c.id, c.fullname as name, ss.startdate, ss.enddate
         FROM mdl_enrol e
         JOIN mdl_cohort co ON e.customint1 = co.id
         JOIN mdl_course c ON c.id = e.courseid
+        JOIN mdl_smartch_session ss ON ss.groupid = e.customint2
         WHERE co.id = ' . $cohortid . '
         '.$filtersql.'
         LIMIT ' . $offset . ', ' . $no_of_records_per_page . '
@@ -131,8 +149,13 @@ $templatecontextheader = (object)[
 ];
 $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_back', $templatecontextheader);
 
-$content .= '<div class="row" style="margin:30px 0;"></div>';
+$content .= '<div class="row" style="margin:50px 0;"></div>';
 
+// $content .= '<div class="row mb-3">
+//     <div class="col-md-12" style="text-align:right;">
+//     <a class="smartch_btn" href="'.new moodle_url('/theme/remui/views/editcohort.php').'">Modifier le groupe</a>
+//     </div>
+// </div>';
 
 //barre de recherche des parcours
 $templatecontext = (object)[
@@ -190,16 +213,19 @@ $templatecontextpagination = (object)[
 
 if (count($courses) > 0) {
     $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_pagination', $templatecontextpagination);
+} else {
+    $content .= nothingtodisplay("Aucune formation associé...");
 }
 
 //affichage de la table de tous les utilisateurs
 $content .= '<div class="row">
         <div class="col-sm-12 col-md-12 col-lg-12 col-xl-12">
             <table class="smartch_table">
-                <thead>
+                <thead style="display:none;">
                     <tr>
-                        <th>Nom</th>
-                        <th>Progression</th>
+                        <th>Formation</th>
+                        <th>Session</th>
+                        <th>Date</th>
                         <th>Options</th>
                     </tr>
                 </thead>
@@ -221,10 +247,13 @@ foreach ($courses as $course) {
                             <path d="M28 19C28 21.2091 26.2091 23 24 23C21.7909 23 20 21.2091 20 19C20 16.7909 21.7909 15 24 15C26.2091 15 28 16.7909 28 19Z" stroke="#004687" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M24 26C20.134 26 17 29.134 17 33H31C31 29.134 27.866 26 24 26Z" stroke="#004687" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        <span style="margin-left: 10px;"><a href="' . new moodle_url('/theme/remui/views/cohort.php') . '?id=' . $course->id . '">' . $course->name . '</a></span>
+                        <span style="margin-left: 10px;"><a href="' . new moodle_url('/theme/remui/views/adminteam.php') . '?teamid=' . $cohortgroupid . '">' . $course->name . '</a></span>
                     </td>
                     <td>
-                        <a class="smartch_table_btn" href="' . new moodle_url('/theme/remui/views/adminteam.php') . '?teamid=' . $cohortgroupid . '">Voir la progression</a>
+                        <a class="smartch_table_btn" href="' . new moodle_url('/theme/remui/views/adminteam.php') . '?teamid=' . $cohortgroupid . '">Voir la session</a>
+                    </td>
+                    <td>
+                        Du ' . userdate($course->startdate, get_string('strftimedate')) . ' au ' . userdate($course->enddate, get_string('strftimedate')) . '
                     </td>
                     <td>
                         <a class="smartch_table_btn" href="' . new moodle_url('/theme/remui/views/cohort.php') . '?cohortid='.$cohortid.'&courseid=' . $course->id . '&action=desync">Supprimer l\'association du cours</a>
@@ -246,8 +275,7 @@ if (count($courses) > 0) {
 $nonlinkedcourses = $DB->get_records_sql('SELECT c.*
 FROM mdl_course c
 JOIN mdl_enrol e ON e.courseid <> c.id
-WHERE e.enrol = "cohort"
-AND c.fullname <> ""
+WHERE c.fullname <> ""
 AND format != "site"', null);
 
 
@@ -257,9 +285,9 @@ $content .= '<h3 style="letter-spacing:1px;max-width:70%;cursor:pointer;" class=
 $content .= '<form class="mt-5" action="" method="post">';
 $content .= '<div>';
 $content .= '<label class="mr-2" for="startdate">Date de début</label>';
-$content .= '<input class="smartch_input mr-5" type="date" name="startdate"/>';
+$content .= '<input value="'.date('Y-m-d').'" class="smartch_input mr-5" type="date" name="startdate"/>';
 $content .= '<label class="mr-2" for="startdate">Date de fin</label>';
-$content .= '<input class="smartch_input" type="date" name="enddate"/>';
+$content .= '<input value="'.date('Y-m-d', strtotime('+1 month')).'" class="smartch_input" type="date" name="enddate"/>';
 $content .= '</div>';
 
 $content .= '<div class="mt-5">';

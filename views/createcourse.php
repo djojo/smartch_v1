@@ -74,7 +74,7 @@ if ($mform->is_cancelled()) {
     $newcourse->summary = reset($fromform->summary);
     $newcourse->summaryformat = 1;
     $newcourse->category = $fromform->categoryid;
-    $newcourse->visible = 1;
+    $newcourse->visible = $fromform->visible;
     $newcourse->format = "topics"; //topics
     $newcourse->numsections = $fromform->nbsection; //on créer des sections
     $newcourse->newsitems = 0;
@@ -126,67 +126,67 @@ if ($mform->is_cancelled()) {
 
     // COURSE TYPE
     //on va chercher le field personalisé du cours
-    $fieldcoursetype = $DB->get_record_sql('
-    SELECT * 
-    FROM mdl_customfield_field cf
-    WHERE cf.shortname = "coursetype"', null);
-    if ($fieldcoursetype) {
-        //on ajoute le champs personalisé du cours
-        $customfieldcoursetype = new stdClass();
-        $customfieldcoursetype->shortname = "coursetype";
-        $customfieldcoursetype->timecreated = time();
-        $customfieldcoursetype->timemodified = time();
-        $customfieldcoursetype->charvalue = $fromform->coursetype;
-        $customfieldcoursetype->value = $fromform->coursetype;
-        $customfieldcoursetype->instanceid = $course->id;
-        $customfieldcoursetype->fieldid = $fieldcoursetype->id;
-        $customfieldcoursetype->valueformat = 0;
+    // $fieldcoursetype = $DB->get_record_sql('
+    // SELECT * 
+    // FROM mdl_customfield_field cf
+    // WHERE cf.shortname = "coursetype"', null);
+    // if ($fieldcoursetype) {
+    //     //on ajoute le champs personalisé du cours
+    //     $customfieldcoursetype = new stdClass();
+    //     $customfieldcoursetype->shortname = "coursetype";
+    //     $customfieldcoursetype->timecreated = time();
+    //     $customfieldcoursetype->timemodified = time();
+    //     $customfieldcoursetype->charvalue = $fromform->coursetype;
+    //     $customfieldcoursetype->value = $fromform->coursetype;
+    //     $customfieldcoursetype->instanceid = $course->id;
+    //     $customfieldcoursetype->fieldid = $fieldcoursetype->id;
+    //     $customfieldcoursetype->valueformat = 0;
 
-        $DB->insert_record('customfield_data', $customfieldcoursetype);
-    }
+    //     $DB->insert_record('customfield_data', $customfieldcoursetype);
+    // }
 
     // COURSE DIPLOME
     //on va chercher le field personalisé du cours
-    $fieldcoursediplome = $DB->get_record_sql('
-    SELECT * 
-    FROM mdl_customfield_field cf
-    WHERE cf.shortname = "coursediplome"', null);
-    if ($fieldcoursediplome) {
-        //on ajoute le champs personalisé du cours
-        $customfieldcoursediplome = new stdClass();
-        $customfieldcoursediplome->shortname = "coursediplome";
-        $customfieldcoursediplome->timecreated = time();
-        $customfieldcoursediplome->timemodified = time();
-        $customfieldcoursediplome->charvalue = $fromform->coursediplome;
-        $customfieldcoursediplome->value = $fromform->coursediplome;
-        $customfieldcoursediplome->instanceid = $course->id;
-        $customfieldcoursediplome->fieldid = $fieldcoursediplome->id;
-        $customfieldcoursediplome->valueformat = 0;
+    // $fieldcoursediplome = $DB->get_record_sql('
+    // SELECT * 
+    // FROM mdl_customfield_field cf
+    // WHERE cf.shortname = "coursediplome"', null);
+    // if ($fieldcoursediplome) {
+    //     //on ajoute le champs personalisé du cours
+    //     $customfieldcoursediplome = new stdClass();
+    //     $customfieldcoursediplome->shortname = "coursediplome";
+    //     $customfieldcoursediplome->timecreated = time();
+    //     $customfieldcoursediplome->timemodified = time();
+    //     $customfieldcoursediplome->charvalue = $fromform->coursediplome;
+    //     $customfieldcoursediplome->value = $fromform->coursediplome;
+    //     $customfieldcoursediplome->instanceid = $course->id;
+    //     $customfieldcoursediplome->fieldid = $fieldcoursediplome->id;
+    //     $customfieldcoursediplome->valueformat = 0;
 
-        $DB->insert_record('customfield_data', $customfieldcoursediplome);
-    }
+    //     $DB->insert_record('customfield_data', $customfieldcoursediplome);
+    // }
 
     // METHODE D'INSCRIPTION
     //on va chercher le field personalisé du cours
-    $field = $DB->get_record_sql('
-    SELECT * 
-    FROM mdl_customfield_field cf
-    WHERE cf.shortname = "subscribemethod"', null);
+    // $field = $DB->get_record_sql('
+    // SELECT * 
+    // FROM mdl_customfield_field cf
+    // WHERE cf.shortname = "subscribemethod"', null);
 
-    if ($field) {
-        //on ajoute le champs personalisé du cours
-        $customfieldsubscribe = new stdClass();
-        $customfieldsubscribe->shortname = "subscribemethod";
-        $customfieldsubscribe->timecreated = time();
-        $customfieldsubscribe->timemodified = time();
-        $customfieldsubscribe->charvalue = $fromform->subscribemethod;
-        $customfieldsubscribe->value = $fromform->subscribemethod;
-        $customfieldsubscribe->instanceid = $course->id;
-        $customfieldsubscribe->fieldid = $field->id;
-        $customfieldsubscribe->valueformat = 0;
+    // if ($field) {
+    //     //on ajoute le champs personalisé du cours
+    //     $customfieldsubscribe = new stdClass();
+    //     $customfieldsubscribe->shortname = "subscribemethod";
+    //     $customfieldsubscribe->timecreated = time();
+    //     $customfieldsubscribe->timemodified = time();
+    //     $customfieldsubscribe->charvalue = $fromform->subscribemethod;
+    //     $customfieldsubscribe->value = $fromform->subscribemethod;
+    //     $customfieldsubscribe->instanceid = $course->id;
+    //     $customfieldsubscribe->fieldid = $field->id;
+    //     $customfieldsubscribe->valueformat = 0;
 
-        $DB->insert_record('customfield_data', $customfieldsubscribe);
-    }
+    //     $DB->insert_record('customfield_data', $customfieldsubscribe);
+    // }
 
     //on va chercher les départements
     $cohorts = $DB->get_records_sql('SELECT c.*

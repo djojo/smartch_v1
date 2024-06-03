@@ -771,7 +771,7 @@ object{
     border: none;
     text-decoration: none;
     font-size: 0.8rem;
-    height: 45px;
+    height: 30px;
     margin-bottom: 20px;
     margin-left: 5px;
     background: $fffblue;
@@ -916,6 +916,30 @@ object{
     align-items: end;
     padding: 10px;
 }
+
+
+.smartch_modal_container {
+    position: fixed;
+    top: 60px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    left: 0px;
+    width: 100vw;
+    height: calc(100vh - 60px);
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 2000;
+    height: 100vh;
+  }
+
+.smartch_modal {
+    max-width: 800px;
+    margin: 50px auto;
+    background: var(--creaboxbackgroundcolor);
+    color: var(--creaboxtextcolor);
+    padding: 50px;
+    border-radius: var(--creaborderradius);
+  }
 
 //table
 
