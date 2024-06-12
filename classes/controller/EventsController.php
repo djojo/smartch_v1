@@ -23,11 +23,34 @@
  */
 namespace theme_remui\controller;
 
+// use \stdClass;
+// use \context;
+
+
 /**
  * Class EventsController will handle the events triggered by Moodle.
  */
 class EventsController {
 
+    public static function user_created_event($eventdata) {
+
+        global $DB,$CFG;
+        require_once($CFG->dirroot . '/cohort/lib.php');
+
+        $data = $eventdata->get_data();
+
+        $userid = $data['relateduserid'];
+
+        //on va chercher la cohorte
+        $maincohort = $DB->get_record_sql('SELECT * 
+        FROM mdl_cohort co
+        WHERE co.name = "Employés FFF"', null);
+
+        if($maincohort){
+            //On ajoute à la cohorte
+            cohort_add_member($maincohort->id, $userid);
+        }
+    }
     public static function user_enrollment_event($eventdata) {
 
         $data = $eventdata->get_data();

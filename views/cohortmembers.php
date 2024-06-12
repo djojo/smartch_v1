@@ -226,7 +226,7 @@ foreach ($users as $user) {
 
     $content .= '<tr>
                     <td style="text-transform:capitalize;text-align:left;">
-                        <a href="' . new moodle_url('/theme/remui/views/adminuser.php') . '?id=' . $user->id . '">' . $user->firstname . ' ' . $user->lastname . '</a>
+                        <a href="' . new moodle_url('/theme/remui/views/adminuser.php') . '?userid=' . $user->id . '">' . $user->firstname . ' ' . $user->lastname . '</a>
                     </td>
                     <td>
                         ' . $user->email . '

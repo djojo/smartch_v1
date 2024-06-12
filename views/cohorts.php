@@ -27,8 +27,11 @@ $action = optional_param('action', null, PARAM_TEXT);
 $cohortid = optional_param('cohortid', null, PARAM_INT);
 
 if($action == "delete" && $cohortid){
-    deleteCohort($cohortid);
-    redirect(new moodle_url('/theme/remui/views/cohorts.php'));
+    $cohort = $DB->get_record('cohort', array('id' => $cohortid), '*', MUST_EXIST);
+    if($cohort->name != "Employés FFF"){
+        deleteCohort($cohortid);
+        redirect(new moodle_url('/theme/remui/views/cohorts.php'));
+    }
 }
 
 $context = context_system::instance();
@@ -235,11 +238,14 @@ foreach ($cohorts as $cohort) {
                             '.$formations->count.' Formations associés
                         </a>
                     </td>
-                    <td>
-                        <a class="smartch_table_btn" onclick="deleteFromGroup(\'' . new moodle_url('/theme/remui/views/cohorts.php') . '?cohortid=' . $cohort->id . '&action=delete\', \'group\')">
-                            Supprimer le groupe
-                        </a>
-                    </td>
+                    <td>';
+                    if($cohort->name != "Employés FFF"){
+                        $content .= '<a class="smartch_table_btn" onclick="deleteFromGroup(\'' . new moodle_url('/theme/remui/views/cohorts.php') . '?cohortid=' . $cohort->id . '&action=delete\', \'group\')">
+                                        Supprimer le groupe
+                                    </a>';
+                    }
+                        
+                    $content .= '</td>
                 </tr>';
 }
 

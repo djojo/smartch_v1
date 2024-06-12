@@ -26,6 +26,10 @@ defined('MOODLE_INTERNAL') || die;
 
 $observers = array(
     array(
+        'eventname'   => '\core\event\user_created',
+        'callback'    => 'theme_remui\controller\EventsController::user_created_event',
+    ),
+    array(
         'eventname'   => '\core\event\user_enrolment_created',
         'callback'    => 'theme_remui\controller\EventsController::user_enrollment_event',
     ),
