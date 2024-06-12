@@ -131,6 +131,34 @@ trait get_smartch_my_courses
         $freecat = $DB->get_record_sql('SELECT * from mdl_course_categories WHERE name = "Formation gratuite"', null);
 
         foreach ($courses as $course) {
+
+            $certification = false;
+            $el['notavailable'] = false;
+
+            $imgcourse = "";
+            //On va chercher l'image du cours
+            $course2 = new core_course_list_element($course);
+            foreach ($course2->get_course_overviewfiles() as $file) {
+                if ($file->is_valid_image()) {
+                    $imagepath = '/' . $file->get_contextid() .
+                        '/' . $file->get_component() .
+                        '/' . $file->get_filearea() .
+                        $file->get_filepath() .
+                        $file->get_filename();
+                    $imageurl = file_encode_url(
+                        $CFG->wwwroot . '/pluginfile.php',
+                        $imagepath,
+                        false
+                    );
+
+                    $imgcourse = $imageurl;
+                    break;
+                }
+            }
+            if ($imgcourse == "") {
+                $imgcourse = $CFG->wwwroot . '/theme/remui/pix/background.jpeg';
+            }
+            $el['img'] = $imgcourse;
             
             //si on est sur une formation gratuite
             if ($course->category == $freecat->id) {
@@ -155,8 +183,6 @@ trait get_smartch_my_courses
                     //on affiche la catégorie
                     $el['category'] = $DB->get_record('course_categories', ['id' => $course->category])->name;
                 } else {
-
-
                     // STARTDATE
                     //on va chercher le champs perso type de certification
                     $diplomeresult = $DB->get_record_sql('
@@ -196,20 +222,61 @@ trait get_smartch_my_courses
                     JOIN mdl_smartch_session ss ON ss.groupid = g.id
                     WHERE gm.userid = ' . $USER->id . ' AND g.courseid = ' . $course->id, null);
                     if (count($allsessions) > 1) {
-                        //on affiche la catégorie 
-                        $el['category'] = $DB->get_record('course_categories', ['id' => $course->category])->name;
+                        //on regarde le role 
+                        if($rolename == "student"){
+                            $multiplesession = true;
+                            //on créer autant de vignette que de sessions
+                            foreach($allsessions as $onesession){
+                                if($certification){
+                                    //si la session n'a pas commencé
+                                    if($onesession->startdate < time()){
+                                        $el['notavailable'] = false;
+                                        $el['date1'] = 'Du  ' . userdate($onesession->startdate, '%d/%m/%Y');
+                                        $el['date2'] = 'Au ' . userdate($onesession->enddate, '%d/%m/%Y');
+                                    } else {
+                                        $el['notavailable'] = true;
+                                        if($onesession->startdate){
+                                            $el['date1'] = 'À partir du  ' . userdate($onesession->startdate, '%d/%m/%Y');
+                                        } else {
+                                            $el['date1'] = 'Date manquante';
+                                        }
+                                        $el['date2'] = '';
+                                    }
+                                    
+                                } else if ($onesession) {
+                                    $el['date1'] = 'Du  ' . userdate($onesession->startdate, '%d/%m/%Y');
+                                    $el['date2'] = 'Au ' . userdate($onesession->enddate, '%d/%m/%Y');
+                                } else {
+                                    $el['date1'] = '';
+                                    $el['date2'] = '';
+                                }
+
+                                //On ajoute la vignette
+                                $el['id'] = $course->id;
+                                $el['freecategory'] = $freecategory;
+                                $el['url'] = $CFG->wwwroot . "/theme/remui/views/formation.php?id=" . $course->id . "&return=dashboard";    
+                                array_push($mycourses, $el);
+                            }
+                        } else {
+                            //on affiche la catégorie 
+                            $el['category'] = $DB->get_record('course_categories', ['id' => $course->category])->name;
+                        }
+                        
                     } else {
                         $session = reset($allsessions);
                         if($certification){
                             //si la session n'a pas commencé
                             if($session->startdate < time()){
+                                $el['notavailable'] = false;
+                                $el['date1'] = 'Du  ' . userdate($session->startdate, '%d/%m/%Y');
+                                $el['date2'] = 'Au ' . userdate($session->enddate, '%d/%m/%Y');
+                            } else {
                                 $el['notavailable'] = true;
                                 if($session->startdate){
                                     $el['date1'] = 'À partir du  ' . userdate($session->startdate, '%d/%m/%Y');
                                 } else {
                                     $el['date1'] = 'Date manquante';
                                 }
-                                
                                 $el['date2'] = '';
                             }
                         } else if ($session) {
@@ -217,7 +284,6 @@ trait get_smartch_my_courses
                             $el['date2'] = 'Au ' . userdate($session->enddate, '%d/%m/%Y');
                         } else {
                             $el['date1'] = '';
-                            // $el['date1'] = 'Session manquante';
                             $el['date2'] = '';
                         }
                     }
@@ -227,47 +293,17 @@ trait get_smartch_my_courses
 
 
 
-
-
-            $el['id'] = $course->id;
-            $el['freecategory'] = $freecategory;
-            $el['url'] = $CFG->wwwroot . "/theme/remui/views/formation.php?id=" . $course->id . "&return=dashboard";
-
-
-            $imgcourse = "";
-            //On va chercher l'image du cours
-            $course2 = new core_course_list_element($course);
-            foreach ($course2->get_course_overviewfiles() as $file) {
-                if ($file->is_valid_image()) {
-                    $imagepath = '/' . $file->get_contextid() .
-                        '/' . $file->get_component() .
-                        '/' . $file->get_filearea() .
-                        $file->get_filepath() .
-                        $file->get_filename();
-                    $imageurl = file_encode_url(
-                        $CFG->wwwroot . '/pluginfile.php',
-                        $imagepath,
-                        false
-                    );
-
-                    $imgcourse = $imageurl;
-                    break;
-                }
+            if(!$multiplesession){
+                $el['id'] = $course->id;
+                $el['freecategory'] = $freecategory;
+                $el['url'] = $CFG->wwwroot . "/theme/remui/views/formation.php?id=" . $course->id . "&return=dashboard";    
+                array_push($mycourses, $el);
             }
 
+            
 
-            if ($imgcourse == "") {
-                $imgcourse = $CFG->wwwroot . '/theme/remui/pix/background.jpeg';
-            }
-            $el['img'] = $imgcourse;
-
-
-            //l'url
-            // $baseurl = $CFG->wwwroot;
-
-
-
-            array_push($mycourses, $el);
+            
+            
         }
 
         $data['rolename'] = $rolename;

@@ -9,7 +9,7 @@ require_once($CFG->dirroot . '/theme/remui/views/utils.php');
 
 require_once($CFG->dirroot . '/theme/remui/classes/form/course_create.php');
 
-isAdmin();
+isAdminFormation();
 
 // $type = optional_param('type', null, PARAM_TEXT);
 
