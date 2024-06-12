@@ -1934,19 +1934,16 @@ function getModuleGrade($userid, $activityid)
 
     if($result){
         //le score
-        $grade = $result->rawgrade;
-        $score = $grade;
+        $grade = number_format($result->rawgrade, 2, '.', '');
 
         //le score max
-        // $rawgrademax = $result->rawgrademax;
+        $rawgrademax = $result->rawgrademax;
 
-        // if(!empty($rawgrademax)){
-        //     //le score sur 100
-        //     $score = floor($grade/$rawgrademax) * 100;
-        // } else{
-        //     $score = floor($grade)* 10;
-        //     // $score = $grade;
-        // }
+        if(!empty($rawgrademax)){
+            $score = $grade . '/' . number_format($rawgrademax, 2, '.', '');
+        } else {
+            $score = $grade;
+        }
         
         return $score;
     } else{
@@ -1970,19 +1967,16 @@ function get_module_grade_by_user_scorm_V2($user_id, $activity_id)
 
     if($result){
         //le score
-        $grade = $result->rawgrade;
-        $score = $grade;
+        $grade = number_format($result->rawgrade, 2, '.', '');
 
         //le score max
-        // $rawgrademax = $result->rawgrademax;
+        $rawgrademax = $result->rawgrademax;
 
-        // if(!empty($rawgrademax)){
-        //     //le score sur 100
-        //     $score = floor($grade/$rawgrademax) * 100;
-        // } else{
-        //     $score = floor($grade)* 10;
-        //     // $score = $grade;
-        // }
+        if(!empty($rawgrademax)){
+            $score = $grade . '/' . number_format($rawgrademax, 2, '.', '');
+        } else {
+            $score = $grade;
+        }
         
         return $score;
     } else{

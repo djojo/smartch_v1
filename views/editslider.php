@@ -31,36 +31,36 @@ require_login();
 isAdminFormation();
 
 //on regarde si la table existe
-$testsmartchslider = $DB->get_record_sql('SELECT *
-FROM information_schema.COLUMNS
-WHERE TABLE_NAME = "mdl_smartch_slider"', null);
+// $testsmartchslider = $DB->get_record_sql('SELECT *
+// FROM information_schema.COLUMNS
+// WHERE TABLE_NAME = "mdl_smartch_slider"', null);
 
 // var_dump($testsmartchslider);
 
 //si on doit mettre les nouveaux noms de colonne
-if(!$testsmartchslider){
+// if(!$testsmartchslider){
     //on change la keyvalue
-    $DB->execute('
-    CREATE TABLE `mdl_smartch_slider` (
-        `id` bigint(10) NOT NULL,
-        `imagefixe` longtext COLLATE utf8mb4_general_ci,
-        `image1` longtext COLLATE utf8mb4_general_ci,
-        `image2` longtext COLLATE utf8mb4_general_ci,
-        `image3` longtext COLLATE utf8mb4_general_ci,
-        `image4` longtext COLLATE utf8mb4_general_ci,
-        `image5` longtext COLLATE utf8mb4_general_ci,
-        `sliderarray` longtext COLLATE utf8mb4_general_ci
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT="table pour le slider" ROW_FORMAT=COMPRESSED;
-    ', null);
-    $DB->execute('
-    ALTER TABLE `mdl_smartch_slider`
-        ADD PRIMARY KEY (`id`);
-        ', null);
-    $DB->execute('
-    ALTER TABLE `mdl_smartch_slider`
-    MODIFY `id` bigint(10) NOT NULL AUTO_INCREMENT;
-        ', null);
-}
+    // $DB->execute('
+    // CREATE TABLE `mdl_smartch_slider` (
+    //     `id` bigint(10) NOT NULL,
+    //     `imagefixe` longtext COLLATE utf8mb4_general_ci,
+    //     `image1` longtext COLLATE utf8mb4_general_ci,
+    //     `image2` longtext COLLATE utf8mb4_general_ci,
+    //     `image3` longtext COLLATE utf8mb4_general_ci,
+    //     `image4` longtext COLLATE utf8mb4_general_ci,
+    //     `image5` longtext COLLATE utf8mb4_general_ci,
+    //     `sliderarray` longtext COLLATE utf8mb4_general_ci
+    //   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT="table pour le slider" ROW_FORMAT=COMPRESSED;
+    // ', null);
+    // $DB->execute('
+    // ALTER TABLE `mdl_smartch_slider`
+    //     ADD PRIMARY KEY (`id`);
+    //     ', null);
+    // $DB->execute('
+    // ALTER TABLE `mdl_smartch_slider`
+    // MODIFY `id` bigint(10) NOT NULL AUTO_INCREMENT;
+    //     ', null);
+// }
 
 global $USER, $DB, $CFG;
 
