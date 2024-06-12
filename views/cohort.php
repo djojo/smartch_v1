@@ -19,6 +19,7 @@ $courseid = optional_param('courseid', null, PARAM_INT);
 $startdate = optional_param('startdate', null, PARAM_TEXT);
 $enddate = optional_param('enddate', null, PARAM_TEXT);
 $action = optional_param('action', null, PARAM_TEXT);
+$messagesent = optional_param('messagesent', null, PARAM_INT);
 
 // var_dump($startdate);
 // die();
@@ -39,6 +40,8 @@ if($courseid && $action == "sync"){
     desyncCohortWithCourse($cohortid, $courseid);
     $messagenotif = $course->fullname . " est désynchronisé avec le groupe";
     
+} else if(!empty($messagesent)){
+    $messagenotif = 'Message envoyé aux '.$messagesent.' membres du groupe';
 }
 
 $content = '';

@@ -18,6 +18,7 @@ $cohort = $DB->get_record('cohort', ['id' => $cohortid]);
 // $courseid = optional_param('courseid', null, PARAM_INT);
 $userid = optional_param('userid', null, PARAM_INT);
 $action = optional_param('action', null, PARAM_TEXT);
+$messagesent = optional_param('messagesent', null, PARAM_TEXT);
 
 if($userid){
     $user = $DB->get_record('user', ['id'=>$userid]);
@@ -39,6 +40,8 @@ if($userid && $action == "sync"){
         $textnotification = "Utilisateur ajouté";
         $messagenotif = $user->firstname . ' ' . $user->lastname . ' a été supprimé du groupe ' . $cohort->name . '.';
     }
+} else if(!empty($messagesent)){
+    $messagenotif = 'Message envoyé';
 }
 
 $content = '';
@@ -76,6 +79,8 @@ echo '<style>
 </style>';
 
 echo $OUTPUT->header();
+
+smartchModal();
 
 // echo html_writer::start_div('container');
 
@@ -243,9 +248,19 @@ foreach ($users as $user) {
                         ' . $user->email . '
                     </td>
                     <td>';
-
+                    $content .= '<a class="smartch_table_btn mr-2" href="' . new moodle_url('/theme/remui/views/usermessage.php') . '?userid=' . $user->id . '&returnurl='.new moodle_url('/theme/remui/views/cohortmembers.php?cohortid='.$cohortid).'">
+                        <svg style="width:20px;margin-right:5px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                        </svg>
+                        Envoyer un message
+                    </a>';
                     if($cohort->name != "Employés FFF"){
-                        $content .= '<a class="smartch_btn" href="' . new moodle_url('/theme/remui/views/cohortmembers.php') . '?cohortid='.$cohortid.'&userid=' . $user->id . '&action=desync">Supprimer le membre du groupe</a>';
+                        $content .= '<a class="smartch_table_btn" onclick="deleteFromGroup(\'' . new moodle_url('/theme/remui/views/cohortmembers.php') . '?cohortid='.$cohortid.'&userid=' . $user->id . '&action=desync\', \'group\')">
+                            <svg style="width:20px;margin-right:5px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"  class="w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            </svg>
+                            Supprimer le membre du groupe
+                        </a>';
                     }
             $content .= '</td>
                 </tr>';
@@ -273,7 +288,7 @@ if($cohort->name != "Employés FFF"){
     $content .= '<input type="hidden" name="action" value="sync"/>';
     $content .= '<input id="searchuser" onkeyup="checkEnter(event)" class="smartch_input" type="text" name="search"/>';
 
-    $content .= '<a onclick="getUsers();" class="smartch_btn ml-5" >Chercher</a>';
+    $content .= '<a onclick="getUsers();" class="smartch_btn ml-5">Chercher</a>';
 
     $content .= '<table class="smartch_table mt-5">';
     $content .= '<tbody id="boxresultsearch"></tbody>';
@@ -392,4 +407,16 @@ echo '<script>
         el.setAttribute("selected", "selected");
     });
 
+</script>';
+
+
+echo '<script>
+function deleteFromGroup(url, name){
+    let text = "Voulez vous vraiment supprimer le membre du groupe ?";
+    let btntext = "Supprimer"
+    document.querySelector("#modal_title").innerHTML = text;
+    document.querySelector("#modal_btn").innerHTML = btntext;
+    document.querySelector("#modal_btn").href = url;
+    document.querySelector(".smartch_modal_container").style.display = "flex";
+}
 </script>';

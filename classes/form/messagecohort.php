@@ -37,15 +37,11 @@ class create extends moodleform
 
         $context = $PAGE->context;
 
-        $return = $this->_customdata['variables']['returnurl'];
-        $userid = $this->_customdata['variables']['userid'];
+        $cohortid = $this->_customdata['variables']['cohortid'];
+        // $cohort = $DB->get_record('cohort', ['id' => $cohortid]);
 
-        // hidden
-        $mform->addElement('hidden', 'returnurl', $return);
-        $mform->setType('returnurl', PARAM_TEXT); // Set the data type to integer
-        $mform->addElement('hidden', 'userid', $userid);
-        $mform->setType('userid', PARAM_INT); // Set the data type to integer
-
+        $mform->addElement('hidden', 'cohortid', $cohortid);
+        $mform->setType('cohortid', PARAM_INT); // Set the data type to integer
 
         $options = array(
             'size' => '300',
