@@ -47,6 +47,8 @@ echo '<style>
 
 echo $OUTPUT->header();
 
+smartchModal();
+
 
 $togglevisible = optional_param('togglevisible', '', PARAM_INT);
 $visible = optional_param('visible', 1, PARAM_INT);
@@ -338,8 +340,21 @@ foreach ($courses as $course) {
             
             //on regarde si l'utilisateur est admin
             if ($rolename == "super-admin" || $rolename == "manager") {
+                //on check si il y a des apprenants dans la formations
+                $countenroll = $DB->get_record_sql('SELECT COUNT(u.id) count 
+                FROM mdl_user u
+                JOIN mdl_user_enrolments ue ON ue.userid = u.id
+                JOIN mdl_enrol e ON e.id = ue.enrolid
+                WHERE e.courseid = ' . $course->id . '
+                AND u.deleted = 0', null);
+                if($countenroll->count > 0){
+                    $possible = false;
+                } else {
+                    $possible = true;
+                }
+                // var_dump($countenroll);
                 $content .= '
-                    <a data-toggle="tooltip" data-placement="top" title="Supprimer la formation" href="' . new moodle_url('/course/delete.php') . '?id=' . $course->id . '">
+                    <a data-toggle="tooltip" data-placement="top" title="Supprimer la formation" onclick="deleteFromGroup(\'' . new moodle_url('/course/delete.php') . '?id=' . $course->id . '\', \'group\', \''.$possible .'\')">
                         <svg class="iconsvg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                         </svg>
@@ -387,15 +402,10 @@ foreach ($courses as $course) {
 </div>';
 }
 
-
 $content .= '</div>';
-
-
 
 //la pagination en bas
 $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_pagination', $templatecontextpagination);
-
-// $content .= html_writer::end_div(); //container
 
 echo $content;
 
@@ -406,14 +416,10 @@ echo '<script>
 
 window.onload = function(){
     let els = document.getElementsByClassName("page' . $pageno . '");
-    // alert(els.length)
-    // for(i=0;i<els.length;i++){
-    //     alert(els[i])
-    // }
     Array.from(els).forEach((el) => {
         el.setAttribute("selected", "selected");
     });
-    }
+}
 </script>';
 
 if ($visible != 1) {
@@ -423,3 +429,26 @@ if ($categoryid != "all") {
     echo '<script>document.getElementById("cat' . $categoryid . '").setAttribute("selected", "selected")</script>';
 }
 
+
+
+echo '<script>
+function deleteFromGroup(url, name, possible){
+    if(possible){
+        let text = "Voulez vous vraiment supprimer la formation ?";
+        let btntext = "Supprimer"
+        document.querySelector("#modal_title").innerHTML = text;
+        document.querySelector("#modal_btn").innerHTML = btntext;
+        document.querySelector("#modal_btn").style.display = "block";
+        document.querySelector("#modal_btn").href = url;
+        document.querySelector(".smartch_modal_container").style.display = "flex";
+    } else {
+        let text = "<p>Vous ne pouvez pas supprimer la formation car il y a des apprenants inscrits ...</p>";
+        text += "<p>Désinscrivez les apprenants puis réessayez</p>";
+        document.querySelector("#modal_title").innerHTML = text;
+        document.querySelector("#modal_btn").style.display = "none";
+        document.querySelector(".smartch_modal_container").style.display = "flex";
+    }
+    
+
+}
+</script>';

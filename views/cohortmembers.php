@@ -203,11 +203,22 @@ $templatecontextpagination = (object)[
     'formurl' => new moodle_url('/theme/remui/views/cohortmembers.php')
 ];
 
+
+if($cohort->name == "Employés FFF"){
+    $content .= '<div class="row">
+        <div class="col-12">
+            <p style="margin:10px 0;">Ce groupe contient tous les membres de la plateforme. Au moment de l\'inscription d\'un nouvel utilisateur, il est automatiquement ajouté à ce groupe.</p>
+        </div>
+    </div>
+    ';
+}
+
 if (count($users) > 0) {
     $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_pagination', $templatecontextpagination);
 } else {
     $content .= nothingtodisplay("Aucun membre pour l'instant...");
 }
+
 
 //affichage de la table de tous les utilisateurs
 $content .= '<div class="row">
@@ -231,9 +242,12 @@ foreach ($users as $user) {
                     <td>
                         ' . $user->email . '
                     </td>
-                    <td>
-                        <a class="smartch_btn" href="' . new moodle_url('/theme/remui/views/cohortmembers.php') . '?cohortid='.$cohortid.'&userid=' . $user->id . '&action=desync">Supprimer le membre du groupe</a>
-                    </td>
+                    <td>';
+
+                    if($cohort->name != "Employés FFF"){
+                        $content .= '<a class="smartch_btn" href="' . new moodle_url('/theme/remui/views/cohortmembers.php') . '?cohortid='.$cohortid.'&userid=' . $user->id . '&action=desync">Supprimer le membre du groupe</a>';
+                    }
+            $content .= '</td>
                 </tr>';
 }
 
@@ -247,30 +261,33 @@ if (count($users) > 0) {
     $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_pagination', $templatecontextpagination);
 }
 
+if($cohort->name != "Employés FFF"){
+    // ajout d'un membre
+    $content .= '<div class="row" id="addmember">';
+    $content .= '<div class="col-md-12">';
+    $content .= '<h3 style="letter-spacing:1px;max-width:70%;cursor:pointer;" class="smartch_title FFF-Hero-Bold FFF-Blue mt-5">Ajouter un membre au groupe : '.$cohort->name . '</h3>';
+    // $content .= '<form class="mt-5" action="" method="post">';
+    $content .= '<div class="mt-5">';
+    $content .= '<label class="mr-2" for="startdate">Chercher un membre</label>';
+    $content .= '<input type="hidden" name="cohortid" value="'.$cohortid.'"/>';
+    $content .= '<input type="hidden" name="action" value="sync"/>';
+    $content .= '<input id="searchuser" onkeyup="checkEnter(event)" class="smartch_input" type="text" name="search"/>';
 
-// ajout d'un membre
-$content .= '<div class="row" id="addmember">';
-$content .= '<div class="col-md-12">';
-$content .= '<h3 style="letter-spacing:1px;max-width:70%;cursor:pointer;" class="smartch_title FFF-Hero-Bold FFF-Blue mt-5">Ajouter un membre au groupe : '.$cohort->name . '</h3>';
-// $content .= '<form class="mt-5" action="" method="post">';
-$content .= '<div class="mt-5">';
-$content .= '<label class="mr-2" for="startdate">Chercher un membre</label>';
-$content .= '<input type="hidden" name="cohortid" value="'.$cohortid.'"/>';
-$content .= '<input type="hidden" name="action" value="sync"/>';
-$content .= '<input id="searchuser" onkeyup="checkEnter(event)" class="smartch_input" type="text" name="search"/>';
+    $content .= '<a onclick="getUsers();" class="smartch_btn ml-5" >Chercher</a>';
 
-$content .= '<a onclick="getUsers();" class="smartch_btn ml-5" >Chercher</a>';
+    $content .= '<table class="smartch_table mt-5">';
+    $content .= '<tbody id="boxresultsearch"></tbody>';
+    $content .= '</table>';
 
-$content .= '<table class="smartch_table mt-5">';
-$content .= '<tbody id="boxresultsearch"></tbody>';
-$content .= '</table>';
+    $content .= '</div>';
 
-$content .= '</div>';
+    // $content .= '</form>';
 
-// $content .= '</form>';
+    $content .= '</div>'; //md12
+    $content .= '</div>'; //row
+}
 
-$content .= '</div>'; //md12
-$content .= '</div>'; //row
+
 
 
 

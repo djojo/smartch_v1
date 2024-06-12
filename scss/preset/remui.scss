@@ -975,6 +975,23 @@ object{
 //     background-color: gainsboro;
 //   }
 
+.smartch_box_link{
+    display: block;
+    text-align: center;
+    border: 2px solid #004686;
+    border-radius: 15px;
+    margin: 10px;
+    padding: 20px;
+    cursor:pointer;
+    color:#004686;
+}
+
+.smartch_box_link > svg{
+    width: 40px;
+    display: block;
+    color:#004686;
+    margin: 0 auto;
+}
 
 //EDIT COURSE
 

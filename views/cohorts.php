@@ -270,13 +270,6 @@ echo $OUTPUT->footer();
 //pour la pagination
 echo '<script>
 
-// window.onload = function(){
-//     var els = document.getElementsByClassName("page' . $pageno . '");
-//     Array.from(els).forEach((el) => {
-//         el.setAttribute("selected", "selected");
-//     });
-// };
-
     var els = document.getElementsByClassName("page' . $pageno . '");
     Array.from(els).forEach((el) => {
         el.setAttribute("selected", "selected");
