@@ -9,6 +9,7 @@ require_once('./utils.php');
 
 require_login();
 isPortailRH();
+isAdminFormation();
 
 global $USER, $DB, $CFG;
 
@@ -44,11 +45,6 @@ $content = '';
 $paginationtitle = '';
 $prevurl = '';
 $nexturl = '';
-
-//On va chercher le rôle le plus haut de l'utilisateur
-$rolename = getMainRole();
-
-isStudent();
 
 if($messagenotif){
     displayNotification($messagenotif);
