@@ -85,7 +85,7 @@ if ($rolename == "super-admin" || $rolename == "manager") {
                 OR concat(lower(u.firstname) , " " , lower(u.lastname)) LIKE "%' . $search . '%"
                 OR lower(u.email) LIKE "%' . $search . '%")
                 LIMIT ' . $offset . ', ' . $no_of_records_per_page;
-        $total_pages_sql = 'SELECT COUNT(*) count 
+        $total_pages_sql = 'SELECT COUNT(DISTINCT u.id) count 
                 FROM mdl_user u
                 JOIN mdl_user_enrolments ue ON ue.userid = u.id
                 JOIN mdl_enrol e ON e.id = ue.enrolid
@@ -103,37 +103,26 @@ if ($rolename == "super-admin" || $rolename == "manager") {
                 WHERE e.courseid = ' . $courseid . '
                 LIMIT ' . $offset . ', ' . $no_of_records_per_page . '
                 ';
-        $total_pages_sql = 'SELECT COUNT(*) count 
+        $total_pages_sql = 'SELECT COUNT(DISTINCT u.id) count 
                 FROM mdl_user u
                 JOIN mdl_user_enrolments ue ON ue.userid = u.id
                 JOIN mdl_enrol e ON e.id = ue.enrolid
                 WHERE e.courseid = ' . $courseid;
+        
     }
     // } else if ($rolename == "smalleditingteacher" || $rolename == "editingteacher" || $rolename == "teacher") {
+        $queryallusers = 'SELECT u.id, u.username, u.firstname, u.lastname, u.email
+        FROM mdl_user u
+        JOIN mdl_user_enrolments ue ON ue.userid = u.id
+        JOIN mdl_enrol e ON e.id = ue.enrolid
+        WHERE e.courseid = ' . $courseid . '';
 }
-//  else {
-//     redirect(new moodle_url('/'));
-// }
-
-// $userid = 2; // Remplacez YOUR_USER_ID par l'ID de l'utilisateur concerné
-
-// $sql = "SELECT u.*
-//         FROM {user} u
-//         JOIN {groups_members} gm ON gm.userid = u.id
-//         JOIN {groups} g ON g.id = gm.groupid
-//         WHERE gm.groupid IN (
-//                 SELECT groupid
-//                 FROM mdl_groups_members
-//                 WHERE userid =  :userid
-//             )";
-
-// $users = $DB->get_records_sql($sql, ['userid' => $userid]);
 
 $users = $DB->get_records_sql($queryusers, null);
 // $users = $DB->get_recordset_sql($queryusers, null);
 // var_dump($users);
 
-$allusers = $DB->get_records('user', null);
+$allusers = $DB->get_records_sql($queryallusers, null);
 
 $result = $DB->get_records_sql($total_pages_sql, null);
 $total_rows = reset($result)->count;

@@ -1298,21 +1298,10 @@ WHERE sa.course = ' . $course->id . ' AND gm.groupid =  ' . $groupid, null);
     $writer->save('php://output');
     exit;
 }
-function downloadCSVTeamGrade($groupid)
-{
+
+function getDataTeamGrades($course, $groupid){
 
     global $DB;
-
-    //on va chercher le cours
-    $querycourse = 'SELECT c.*, g.name as groupname
-        FROM mdl_groups g
-        JOIN mdl_course c ON c.id = g.courseid
-        WHERE g.id = ' . $groupid;
-
-    $courseresult = $DB->get_records_sql($querycourse, null);
-
-    $course = reset($courseresult);
-
     $session = $DB->get_record('smartch_session', ['groupid' => $groupid]);
 
     $textsession = "";
@@ -1348,7 +1337,7 @@ ORDER BY u.lastname ASC';
     $activities = getCourseActivitiesRapport($course->id);
 
 
-    array_push($data, ""); //saut de ligne
+    // array_push($data, ""); //saut de ligne
 
     $headertable = ['Nom Prénom de l\'apprenant', 'Adresse courriel', 'N° individu'];
 
@@ -1366,34 +1355,29 @@ ORDER BY u.lastname ASC';
                 }
             }
             if ($activity) {
-                if ($activity->activityname && $activity->activitytype != "folder") {
+                if ($activity->activityname && $activity->activitytype == "quiz") {
                     $nbmodule++;
                 }
             }
         }
-        $sectionname = $section->name;
-        if ($sectionname == "") {
-            $sectionname = "Généralités";
-        }
-        $textmodule = $sectionname;
-        array_push($headertable, $textmodule);
-        $nbmodule--;
-        for ($i = 0; $i < $nbmodule; $i++) {
-            array_push($headertable, "");
-        }
+        // $sectionname = $section->name;
+        // if ($sectionname == "") {
+        //     $sectionname = "Généralités";
+        // }
+        // $textmodule = $sectionname;
+        // array_push($headertable, $textmodule);
+        // $nbmodule--;
+        // for ($i = 0; $i < $nbmodule; $i++) {
+        //     array_push($headertable, "");
+        // }
     }
 
     array_push($data, $headertable);
 
 
-    $sectiontable = ['', '', '', '', ''];
+    $sectiontable = ['', '', ''];
     foreach ($sections as $section) {
 
-        // if ($session) {
-        //     //on va chercher le nombre de planning dans la section disponible
-        //     $sectionsplannings = getSectionPlannings($course->id, $session->id, $section->id);
-        //     $totalsectionsplannings = count($sectionsplannings);
-        // }
 
         //on compte le nombre de matière
         $tableau = explode(',', $section->sequence);
@@ -1405,20 +1389,12 @@ ORDER BY u.lastname ASC';
                     break; // Sortir de la boucle dès que l'élément est trouvé
                 }
             }
-            if ($activity->activitytype == 'face2face') {
-                // //On va chercher le nombre de planning dans cette section
-                // if ($totalsectionsplannings > 0) {
-                //     $totalsectionsplannings--;
-                //     array_push($sectiontable, $activity->activityname);
-                // }
-            } else if ($activity->activityname && $activity->activitytype != "folder") {
+            if ($activity->activityname && $activity->activitytype == "quiz") {
                 array_push($sectiontable, $activity->activityname);
             }
         }
     }
     array_push($data, $sectiontable);
-
-
 
     foreach ($groupmembers as $groupmember) {
 
@@ -1426,8 +1402,6 @@ ORDER BY u.lastname ASC';
 
         // $progression = getCourseProgression($groupmember->id, $course->id) . '%';
         // $timespent = getTimeSpentOnCourse($groupmember->id, $course->id);
-
-
 
         array_push($membertable, $groupmember->firstname . ' ' . $groupmember->lastname);
         array_push($membertable, $groupmember->email);
@@ -1454,16 +1428,8 @@ ORDER BY u.lastname ASC';
                         break; // Sortir de la boucle dès que l'élément est trouvé
                     }
                 }
-                if ($activity->activitytype == 'face2face') {
-                    // if ($totalsectionsplannings > 0) {
-                    //     //on va chercher le planning correspondant
-                    //     $completion = getPlanningCompletion($course->id, $session->id, $section->id);
-                    //     array_push($membertable, $completion);
-                    //     //si il reste des plannings dans cette section à mettre
-                    //     $totalsectionsplannings--;
-                    // }
-                } else if ($activity->activityname && $activity->activitytype != "folder") {
-                    $grade = getModuleGrade($groupmember->id, $activity->activityid);
+                if ($activity->activityname && $activity->activitytype == "quiz") {
+                    $grade = getModuleGrade($groupmember->id, $activity->id);
                     array_push($membertable, $grade);
                 }
             }
@@ -1471,26 +1437,25 @@ ORDER BY u.lastname ASC';
 
         array_push($data, $membertable);
     }
+    return $data;
+}
+function downloadCSVTeamGrade($groupid)
+{
 
-//     //on va chercher les logs du groupe
-//     $logs = $DB->get_records_sql('SELECT sa.id, sa.timespent FROM mdl_smartch_activity_log sa
-// JOIN mdl_groups_members gm ON gm.userid = sa.userid
-// WHERE sa.course = ' . $course->id . ' AND gm.groupid =  ' . $groupid, null);
+    global $DB;
 
-//     $timetotal = 0;
-//     foreach ($logs as $log) {
-//         $timetotal += $log->timespent;
-//     }
+    //on va chercher le cours
+    $querycourse = 'SELECT c.*, g.name as groupname
+        FROM mdl_groups g
+        JOIN mdl_course c ON c.id = g.courseid
+        WHERE g.id = ' . $groupid;
 
-//     $totaltimespent = convert_to_string_time($timetotal);
+    $courseresult = $DB->get_records_sql($querycourse, null);
 
+    $course = reset($courseresult);
 
-    // $timegrouptable = ['PROGRESSION GÉNÉRALE', '', '', getTeamProgress($course->id, $groupid)[0], $totaltimespent];
-    // array_push($data, $timegrouptable);
-
-    // $legendtable = ['Terminé : X', 'Pas terminé : -'];
-    // array_push($data, $legendtable);
-
+    //on va chercher la data en tableau
+    $data = getDataTeamGrades($course, $groupid);
 
 
     // Définir les en-têtes pour le téléchargement
@@ -1526,184 +1491,8 @@ function downloadXLSTeamGrade($groupid)
 
     $course = reset($courseresult);
 
-    $session = $DB->get_record('smartch_session', ['groupid' => $groupid]);
-
-    $textsession = "";
-    if ($session) {
-        $textsession = 'Session du ' . userdate($session->startdate, get_string('strftimedate')) . ' au ' . userdate($session->enddate, get_string('strftimedate') . '');
-    }
-
-    $textdate = 'Extraction du carnet de note le ' . userdate(Time(), get_string('strftimedate')) . '';
-
-    $data = [
-        [$course->fullname, $textsession, $textdate]
-    ];
-
-    //on va chercher les membres du groupe
-    $querygroupmembers = 'SELECT u.id, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
-FROM mdl_role_assignments AS ra 
-LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
-LEFT JOIN mdl_role AS r ON ra.roleid = r.id 
-LEFT JOIN mdl_context AS c ON c.id = ra.contextid 
-LEFT JOIN mdl_enrol AS e ON e.courseid = c.instanceid AND ue.enrolid = e.id 
-LEFT JOIN mdl_user u ON u.id = ue.userid
-LEFT JOIN mdl_groups_members gm ON u.id = gm.userid
-WHERE gm.groupid = ' . $groupid . '
-AND r.shortname = "student"
-ORDER BY u.lastname ASC';
-
-    $groupmembers = $DB->get_records_sql($querygroupmembers, null);
-
-    //on va chercher les sections
-    $sections = getCourseSections($course->id);
-
-    //on va chercher toutes les activités
-    $activities = getCourseActivitiesRapport($course->id);
-
-
-    array_push($data, ""); //saut de ligne
-
-    $headertable = ['Nom Prénom de l\'apprenant', 'Adresse courriel', 'N° individu'];
-
-    foreach ($sections as $section) {
-        //on compte le nombre de matière
-        $tableau = explode(',', $section->sequence);
-        $nbmodule = 0;
-        foreach ($tableau as $moduleid) {
-            $activity = null;
-            //on cherche dans le tableau des activités
-            foreach ($activities as $activityy) {
-                if ($activityy->id == $moduleid) {
-                    $activity = $activityy;
-                    break; // Sortir de la boucle dès que l'élément est trouvé
-                }
-            }
-            if ($activity) {
-                if ($activity->activityname && $activity->activitytype != "folder") {
-                    $nbmodule++;
-                }
-            }
-        }
-        $sectionname = $section->name;
-        if ($sectionname == "") {
-            $sectionname = "Généralités";
-        }
-        $textmodule = $sectionname;
-        array_push($headertable, $textmodule);
-        $nbmodule--;
-        for ($i = 0; $i < $nbmodule; $i++) {
-            array_push($headertable, "");
-        }
-    }
-
-    array_push($data, $headertable);
-
-
-    $sectiontable = ['', '', '', '', ''];
-    foreach ($sections as $section) {
-
-        // if ($session) {
-        //     //on va chercher le nombre de planning dans la section disponible
-        //     $sectionsplannings = getSectionPlannings($course->id, $session->id, $section->id);
-        //     $totalsectionsplannings = count($sectionsplannings);
-        // }
-
-        //on compte le nombre de matière
-        $tableau = explode(',', $section->sequence);
-        foreach ($tableau as $moduleid) {
-            //on cherche dans le tableau des activités
-            foreach ($activities as $activityy) {
-                if ($activityy->id == $moduleid) {
-                    $activity = $activityy;
-                    break; // Sortir de la boucle dès que l'élément est trouvé
-                }
-            }
-            if ($activity->activitytype == 'face2face') {
-                //On va chercher le nombre de planning dans cette section
-                // if ($totalsectionsplannings > 0) {
-                //     $totalsectionsplannings--;
-                //     array_push($sectiontable, $activity->activityname);
-                // }
-            } else if ($activity->activityname && $activity->activitytype != "folder") {
-                array_push($sectiontable, $activity->activityname);
-            }
-        }
-    }
-    array_push($data, $sectiontable);
-
-
-
-    foreach ($groupmembers as $groupmember) {
-
-        $membertable = [];
-
-        // $progression = getCourseProgression($groupmember->id, $course->id) . '%';
-        // $timespent = getTimeSpentOnCourse($groupmember->id, $course->id);
-
-
-
-        array_push($membertable, $groupmember->firstname . ' ' . $groupmember->lastname);
-        array_push($membertable, $groupmember->email);
-        array_push($membertable, $groupmember->id);
-        // array_push($membertable, $progression);
-        // array_push($membertable, $timespent);
-
-
-
-        foreach ($sections as $section) {
-
-            // if ($session) {
-            //     $sectionsplannings = getSectionPlannings($course->id, $session->id, $section->id);
-            //     $totalsectionsplannings = count($sectionsplannings);
-            // }
-
-
-            //on compte le nombre de matière
-            $tableau = explode(',', $section->sequence);
-            foreach ($tableau as $moduleid) {
-                //on cherche dans le tableau des activités
-                foreach ($activities as $activityy) {
-                    if ($activityy->id == $moduleid) {
-                        $activity = $activityy;
-                        break; // Sortir de la boucle dès que l'élément est trouvé
-                    }
-                }
-                if ($activity->activitytype == 'face2face') {
-                    // if ($totalsectionsplannings > 0) {
-                    //     //on va chercher le planning correspondant
-                    //     $completion = getPlanningCompletion($course->id, $session->id, $section->id);
-                    //     array_push($membertable, $completion);
-                    //     //si il reste des plannings dans cette section à mettre
-                    //     $totalsectionsplannings--;
-                    // }
-                } else if ($activity->activityname && $activity->activitytype != "folder") {
-                    $grade = getModuleGrade($groupmember->id, $activity->activityid);
-                    array_push($membertable, $grade);
-                }
-            }
-        }
-
-        array_push($data, $membertable);
-    }
-
-//     //on va chercher les logs du groupe
-//     $logs = $DB->get_records_sql('SELECT sa.id, sa.timespent FROM mdl_smartch_activity_log sa
-// JOIN mdl_groups_members gm ON gm.userid = sa.userid
-// WHERE sa.course = ' . $course->id . ' AND gm.groupid =  ' . $groupid, null);
-
-//     $timetotal = 0;
-//     foreach ($logs as $log) {
-//         $timetotal += $log->timespent;
-//     }
-
-//     $totaltimespent = convert_to_string_time($timetotal);
-
-
-//     $timegrouptable = ['PROGRESSION GÉNÉRALE', '', '', getTeamProgress($course->id, $groupid)[0], $totaltimespent];
-//     array_push($data, $timegrouptable);
-
-//     $legendtable = ['Terminé : X', 'Pas terminé : -'];
-//     array_push($data, $legendtable);
+    //on va chercher la data en tableau
+    $data = getDataTeamGrades($course, $groupid);
 
     // Créer un nouveau document
     $spreadsheet = new Spreadsheet();
@@ -1923,7 +1712,7 @@ function getModuleGrade($userid, $activityid)
 {
     global $DB;
 
-    $query = 'SELECT gi.courseid, g.rawgrade, cm.id AS moduleid, gi.itemname AS modulename, gi.itemmodule
+    $query = 'SELECT gi.courseid, g.rawgrade, g.rawgrademax, cm.id AS moduleid, gi.itemname AS modulename, gi.itemmodule
     FROM mdl_grade_items gi
     JOIN mdl_grade_grades g ON gi.id = g.itemid
     JOIN mdl_course_modules cm ON cm.course = gi.courseid AND cm.instance = gi.iteminstance
@@ -1947,7 +1736,7 @@ function getModuleGrade($userid, $activityid)
         
         return $score;
     } else{
-        return null;
+        return "";
     }
 }
 

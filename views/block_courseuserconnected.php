@@ -18,7 +18,7 @@ if ($courseid) {
     FROM mdl_smartch_stats_course sc
     JOIN mdl_course c ON c.id = sc.courseid
     ' . $filterfrom . '
-    AND sc.courseid = ' . $courseid . '
+    AND c.id = ' . $courseid . '
     ORDER BY datecreated ASC';
     $title = $selectedcourse->fullname;
 } else if($categoryid) {
@@ -38,7 +38,7 @@ if ($courseid) {
 //On va chercher les stats des étudiants
 $stats = $DB->get_records_sql($sqlstats, null);
 
-var_dump($stats);
+// var_dump($stats);
 
 foreach ($stats as $stat) {
     //On parcours va chercher les logs dans cette tranche de temps

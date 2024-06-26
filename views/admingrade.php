@@ -67,6 +67,7 @@ $content .= '<td  rowspan="2">N° individu</td>';
 
 foreach ($sections as $section) {
 
+  $tableau = [];
   ///////////////
   if ($session) {
     //on va chercher le nombre de planning dans la section disponible
@@ -77,6 +78,7 @@ foreach ($sections as $section) {
 
   //on compte le nombre de matière
   $tableau = explode(',', $section->sequence);
+  
   $nbmodule = 0;
   foreach ($tableau as $moduleid) {
     //on cherche dans le tableau des activités
@@ -104,26 +106,17 @@ foreach ($sections as $section) {
   if ($sectionname == "") {
     $sectionname = "Généralités";
   }
-  $content .= '<td  colspan="' . $nbmodule . '">' . $sectionname . '</td>';
+  // si il n'y a rien dans la section on la passe
+  if(reset($tableau) != ''){
+    $content .= '<td  colspan="' . $nbmodule . '">' . $sectionname . '</td>';
+  }
+  
 }
 
 $content .= '</tr>';
 $content .= '<tr>';
 
 foreach ($sections as $section) {
-
-  ///////////////
-  // if ($session) {
-  //   //on va chercher le nombre de planning dans la section disponible
-  //   $sectionsplannings = getSectionPlannings($course->id, $session->id, $section->id);
-  //   $totalsectionsplannings = count($sectionsplannings);
-
-  //   // //on compte le nombre de planning de la section dans le ruban
-  //   // $sectionplannings = getSectionActivityPlannings($course->id, $session->id, $section->id);
-  //   // //le nombre d'activité planning de la section
-  //   // $countactivityplanning = count($sectionplannings);
-  // }
-  //////////
 
   //on compte le nombre de matière
   $tableau = explode(',', $section->sequence);
@@ -136,15 +129,7 @@ foreach ($sections as $section) {
       }
     }
     if($activity){
-      // $content .= '<td style="writing-mode: vertical-rl; text-orientation: upright;">' . $activity->activityname . '</td>';
-      if ($activity->activitytype == 'face2face') {
-        //On va chercher le nombre de planning dans cette section
-        // if ($totalsectionsplannings > 0) {
-        //   $totalsectionsplannings--;
-        //   $content .= '<td>' . $activity->activityname . '</td>';
-        //   // $content .= '<td>Planning</td>';
-        // }
-      } else if ($activity->activityname && $activity->activitytype != "folder") {
+      if ($activity->activityname && $activity->activitytype == "quiz") {
         $content .= '<td>' . $activity->activityname . '</td>';
       }
     }
@@ -156,29 +141,14 @@ $content .= '</tr>';
 
 foreach ($groupmembers as $groupmember) {
 
-  // $progression = getCourseProgression($groupmember->id, $course->id) . '%';
-  // $timespent = getTimeSpentOnCourse($groupmember->id, $course->id);
-
   $content .= '<tr>';
 
   $content .= '<td>' . $groupmember->firstname . ' ' . $groupmember->lastname . '</td>';
   $content .= '<td>' . $groupmember->email . '</td>';
   $content .= '<td>' . $groupmember->id . '</td>';
-  // $content .= '<td>' . $progression . '</td>';
-  // $content .= '<td>' . $timespent . '</td>';
 
   foreach ($sections as $section) {
-
-    // if ($session) {
-    //   //on compte le nombre de planning de la section dans le ruban
-    //   $sectionplannings = getSectionActivityPlannings($course->id, $session->id, $section->id);
-    //   //le nombre d'activité planning de la section
-    //   $countactivityplanning = count($sectionplannings);
-
-    //   $sectionsplannings = getSectionPlannings($course->id, $session->id, $section->id);
-    //   $totalsectionsplannings = count($sectionsplannings);
-    // }
-
+    
     //on compte le nombre de matière
     $tableau = explode(',', $section->sequence);
     foreach ($tableau as $moduleid) {
@@ -189,18 +159,11 @@ foreach ($groupmembers as $groupmember) {
           break; // Sortir de la boucle dès que l'élément est trouvé
         }
       }
-      if ($activity->activitytype == 'face2face') {
-        // //On va chercher le nombre de planning dans cette section
-        // if ($totalsectionsplannings > 0) {
-        //   //on va chercher le planning correspondant
-        //   $completion = getPlanningCompletion($course->id, $session->id, $section->id);
-        //   $content .= '<td>' . $completion . '</td>';
-        //   //si il reste des plannings dans cette section à mettre
-        //   $totalsectionsplannings--;
-        // }
-      } else if ($activity->activityname && $activity->activitytype != "folder" && $moduleid) {
-        $grade = getModuleGrade($groupmember->id, $moduleid);
-        $content .= '<td>' . $grade . '</td>';
+      if($activity){
+        if ($activity->activityname && $activity->activitytype == "quiz") {
+          $grade = getModuleGrade($groupmember->id, $activity->id);
+          $content .= '<td>' . $grade . '</td>';
+        }
       }
     }
   }
@@ -208,36 +171,10 @@ foreach ($groupmembers as $groupmember) {
   $content .= '</tr>';
 }
 
-// //on va chercher les logs du groupe
-// $logs = $DB->get_records_sql('SELECT sa.id, sa.timespent FROM mdl_smartch_activity_log sa
-// JOIN mdl_groups_members gm ON gm.userid = sa.userid
-// WHERE sa.course = ' . $course->id . ' AND gm.groupid =  ' . $groupid, null);
-
-// // var_dump($logs);
-// $timetotal = 0;
-// foreach ($logs as $log) {
-//   $timetotal += $log->timespent;
-// }
-
-// $totaltimespent = convert_to_string_time($timetotal);
-
-
-// $content .= '<tr>';
-// $content .= '<td>PROGRESSION GÉNÉRALE</td>';
-// $content .= '<td></td>';
-// $content .= '<td></td>';
-// $content .= '<td>' . getTeamProgress($course->id, $groupid)[0] . '</td>';
-// $content .= '<td>' . $totaltimespent . '</td>';
-// $content .= '</tr>';
-
 $content .= '</tbody>';
 $content .= '</table>';
 
-
 $content .= '<div>';
-// $content .= '
-// <p>Terminé : X</p>
-// <p>Pas terminé : -</p>';
 
 $content .= '</div>';
 
@@ -245,9 +182,7 @@ $content .= '</div>';
 require_once '../dompdf/autoload.inc.php';
 
 $options = new Options();
-// $options->set('defaultFont', 'Zapf-Dingbats');
 $options->set('isRemoteEnabled', true);
-// $options->set(['defaultFont' => 'Courier', 'isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true]);
 $dompdf = new Dompdf($options);
 $css = '<link type="text/css" href="' . $CFG->dirroot . '/local/concorde_plugin/exports/export.css" rel="stylesheet" />';
 

@@ -35,7 +35,7 @@ function xmldb_theme_remui_upgrade($oldversion) {
 
     $dbman = $DB->get_manager(); // Loads ddl manager and xmldb classes.
 
-    if ($oldversion < 2024042500) {
+    if ($oldversion < 2024042502) {
         // Suppose que 2024042500 est la nouvelle version incluant la table smartch_config.
 
         // Define the table smartch_config to be created.
@@ -49,6 +49,31 @@ function xmldb_theme_remui_upgrade($oldversion) {
         $table->add_key('key', XMLDB_KEY_UNIQUE, ['key']);
 
         // Conditionally launch create table for smartch_config.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+    }
+
+    if ($oldversion < 2024042502) {
+        // Suppose que 2024042500 est la nouvelle version incluant la table smartch_slider.
+
+        // Define the table smartch_slider to be created.
+        $table = new xmldb_table('smartch_slider');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('imagefixe', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('image1', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('image2', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('image3', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('image4', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('image5', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('sliderarray', XMLDB_TYPE_TEXT, null, null, null, null, null);
+
+        // Adding keys to table smartch_slider.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('key', XMLDB_KEY_UNIQUE, ['key']);
+
+        // Conditionally launch create table for smartch_slider.
         if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);
         }

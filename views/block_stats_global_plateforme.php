@@ -6,8 +6,8 @@ $filtersqlcourse = "";
 $filtersqlcoursecategory = "";
 if ($courseid) {
     // $filter = " AND c.";
-    $filtersqlcoursecategory = ' AND c.id = ' . $course->id . ' ';
-    $filtersqlcourse = ' AND g.courseid = ' . $course->id . ' ';
+    $filtersqlcoursecategory = ' AND c.id = ' . $courseid . ' ';
+    $filtersqlcourse = ' AND g.courseid = ' . $courseid . ' ';
 } else if ($categoryid) {
     $filtersqlcoursecategory = ' AND c.category = ' . $categoryid . ' ';
     $filtersqlcourse = ' AND c.category = ' . $categoryid . ' ';

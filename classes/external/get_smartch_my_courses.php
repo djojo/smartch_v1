@@ -30,6 +30,7 @@ use external_function_parameters;
 use external_value;
 use core_course_list_element;
 use moodle_url;
+use stdClass;
 
 require_once($CFG->dirroot . '/course/lib.php');
 require_once($CFG->libdir . '/completionlib.php');
@@ -132,6 +133,8 @@ trait get_smartch_my_courses
 
         foreach ($courses as $course) {
 
+            $multiplesession = false;
+            $displaycourse = true;
             $certification = false;
             $el['notavailable'] = false;
 
@@ -193,21 +196,17 @@ trait get_smartch_my_courses
                     if ($diplomeresult) {
                         $diplome = $diplomeresult->value;
 
-                        if($diplome == "Certifications Fédérales"){
+                        // if(true){
+                        if(trim($diplome) == "Certifications Fédérales"){
 
                             //on va chercher l'enrollement dans la formation
-                            $enrol = $DB->get_record_sql('SELECT * 
-                            FROM mdl_enrol
-                            WHERE courseid =  ' . $course->id . '
-                            AND customint1 = ' . $USER->id, null);
+                            // $enrol = $DB->get_record_sql('SELECT * 
+                            // FROM mdl_enrol
+                            // WHERE courseid =  ' . $course->id . '
+                            // AND customint1 = ' . $USER->id, null);
 
                             //on grise la formation si elle n'a pas commencé
-                            // $el['notavailable'] = $enrol->enrolstartdate . 'ok ' . $enrol->enrolenddate;
                             $certification = true;
-                            // $el['notavailable'] = true;
-                            // if($enrol->enrolstartdate){
-                            //     $el['date1'] = 'À partir du  ' . userdate($enrol->enrolstartdate, '%d/%m/%Y');
-                            // }
                             
 
                         }
@@ -216,20 +215,32 @@ trait get_smartch_my_courses
 
                     // DATES
                     //on va chercher la session et on met les dates à la place de la catégorie
-                    $allsessions = $DB->get_records_sql('SELECT ss.id, ss.startdate, ss.enddate
+                    $allsessions = $DB->get_records_sql('SELECT DISTINCT ss.id, ss.startdate, ss.enddate
                     FROM mdl_groups g
                     JOIN mdl_groups_members gm ON gm.groupid = g.id
                     JOIN mdl_smartch_session ss ON ss.groupid = g.id
                     WHERE gm.userid = ' . $USER->id . ' AND g.courseid = ' . $course->id, null);
+                    
+                    //si il y a plusieurs session avec ce cours
                     if (count($allsessions) > 1) {
                         //on regarde le role 
                         if($rolename == "student"){
                             $multiplesession = true;
                             //on créer autant de vignette que de sessions
                             foreach($allsessions as $onesession){
+                                
+                                $el['notavailable'] = false;
+                                $displaycourse = true;
+
                                 if($certification){
-                                    //si la session n'a pas commencé
-                                    if($onesession->startdate < time()){
+                                    
+                                    if($onesession->enddate < time()){
+                                        //si la session de la certification est terminé
+                                        $displaycourse = false;
+                                        $el['date1'] = '';
+                                        $el['date2'] = '';
+                                    } else if($onesession->startdate < time()){
+                                        //si la session de la certification a commencé
                                         $el['notavailable'] = false;
                                         $el['date1'] = 'Du  ' . userdate($onesession->startdate, '%d/%m/%Y');
                                         $el['date2'] = 'Au ' . userdate($onesession->enddate, '%d/%m/%Y');
@@ -251,11 +262,15 @@ trait get_smartch_my_courses
                                     $el['date2'] = '';
                                 }
 
-                                //On ajoute la vignette
-                                $el['id'] = $course->id;
-                                $el['freecategory'] = $freecategory;
-                                $el['url'] = $CFG->wwwroot . "/theme/remui/views/formation.php?id=" . $course->id . "&return=dashboard";    
-                                array_push($mycourses, $el);
+                                //On ajoute la vignette pour la certif
+                                if($displaycourse){
+                                    //si la session n'est pas terminé
+                                    $el['id'] = $course->id;
+                                    $el['freecategory'] = $freecategory;
+                                    $el['url'] = $CFG->wwwroot . "/theme/remui/views/formation.php?id=" . $course->id . "&return=dashboard";    
+                                    array_push($mycourses, $el);
+                                }
+                                
                             }
                         } else {
                             //on affiche la catégorie 
@@ -263,10 +278,14 @@ trait get_smartch_my_courses
                         }
                         
                     } else {
+                        //sinon il y a une seule session avec ce cours
                         $session = reset($allsessions);
                         if($certification){
-                            //si la session n'a pas commencé
-                            if($session->startdate < time()){
+                            if ($session->enddate < time()){
+                                //si la session de la certif est terminé
+                                $displaycourse = false;
+                            } else if($session->startdate < time()){
+                                //si la session a  commencé
                                 $el['notavailable'] = false;
                                 $el['date1'] = 'Du  ' . userdate($session->startdate, '%d/%m/%Y');
                                 $el['date2'] = 'Au ' . userdate($session->enddate, '%d/%m/%Y');
@@ -286,33 +305,23 @@ trait get_smartch_my_courses
                             $el['date1'] = '';
                             $el['date2'] = '';
                         }
+                        
                     }
                 }
             }
 
-
-
-
-            if(!$multiplesession){
+            // displaycourse = si la session n'est pas terminé
+            if(!$multiplesession && $displaycourse){
                 $el['id'] = $course->id;
                 $el['freecategory'] = $freecategory;
                 $el['url'] = $CFG->wwwroot . "/theme/remui/views/formation.php?id=" . $course->id . "&return=dashboard";    
                 array_push($mycourses, $el);
             }
-
-            
-
-            
-            
         }
 
         $data['rolename'] = $rolename;
         $data['mycourses'] = $mycourses;
-        //$data['ssourl'] = $CFG->wwwroot . "/theme/remui/views/sso.php";
-        // $el['baseurl'] = $baseurl;
 
-
-        // $out = array_values($courses);
         return json_encode($data);
     }
 

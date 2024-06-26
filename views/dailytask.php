@@ -105,6 +105,33 @@ function calculateCourseStats($timeday, $timestart, $timeend)
         AND al.timestart < ' . $timeend . '', null);
         $coursestat->countusersconnected = count($usersconnected);
 
+        //le nombre de formateurs qui se sont connectés
+        $teachersconnected = $DB->get_records_sql('SELECT DISTINCT al.userid
+        FROM mdl_smartch_activity_log al
+        JOIN mdl_user u ON u.id = al.userid
+        JOIN mdl_role_assignments ra ON ra.userid = u.id
+        JOIN mdl_role r ON r.id = ra.roleid
+        WHERE al.course = ' . $course->id . '
+        AND (r.shortname = "smalleditingteacher"
+        OR r.shortname = "editingteacher"
+        OR r.shortname = "noneditingteacher"
+        OR r.shortname = "teacher")
+        AND al.timestart > ' . $timestart . '
+        AND al.timestart < ' . $timeend . '', null);
+        $coursestat->countteacherconnected = count($teachersconnected);
+
+        //le nombre d'etudiants qui se sont connectés
+        $studentsconnected = $DB->get_records_sql('SELECT DISTINCT al.userid
+        FROM mdl_smartch_activity_log al
+        JOIN mdl_user u ON u.id = al.userid
+        JOIN mdl_role_assignments ra ON ra.userid = u.id
+        JOIN mdl_role r ON r.id = ra.roleid
+        WHERE al.course = ' . $course->id . '
+        AND r.shortname = "student"
+        AND al.timestart > ' . $timestart . '
+        AND al.timestart < ' . $timeend . '', null);
+        $coursestat->countstudentconnected = count($studentsconnected);
+
         //le temps passé sur le cours
         $dailytotaltimespent = 0;
         $dailylogs = $DB->get_records_sql('SELECT al.id, al.timespent
@@ -162,7 +189,7 @@ function calculateGlobalStats($timeday, $timestart, $timeend)
     JOIN mdl_role r ON r.id = ra.roleid
     WHERE (r.shortname = "smalleditingteacher"
     OR r.shortname = "editingteacher"
-    OR r.shortname = "nonteacher"
+    OR r.shortname = "noneditingteacher"
     OR r.shortname = "teacher")
     AND al.timestart > ' . $timestart . '
     AND al.timestart < ' . $timeend . '', null);

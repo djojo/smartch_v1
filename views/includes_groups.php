@@ -127,11 +127,20 @@ foreach ($groups as $team) {
                     <div style="font-size: 0.8rem;">' . $datesession . '</div>
                 </div>
                 <div>
-                    <span style="margin-right:10px;">' . $nbmembres . '</span>
-                    <svg onclick="window.location.href=\'' . new moodle_url('/theme/remui/views/adminteam.php?return=course&teamid=' . $team->id) . '&message=1#sendmessageteam\'" style="cursor:pointer;" width="20" height="16" viewBox="0 0 20 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 4L8.8906 9.2604C9.5624 9.70827 10.4376 9.70827 11.1094 9.2604L19 4M3 15H17C18.1046 15 19 14.1046 19 13V3C19 1.89543 18.1046 1 17 1H3C1.89543 1 1 1.89543 1 3V13C1 14.1046 1.89543 15 3 15Z" stroke="#0B427C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
+                    <span style="margin-right:10px;">' . $nbmembres . '</span>';
+                    //si on est sur culture fédérale
+                    $portail = getConfigPortail();
+                    if($portail == "portailrh"){
+                        //on va chercher la cohort
+                        $cohort = $DB->get_record_sql('SELECT * 
+                        FROM mdl_enrol
+                        WHERE customint2 = ' . $team->id . '
+                        AND courseid = ' . $courseid, null);
+                        $content .= '<svg onclick="window.location.href=\'' . new moodle_url('/theme/remui/views/cohortmessage.php?cohortid=' . $cohort->customint1) . '\'" style="cursor:pointer;" width="20" height="16" viewBox="0 0 20 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 4L8.8906 9.2604C9.5624 9.70827 10.4376 9.70827 11.1094 9.2604L19 4M3 15H17C18.1046 15 19 14.1046 19 13V3C19 1.89543 18.1046 1 17 1H3C1.89543 1 1 1.89543 1 3V13C1 14.1046 1.89543 15 3 15Z" stroke="#0B427C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>';
+                    }
+                $content .= '</div>
             </div>
         </div>'; //end row header team
 

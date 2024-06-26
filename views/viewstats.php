@@ -250,11 +250,6 @@ $content .= '</div>'; // row
 
 // BLOCK STATS
 
-
-
-
-
-
 // $todaydate = date('Y-m-d');
 // // Date 7 jours avant
 // $datefromtimestamp = strtotime('-7 days', strtotime($todaydate));

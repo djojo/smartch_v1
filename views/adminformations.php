@@ -347,7 +347,7 @@ foreach ($courses as $course) {
                 JOIN mdl_enrol e ON e.id = ue.enrolid
                 WHERE e.courseid = ' . $course->id . '
                 AND u.deleted = 0', null);
-                if($countenroll->count > 0){
+                if($countenroll->count > 1){
                     $possible = false;
                 } else {
                     $possible = true;
