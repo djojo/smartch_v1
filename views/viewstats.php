@@ -174,13 +174,13 @@ $content .= '<div class="col-md-12">';
 $content .= '<div style="margin:50px 0;display:flex;align-items:self-start;justify-content:space-between;">';
 
 $content .= '<div>';
-$content .= '<h2>Statistiques</h2>';
+$content .= '<h3 class="FFF-Equipe-Bold FFF-Blue">Statistiques</h3>';
 if ($courseid) {
     $content .= '<h5>' . $course->fullname . '</h5>';
 } else if ($categoryid) {
     $content .= '<h5>' . $selectedcategory->name . '</h5>';
 } else {
-    $content .= '<h5>Toutes les formations</h5>';
+    $content .= '<h5 class="FFF-Equipe-regular FFF-Blue">Toutes les formations</h5>';
 }
 $content .= '</div>';
 

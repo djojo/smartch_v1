@@ -79,7 +79,7 @@ $content .= '<div class="row" style="margin:50px 0;"></div>';
 
 $content .= '<div class="row mb-5">
 <div class="col-md-12">
-<h1 style="letter-spacing:1px;max-width:70%;cursor:pointer;" class="smartch_title FFF-Hero-Bold FFF-Blue">Nouveau message pour '.$user->firstname.' '.$user->lastname.'</h1>
+<h4 style="letter-spacing:1px;max-width:70%;cursor:pointer;" class="FFF-Equipe-Bold FFF-Blue">Nouveau message pour '.$user->firstname.' '.$user->lastname.'</h4>
 </div>
 </div>';
 

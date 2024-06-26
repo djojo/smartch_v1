@@ -10,13 +10,14 @@ global $DB, $CFG;
 require_login();
 
 $search = optional_param('search', null, PARAM_TEXT);
-// $cohortid = optional_param('cohortid', null, PARAM_INT);
+$cohortid = optional_param('cohortid', null, PARAM_INT);
 
 $arrayusers = [];
 
 //On va chercher les utilisateurs qui ne sont pas dans le groupe
 $users = $DB->get_records_sql('SELECT u.id, u.firstname, u.lastname, u.email
 FROM mdl_user u
+JOIN mdl_cohort_members cm ON cm.cohortid = '.$cohortid.' AND cm.userid <> u.id
 WHERE u.deleted = 0 AND u.suspended = 0
 AND (u.firstname LIKE "%'.$search.'%"
 OR u.lastname LIKE "%'.$search.'%"

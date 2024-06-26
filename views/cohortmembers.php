@@ -282,7 +282,7 @@ if($cohort->name != "Employés FFF"){
     // ajout d'un membre
     $content .= '<div class="row" id="addmember">';
     $content .= '<div class="col-md-12">';
-    $content .= '<h3 style="letter-spacing:1px;max-width:70%;cursor:pointer;" class="smartch_title FFF-Hero-Bold FFF-Blue mt-5">Ajouter un membre au groupe : '.$cohort->name . '</h3>';
+    $content .= '<h4 style="letter-spacing:1px;max-width:70%;cursor:pointer;" class="FFF-Equipe-Bold FFF-Blue mt-5">Ajouter un membre au groupe : '.$cohort->name . '</h4>';
     // $content .= '<form class="mt-5" action="" method="post">';
     $content .= '<div class="mt-5">';
     $content .= '<label class="mr-2" for="startdate">Chercher un membre</label>';
@@ -389,7 +389,7 @@ function getUsers(){
     };
 
   // Définir la méthode de requête et l\'URL de l\'API à appeler
-  var apiURL = "' . $urlsearchuser . '?search="+search; // Remplacez par l\'URL de l\'API réelle
+  var apiURL = "' . $urlsearchuser . '?cohortid='.$cohortid.'&search="+search; // Remplacez par l\'URL de l\'API réelle
  
   xhr.open("GET", apiURL, true);
 

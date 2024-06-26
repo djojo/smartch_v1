@@ -79,6 +79,8 @@ echo '<style>
 
 echo $OUTPUT->header();
 
+smartchModal();
+
 
 
 // echo html_writer::start_div('container');
@@ -238,11 +240,6 @@ foreach ($courses as $course) {
 
     $content .= '<tr>
                     <td style="text-transform:capitalize;">
-                        <svg width="50" height="50" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="24" cy="24" r="24" fill="#E2E8F0"/>
-                            <path d="M28 19C28 21.2091 26.2091 23 24 23C21.7909 23 20 21.2091 20 19C20 16.7909 21.7909 15 24 15C26.2091 15 28 16.7909 28 19Z" stroke="#004687" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M24 26C20.134 26 17 29.134 17 33H31C31 29.134 27.866 26 24 26Z" stroke="#004687" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
                         <span style="margin-left: 10px;"><a href="' . new moodle_url('/theme/remui/views/adminteam.php') . '?teamid=' . $cohortgroupid . '">' . $course->name . '</a></span>
                     </td>
                     <td>
@@ -257,19 +254,26 @@ foreach ($courses as $course) {
                         Du ' . userdate($course->startdate, get_string('strftimedate')) . ' au ' . userdate($course->enddate, get_string('strftimedate')) . '
                     </td>
                     <td>
-                        <a class="smartch_table_btn" href="' . new moodle_url('/theme/remui/views/cohort.php') . '?cohortid='.$cohortid.'&courseid=' . $course->id . '&action=desync">
+                        <a class="smartch_table_btn" onclick="deleteFromGroup(\'' . new moodle_url('/theme/remui/views/cohort.php') . '?cohortid='.$cohortid.'&courseid=' . $course->id . '&action=desync\', \'group\')">
                             <svg style="width:20px;margin-right:5px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                             </svg>
                             Supprimer l\'association du cours
                         </a>
                     </td>
-                    <td>
-                        <a class="smartch_table_btn" href="' . new moodle_url('/theme/remui/views/cohortmessage.php') . '?cohortid='.$cohortid.'&courseid=' . $course->id . '&template=notif">
+                    <td style="width: 350px;">
+                        <a class="smartch_table_btn mr-2" href="' . new moodle_url('/theme/remui/views/cohortmessage.php') . '?cohortid='.$cohortid.'&courseid=' . $course->id . '&template=notif">
+                            
+                            <svg style="width:20px;margin-right:5px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0M3.124 7.5A8.969 8.969 0 0 1 5.292 3m13.416 0a8.969 8.969 0 0 1 2.168 4.5" />
+                            </svg>
+                            Notifier
+                        </a>
+                        <a class="smartch_table_btn" href="' . new moodle_url('/theme/remui/views/cohortmessage.php') . '?cohortid='.$cohortid.'&courseid=' . $course->id . '">
                             <svg style="width:20px;margin-right:5px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
                             </svg>
-                            Notifier par email
+                            Envoyer un email
                         </a>
                     </td>
                 </tr>';
@@ -295,7 +299,7 @@ AND format != "site"', null);
 
 $content .= '<div class="row">';
 $content .= '<div class="col-md-12">';
-$content .= '<h3 style="letter-spacing:1px;max-width:70%;cursor:pointer;" class="smartch_title FFF-Hero-Bold FFF-Blue mt-5">Ajouter une formation au groupe : '.$cohort->name . '</h3>';
+$content .= '<h4 style="letter-spacing:1px;max-width:70%;cursor:pointer;" class="FFF-Equipe-Bold FFF-Blue mt-5">Ajouter une formation au groupe : '.$cohort->name . '</h4>';
 $content .= '<form class="mt-5" action="" method="post">';
 $content .= '<div>';
 $content .= '<label class="mr-2" for="startdate">Date de début</label>';
@@ -353,4 +357,15 @@ echo '<script>
         el.setAttribute("selected", "selected");
     });
 
+</script>';
+
+echo '<script>
+function deleteFromGroup(url, name){
+    let text = "Voulez vous vraiment désassocier la formation du groupe ?";
+    let btntext = "Supprimer"
+    document.querySelector("#modal_title").innerHTML = text;
+    document.querySelector("#modal_btn").innerHTML = btntext;
+    document.querySelector("#modal_btn").href = url;
+    document.querySelector(".smartch_modal_container").style.display = "flex";
+}
 </script>';

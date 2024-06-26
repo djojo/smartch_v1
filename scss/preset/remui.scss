@@ -984,14 +984,21 @@ object{
     padding: 20px;
     cursor:pointer;
     color:#004686;
+    width: 230px;
 }
 
-.smartch_box_link > svg{
-    width: 40px;
-    display: block;
-    color:#004686;
-    margin: 0 auto;
+
+
+.smartch_box_link:hover{
+    border: 2px solid white;
+    color:white;
+    background:#004686;
+
+    // .smartch_box_link > svg{
+    //     color:white;
+    // }
 }
+
 
 //EDIT COURSE
 
