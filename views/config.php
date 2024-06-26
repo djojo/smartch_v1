@@ -1,5 +1,7 @@
 <?php
 
+use OAuth2\Storage\Moodle;
+
 require_once(__DIR__ . '/../../../config.php');
 require_once('./utils.php');
 
@@ -13,6 +15,42 @@ $content = '';
 $rolename = getMainRole();
 
 isAdmin();
+
+$configid = optional_param('configid', null, PARAM_INT);
+$action = optional_param('action', null, PARAM_TEXT);
+$configvalue = optional_param('configvalue', null, PARAM_TEXT);
+
+
+if($action == "delete" && $configid){
+    $DB->delete_records('smartch_config', ['id' => $configid]);
+} else if($action == "update" && $configid && $configvalue){
+    $config = $DB->get_record('smartch_config', ['id' => $configid]);
+    $config->config_value = $configvalue;
+    $DB->update_record('smartch_config', $config);
+}
+
+$newconfigkey = optional_param('newconfigkey', null, PARAM_TEXT);
+$newconfigvalue = optional_param('newconfigvalue', null, PARAM_TEXT);
+
+if($newconfigkey){
+    $newconfig = new stdClass();
+    $newconfig->config_key = $newconfigkey;
+    $newconfig->config_value = $newconfigvalue;
+    $DB->insert_record('smartch_config', $newconfig);
+    redirect( new moodle_url('/theme/remui/views/config.php'));
+}
+
+// $inputconfigkey = optional_param('inputconfigkey', null, PARAM_TEXT);
+// $inputconfigvalue = optional_param('inputconfigvalue', null, PARAM_TEXT);
+
+
+// if($inputconfigkey && $inputconfigvalue){
+//     $configtochange = $DB->get_record_sql('SELECT * 
+//     FROM mdl_smartch_config sc
+//     WHERE sc.config_key = "'.$inputconfigkey.'"', null);
+//     $configtochange->config_value = $inputconfigvalue;
+//     $DB->update_record('smartch_config', $configtochange);
+// }
 
 $portailtype = optional_param('portailtype', null, PARAM_TEXT);
 if($portailtype){
@@ -73,8 +111,20 @@ $configportail = getConfigPortail();
 $content .= '<div class="row">';
 $content .= '<div class="col-md-12">';
 $content .= '<h1 style="margin-bottom:50px;letter-spacing:1px;" class="smartch_title FFF-Hero-Bold FFF-Blue">Configuration</h1>';
-$content .= '<form method="POST" action=""  style="text-align:center;">';
+
 $content .= '<div>';
+
+$content .= '<table class="smartch_table">';
+$content .= '<tbody>';
+
+
+$content .= '<form method="POST" action=""  style="text-align:center;">';
+$content .= '<tr style="margin:10px 0;">';
+$content .= '<td>
+    <div style="margin:10px 0;">Changer le portail</div>
+</td>';
+$content .= '<td>';
+
 $content .= '<select class="smartch_select" name="portailtype">';
 if($configportail == "portailformation"){
     $content .= '<option selected value="portailformation">Portail Formation</option>';
@@ -85,10 +135,60 @@ if($configportail == "portailformation"){
 }
 
 $content .= '</select>';
+
+$content .= '</td>';
+
+$content .= '<td><input class="smartch_btn" type="submit" value="Mettre à jour"></td>';
+$content .= '</tr>';
+$content .= '</form>';
+
+//on va chercher la liste des keys values
+$keyvalues = $DB->get_records_sql('SELECT * FROM mdl_smartch_config sc', null);
+foreach($keyvalues as $keyvalue){
+    if($keyvalue->config_key != "portail"){
+        //FORM pour update une key/value
+        $content .= '<form method="POST" action=""  style="text-align:center;">';
+        $content .= '<tr style="margin:10px 0;">';
+        $content .= '<td>'.$keyvalue->config_key.'</td>';
+        $content .= '<td>
+                <input type="hidden" name="configid" value="'.$keyvalue->id.'"/>
+                <input type="hidden" name="action" value="update"/>
+                <textarea class="form-control" name="configvalue">'.$keyvalue->config_value.'</textarea>
+            </td>';
+        $content .= '<td>';
+        $content .= '<input class="smartch_btn mr-2" type="submit" value="Mettre à jour">';
+        $content .= '<a href="'.new moodle_url('/theme/remui/views/config.php').'?action=delete&configid='.$keyvalue->id.'" class="smartch_btn">Supprimer</a>';
+        $content .= '</td>';
+        $content .= '</tr>';
+        $content .= '</form>';
+    }
+}
+
+
+// FORM pour ajouter une KEY/VALUE
+$content .= '<form method="POST" action=""  style="text-align:center;">';
+$content .= '<tr style="margin:10px 0;">';
+$content .= '<td>
+    <div style="margin:10px 0;">Ajouter une nouvelle clé/valeur configuration</div>
+    <input class="form-control" type="text" name="newconfigkey" placeholder="clé" value=""/>
+</td>';
+$content .= '<td><textarea class="form-control" name="newconfigvalue" placeholder="valeur"></textarea></td>';
+$content .= '<td><input class="smartch_btn" type="submit" value="Ajouter"></td>';
+$content .= '</tr>';
+$content .= '</form>';
+
+
+$content .= '</tbody>';
+$content .= '</table>';
+
+
+
+
+
 $content .= '</div>';
 
-$content .= '<input class="smartch_btn" type="submit" value="Valider">';
-$content .= '</form>';
+
+
 $content .= '</div>';
 $content .= '</div>';
 

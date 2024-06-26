@@ -219,8 +219,7 @@ foreach ($cohorts as $cohort) {
 
     $content .= '<tr>
                     <td style="text-transform:capitalize;">
-                        
-                        <span style="margin-left: 10px;"><a href="' . new moodle_url('/theme/remui/views/cohort.php') . '?cohortid=' . $cohort->id . '">' . $cohort->name . '</a></span>
+                        <span style="margin-left: 10px;"><a href="' . new moodle_url('/theme/remui/views/cohortmembers.php') . '?cohortid=' . $cohort->id . '">' . $cohort->name . '</a></span>
                     </td>
                     <td>
                         <a class="smartch_table_btn ml-2" href="' . new moodle_url('/theme/remui/views/cohortmembers.php') . '?cohortid=' . $cohort->id . '">

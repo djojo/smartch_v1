@@ -150,8 +150,10 @@ $templatecontextheader = (object)[
 ];
 $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_back', $templatecontextheader);
 
-$content .= '<div class="row" style="margin:30px 0;"></div>';
+$content .= '<div class="row" style="margin:50px 0;"></div>';
 
+
+require_once('./cohortmenu.php');
 
 
 //barre de recherche des parcours

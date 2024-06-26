@@ -61,7 +61,7 @@ if ($subject && $body) {
 }
 
 $context = context_system::instance();
-$PAGE->set_url(new moodle_url('/theme/remui/views/noaccess.php'));
+$PAGE->set_url(new moodle_url('/theme/remui/views/support.php'));
 $PAGE->set_context(\context_system::instance());
 $PAGE->set_title("Contacter le support");
 

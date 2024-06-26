@@ -38,6 +38,8 @@ class create extends moodleform
         $context = $PAGE->context;
 
         $cohortid = $this->_customdata['variables']['cohortid'];
+        $templatecontent = $this->_customdata['variables']['templatecontent'];
+        $templatesubject = $this->_customdata['variables']['templatesubject'];
         // $cohort = $DB->get_record('cohort', ['id' => $cohortid]);
 
         $mform->addElement('hidden', 'cohortid', $cohortid);
@@ -52,7 +54,7 @@ class create extends moodleform
         $mform->addElement('text', 'subject', 'Sujet du message', $options);
         $mform->addRule('subject', null, 'required', null, 'client');
         $mform->setType('subject', PARAM_TEXT); // Set the data type to integer
-
+        $mform->setDefault('subject', $templatesubject);
 
         $mform->addElement(
             'editor',
@@ -60,7 +62,7 @@ class create extends moodleform
             'Contenu',
             null,
             array('context' => $context)
-        )->setValue(array('text' => ""));
+        )->setValue(array('text' => $templatecontent));
         $mform->setType('content', PARAM_RAW);
         $mform->addRule('content', null, 'required', null, 'client');
 

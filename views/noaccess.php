@@ -29,7 +29,6 @@ require_login();
 
 global $USER, $DB, $CFG;
 
-
 echo '<div id="page" style="text-align: center;">
 
 <div style="padding:50px 0;display:flex;align-items:center;justify-content:center;">
@@ -40,4 +39,4 @@ echo '<div id="page" style="text-align: center;">
 
 <h1 class="FFF-Hero-Bold" style="text-transform:uppercase; color:#004685;letter-spacing:2px;padding:0 20px;">La plateforme est actuellement en maintenance</h1>
 <h3 class="FFF-Equipe-Light" style="color:#004685;">Elle sera de nouveau accessible prochainement.</h3>
-</div>    ';
+</div>';

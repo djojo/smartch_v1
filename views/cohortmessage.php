@@ -15,7 +15,39 @@ global $USER, $DB, $CFG;
 $cohortid = required_param('cohortid', PARAM_INT);
 $cohort = $DB->get_record('cohort', ['id' => $cohortid]);
 
-$to_form = array('variables' => array('cohortid' => $cohortid));
+$courseid = optional_param('courseid', null, PARAM_INT);
+$template = optional_param('template', null, PARAM_TEXT);
+
+$templatecontent = "";
+if($courseid && $template == "notif"){
+
+    $titleconfig = $DB->get_record_sql('SELECT * 
+    FROM mdl_smartch_config sc
+    WHERE sc.config_key = "email_template_subscribe_title"', null);
+    if($titleconfig){
+        $templatesubject = $titleconfig->config_value;
+    } else {
+        $templatesubject = "";
+    }
+
+    $contentconfig = $DB->get_record_sql('SELECT * 
+    FROM mdl_smartch_config sc
+    WHERE sc.config_key = "email_template_subscribe_content"', null);
+    if($contentconfig){
+        $templatecontent = $contentconfig->config_value;
+    } else {
+        $templatecontent = "";
+    }
+
+}
+
+
+$to_form = array('variables' => array(
+    'cohortid' => $cohortid,
+    'templatesubject' => $templatesubject,
+    'templatecontent' => $templatecontent
+));
+
 $mform = new create(null, $to_form);
 
 if ($mform->is_cancelled()) {
@@ -86,7 +118,9 @@ $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_back', $te
 
 $content .= '<div class="row" style="margin:50px 0;"></div>';
 
-$content .= '<div class="row mb-5">
+require_once('./cohortmenu.php');
+
+$content .= '<div class="row mb-5 mt-4">
 <div class="col-md-12">
 <h1 style="letter-spacing:1px;max-width:70%;cursor:pointer;" class="smartch_title FFF-Hero-Bold FFF-Blue">Nouveau message pour '.$cohort->name.'</h1>
 </div>
