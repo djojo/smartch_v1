@@ -1521,6 +1521,101 @@ function downloadXLSTeamGrade($groupid)
     exit;
 }
 
+function getCourseType($courseid){
+    global $DB;
+    $coursetype = "";
+    $coursetypeobject = $DB->get_record_sql('
+    SELECT cd.value 
+    FROM mdl_customfield_data cd
+    JOIN mdl_customfield_field cf ON cf.id = cd.fieldid
+    WHERE cd.instanceid = ' . $courseid . ' AND cf.shortname = "diplome"', null);
+    if ($coursetypeobject) {
+        $coursetype = $coursetypeobject->value;
+    }
+    return $coursetype;
+}
+
+function getActualUserSession($courseid, $userid = null){
+    global $DB, $USER;
+    if(!$userid){
+        $userid = $USER->id;
+    }
+    $actualdate = time();
+    $allsessions = $DB->get_records_sql('SELECT DISTINCT ss.id, ss.startdate, ss.enddate
+    FROM mdl_groups g
+    JOIN mdl_groups_members gm ON gm.groupid = g.id
+    JOIN mdl_smartch_session ss ON ss.groupid = g.id
+    WHERE gm.userid = ' . $userid . ' 
+    AND g.courseid = ' . $courseid . '
+    AND ss.startdate < ' . $actualdate . '
+    AND ss.enddate > ' . $actualdate, null);
+
+    return $allsessions;
+}
+
+function getUserQuizAttempts($moduleid, $userid = null){
+    global $DB, $USER;
+    if(!$userid){
+        $userid = $USER->id;
+    }
+    // $query = 'SELECT gi.courseid, g.timemodified, g.rawgrade, g.rawgrademax, cm.id AS moduleid, gi.itemname AS modulename, gi.itemmodule
+    // FROM mdl_grade_items gi
+    // JOIN mdl_grade_grades g ON gi.id = g.itemid
+    // JOIN mdl_course_modules cm ON cm.course = gi.courseid AND cm.instance = gi.iteminstance
+    // JOIN mdl_modules md ON cm.module = md.id AND md.name = gi.itemmodule
+    // WHERE gi.itemtype = "mod" AND g.userid = ' . $userid . ' AND cm.id = ' . $moduleid . '
+    // ORDER BY g.timemodified';
+    $query = 'SELECT 
+    qa.id AS attemptid, 
+    gi.courseid, 
+    qa.timefinish AS timemodified, 
+    qa.sumgrades AS rawgrade, 
+    q.grade AS rawgrademax, 
+    cm.id AS moduleid, 
+    gi.itemname AS modulename, 
+    gi.itemmodule, 
+    qa.attempt
+FROM 
+    mdl_quiz_attempts qa
+JOIN 
+    mdl_quiz q ON qa.quiz = q.id
+JOIN 
+    mdl_course_modules cm ON cm.instance = q.id
+JOIN 
+    mdl_modules md ON cm.module = md.id AND md.name = "quiz"
+JOIN 
+    mdl_grade_items gi ON gi.iteminstance = q.id AND gi.itemmodule = "quiz"
+WHERE 
+    qa.userid = ' . $userid . ' 
+    AND cm.id = ' . $moduleid . '
+ORDER BY 
+    qa.timefinish';
+
+    $attempts = $DB->get_records_sql($query, null);
+    return $attempts;
+}
+
+function checkUserCanPassAttempt($moduleid, $courseid, $userid){
+    $coursetype = getCourseType($courseid);
+    if($coursetype == "Certifications Fédérales"){
+        
+        $useractualsessions = [];
+        $userattempts = [];
+        //on regarde le nombre de session actuelle de l'apprenant
+        $useractualsessions = getActualUserSession($courseid, $userid);
+        // var_dump($useractualsessions);
+        //on regarde le nombre de tentative de l'apprenant
+        $userattempts = getUserQuizAttempts($moduleid, $userid);
+        // var_dump($userattempts);
+
+        //si il y a plus ou autant de tentative que de session actuelle
+        if(count($useractualsessions) >= count($userattempts)){
+            return true;
+        } 
+        return false;
+    }
+}
+
 function generateGUID()
 {
     if (function_exists('com_create_guid')) {
@@ -2017,7 +2112,7 @@ function getCompletionPourcent($courseid, $userid = null)
 
     $modulesstatus = getModulesStatus($courseid, null, $userid);
     $pourcent = $modulesstatus[0]/($modulesstatus[0]+$modulesstatus[1])*100;
-    return $pourcent;
+    return number_format($pourcent, 2);;
     
 
 

@@ -485,7 +485,65 @@ if (countCourseActivities($courseid) == 0) {
 
                     if ($displayactivity) {
                         $content .= '<div class="module-' . $activity->moduleid . ' activity-element" id="activity-' . $activity->moduleid . '-' . $activity->activityid . '">';
+
+                        //l'url de l'activité
                         $urlactivity = new moodle_url('/mod/' . $activity->activitytype . '/view.php?id=' . $activity->id);
+
+                        //si l'activité est un quiz
+                        if ($activity->activitytype == "quiz"){
+                            //si l'utilisateur est un étudiant
+                            if($rolename == 'student'){
+
+                                //On regarde si la formation est de type certification
+                                $coursetype = getCourseType($courseid);
+                                // $content .= '<h1>'.$coursetype.'</h1>';
+                                if($coursetype == "Certifications Fédérales"){
+                                    //on reset car dans une boucle foreach
+                                    $useractualsessions = [];
+                                    $userattempts = [];
+                                    $attemptshtml = "";
+                                    //on regarde le nombre de session actuelle de l'apprenant
+                                    $useractualsessions = getActualUserSession($courseid, $USER->id);
+                                    // var_dump($useractualsessions);
+                                    //on regarde le nombre de tentative de l'apprenant
+                                    $userattempts = getUserQuizAttempts($activity->id, $USER->id);
+                                    // var_dump($userattempts);
+                                    //si il y a moins de tentative que de session actuelle
+                                    
+                                    if(count($useractualsessions) <= count($userattempts)){
+                                        $attemptshtml .= '<div style="display:flex;margin-bottom:5px;color:white;">';
+                                        $attemptshtml .= '<div style="border:1px solid;padding:5px 10px;width:250px; text-align:center;background:#004687;border-radius:5px;">Date de passage</div>';
+                                        $attemptshtml .= '<div style="border:1px solid;padding:5px 10px;margin-left:10px;width:130px;text-align:center;background:#004687;border-radius:5px;">Score</div>';
+                                        $attemptshtml .= '</div>';
+                                        //on lui affiche les résultats de ses tentatives
+                                        foreach($userattempts as $userattempt){
+
+                                            //le score
+                                            $grade = number_format($userattempt->rawgrade, 2, '.', '');
+                                            //le score max
+                                            $rawgrademax = $userattempt->rawgrademax;
+
+                                            if(!empty($rawgrademax)){
+                                                $score = $grade . '/' . number_format($rawgrademax, 2, '.', '');
+                                            } else {
+                                                $score = $grade;
+                                            }
+                                            $attemptshtml .= '<div style="display:flex;margin-bottom:5px;">';
+                                            $attemptshtml .= '<div style="border:1px solid;padding:5px 10px;width:250px;text-align:center;border-radius:5px;">'.userdate($userattempt->timemodified).'</div>';
+                                            $attemptshtml .= '<div style="border:1px solid;padding:5px 10px;margin-left:10px;width:130px;text-align:center;border-radius:5px;">'.$score.'</div>';
+                                            $attemptshtml .= '</div>';
+
+                                        }
+                                        // $urlactivity = new moodle_url('/mod/' . $activity->activitytype . '/view.php?id=' . $activity->id);
+                                        $urlactivity = "";
+                                    } //sinon on lui laisse faire une autre tentative
+                                    
+                                }
+                            }
+                            
+                        }
+
+                        
                         if ($activity->activitytype != "face2face") {
                             $content .= '<a href="' . $urlactivity . '">';
                         }
@@ -499,9 +557,22 @@ if (countCourseActivities($courseid) == 0) {
         
                                             </div>
                                             <div>
-                                                <div class="FFF-Equipe-Bold fff-name-activity">' . $activity->activityname . '</div>
-                                                <div>' . $completion . '</div>
-                                                <div class="smartchmoduletype">' . $type . '</div>';
+                                                <div class="FFF-Equipe-Bold fff-name-activity">' . $activity->activityname . '</div>';
+                                                $content .= '<div class="smartchmoduletype" style="font-size: 0.8rem;">' . $type . '</div>';
+
+                                                //on affiche les tentatives
+                                                if($activity->activitytype == "quiz"){
+                                                    $content .= $attemptshtml;
+                                                    //on affiche la complétion si la certification est terminé
+                                                    // (il y a plus ou autant de attempts que de session)
+                                                    if(count($useractualsessions) >= count($userattempts)){
+                                                        $content .= '<div>' . $completion . '</div>';
+                                                    }
+                                                } else {
+                                                    $content .= '<div>' . $completion . '</div>';
+                                                }
+                                                
+                                                
                         $content .= '
                                             </div>';
                         $content .= '</div>'; //flex

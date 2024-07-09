@@ -214,7 +214,7 @@ trait get_smartch_my_courses
 
 
                     // DATES
-                    //on va chercher la session et on met les dates à la place de la catégorie
+                    //on va chercher la/les session(s) et on met les dates à la place de la catégorie
                     $allsessions = $DB->get_records_sql('SELECT DISTINCT ss.id, ss.startdate, ss.enddate
                     FROM mdl_groups g
                     JOIN mdl_groups_members gm ON gm.groupid = g.id
