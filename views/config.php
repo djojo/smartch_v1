@@ -15,6 +15,8 @@ $content = '';
 $rolename = getMainRole();
 
 isAdmin();
+// var_dump($rolename);
+// die();
 
 $configid = optional_param('configid', null, PARAM_INT);
 $action = optional_param('action', null, PARAM_TEXT);

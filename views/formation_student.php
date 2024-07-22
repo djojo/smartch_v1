@@ -203,3 +203,7 @@ $content .= $OUTPUT->render_from_template('theme_remui/smartch_course_your_score
 
 
 require_once('./courses_modules.php');
+
+
+
+

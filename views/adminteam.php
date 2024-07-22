@@ -600,8 +600,9 @@ $content = "";
 
 require_once('./courses_modules.php');
 
-
 echo $content;
+
+require_once('./team_dropbox.php');
 
 echo $OUTPUT->footer();
 

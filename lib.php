@@ -130,7 +130,8 @@ function theme_remui_pluginfile($course, $cm, $context, $filearea, $args, $force
         'faviconurl',
         'loginsettingpic',
         'loginpanellogo',
-        'secondaryfooterlogo'
+        'secondaryfooterlogo',
+        'attachment' //modification smartch dropbox
     ];
     if (in_array($filearea, $settings)) {
         $theme = theme_config::load('remui');

@@ -33,10 +33,12 @@ $templatecontextheader = (object)[
 ];
 $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_text', $templatecontextheader);
 
-$slider = false;
-if ($rolename == "super-admin" || $rolename == "manager") {
-    $slider = true;
+$adminfff = false;
+if ($rolename == "super-admin" || $rolename == "manager" || $rolename == "managerfree") {
+    $adminfff = true;
 }
+// var_dump($rolename);
+// var_dump($adminfff);
 
 $portail = getConfigPortail();
 
@@ -44,14 +46,16 @@ if($portail == "portailformation"){
     //le menu portail formation
     $templatecontext = (object)[
         'url' => new moodle_url('/'),
-        'slider' => $slider
+        'slider' => $slider,
+        'adminfff' => $adminfff
     ];
     $content .= $OUTPUT->render_from_template('theme_remui/smartch_admin_menu', $templatecontext);
 } else if($portail == "portailrh"){
     //le menu portail formation
     $templatecontext = (object)[
         'url' => new moodle_url('/'),
-        'slider' => $slider
+        'slider' => $slider,
+        'adminfff' => $adminfff
     ];
     $content .= $OUTPUT->render_from_template('theme_remui/smartch_adminrh_menu', $templatecontext);
 }

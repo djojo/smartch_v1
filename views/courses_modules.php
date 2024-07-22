@@ -499,44 +499,57 @@ if (countCourseActivities($courseid) == 0) {
                                 // $content .= '<h1>'.$coursetype.'</h1>';
                                 if($coursetype == "Certifications Fédérales"){
                                     //on reset car dans une boucle foreach
+                                    $usertotalsessions = [];
                                     $useractualsessions = [];
                                     $userattempts = [];
                                     $attemptshtml = "";
+                                    //on regarde le nombre de session de l'apprenant
+                                    $usertotalsessions = getUserSessions($courseid, $USER->id);
                                     //on regarde le nombre de session actuelle de l'apprenant
-                                    $useractualsessions = getActualUserSession($courseid, $USER->id);
-                                    // var_dump($useractualsessions);
+                                    $useractualsessions = getActualUserSessions($courseid, $USER->id);
+                                    // var_dump(count($useractualsessions));
+                                    // var_dump('//////////////////////////////////////');
+                                    // var_dump(count($usertotalsessions));
+                                    // var_dump('//////////////////////////////////////');
                                     //on regarde le nombre de tentative de l'apprenant
                                     $userattempts = getUserQuizAttempts($activity->id, $USER->id);
-                                    // var_dump($userattempts);
-                                    //si il y a moins de tentative que de session actuelle
+                                    // var_dump(count($userattempts));
                                     
-                                    if(count($useractualsessions) <= count($userattempts)){
-                                        $attemptshtml .= '<div style="display:flex;margin-bottom:5px;color:white;">';
-                                        $attemptshtml .= '<div style="border:1px solid;padding:5px 10px;width:250px; text-align:center;background:#004687;border-radius:5px;">Date de passage</div>';
-                                        $attemptshtml .= '<div style="border:1px solid;padding:5px 10px;margin-left:10px;width:130px;text-align:center;background:#004687;border-radius:5px;">Score</div>';
-                                        $attemptshtml .= '</div>';
-                                        //on lui affiche les résultats de ses tentatives
-                                        foreach($userattempts as $userattempt){
+                                    
+                                    
+                                    $attemptshtml .= '<div style="display:flex;margin:5px 0;color:white;">';
+                                    $attemptshtml .= '<div style="border:1px solid;padding:5px 10px;width:250px; text-align:center;background:#004687;border-radius:5px;">Date de passage</div>';
+                                    $attemptshtml .= '<div style="border:1px solid;padding:5px 10px;margin-left:10px;width:130px;text-align:center;background:#004687;border-radius:5px;">Score</div>';
+                                    $attemptshtml .= '</div>';
+                                    //on lui affiche les résultats de ses tentatives
+                                    foreach($userattempts as $userattempt){
 
-                                            //le score
-                                            $grade = number_format($userattempt->rawgrade, 2, '.', '');
-                                            //le score max
-                                            $rawgrademax = $userattempt->rawgrademax;
+                                        //le score
+                                        $grade = number_format($userattempt->rawgrade, 2, '.', '');
+                                        //le score max
+                                        $rawgrademax = $userattempt->rawgrademax;
 
-                                            if(!empty($rawgrademax)){
-                                                $score = $grade . '/' . number_format($rawgrademax, 2, '.', '');
-                                            } else {
-                                                $score = $grade;
-                                            }
-                                            $attemptshtml .= '<div style="display:flex;margin-bottom:5px;">';
-                                            $attemptshtml .= '<div style="border:1px solid;padding:5px 10px;width:250px;text-align:center;border-radius:5px;">'.userdate($userattempt->timemodified).'</div>';
-                                            $attemptshtml .= '<div style="border:1px solid;padding:5px 10px;margin-left:10px;width:130px;text-align:center;border-radius:5px;">'.$score.'</div>';
-                                            $attemptshtml .= '</div>';
-
+                                        if(!empty($rawgrademax)){
+                                            $score = $grade . '/' . number_format($rawgrademax, 2, '.', '');
+                                        } else {
+                                            $score = $grade;
                                         }
-                                        // $urlactivity = new moodle_url('/mod/' . $activity->activitytype . '/view.php?id=' . $activity->id);
+                                        $attemptshtml .= '<div style="display:flex;margin-bottom:5px;border-bottom:1px solid;">';
+                                        $attemptshtml .= '<div style="padding:5px 10px;width:250px;text-align:center;border-radius:5px;">'.userdate($userattempt->timemodified).'</div>';
+                                        $attemptshtml .= '<div style="padding:5px 10px;margin-left:10px;width:130px;text-align:center;border-radius:5px;">'.$score.'</div>';
+                                        $attemptshtml .= '</div>';
+
+                                    
+                                    //si il y a moins de tentative que de session actuelle
+                                    // et qu'il ya une session en cours
+                                    if(count($usertotalsessions) > count($userattempts) && count($useractualsessions) > 0){
+                                        //on lui laisse faire une autre tentative
+                                    } else {
                                         $urlactivity = "";
-                                    } //sinon on lui laisse faire une autre tentative
+                                    }
+                                    // $urlactivity = new moodle_url('/mod/' . $activity->activitytype . '/view.php?id=' . $activity->id);
+                                        
+                                }
                                     
                                 }
                             }
@@ -544,20 +557,28 @@ if (countCourseActivities($courseid) == 0) {
                         }
 
                         
+                        
+
+                        $content .= '<div style="display: flex;">';
                         if ($activity->activitytype != "face2face") {
                             $content .= '<a href="' . $urlactivity . '">';
                         }
-
-                        $content .= '<div style="display: flex;">';
                         $content .= '<div class="course_activity_icon">
                                                 <svg style="padding:5px;" class="smartchactivityicon mr-4" width="18" height="21"  xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white"">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     <path stroke-linecap="round" fill="white" stroke-linejoin="round" d="M15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z" />
                                                 </svg>
         
-                                            </div>
-                                            <div>
-                                                <div class="FFF-Equipe-Bold fff-name-activity">' . $activity->activityname . '</div>';
+                                            </div>';
+                                            
+                                $content .= '<div>';
+                                                if ($activity->activitytype != "face2face") {
+                                                    $content .= '<a href="' . $urlactivity . '">';
+                                                }
+                                                $content .= '<div class="FFF-Equipe-Bold fff-name-activity">' . $activity->activityname . '</div>';
+                                                if ($activity->activitytype != "face2face") {
+                                                    $content .= '</a>'; //flex
+                                                }
                                                 $content .= '<div class="smartchmoduletype" style="font-size: 0.8rem;">' . $type . '</div>';
 
                                                 //on affiche les tentatives
@@ -577,9 +598,7 @@ if (countCourseActivities($courseid) == 0) {
                                             </div>';
                         $content .= '</div>'; //flex
                         $content .= '<hr/>';
-                        if ($activity->activitytype != "face2face") {
-                            $content .= '</a>'; //flex
-                        }
+                        
 
 
                         // $content .= '<a href="' . new moodle_url('/mod/' . $activity->activitytype . '/view.php?id=' . $activity->id) . '">

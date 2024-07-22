@@ -121,6 +121,14 @@ function isAdminFormation()
     }
 }
 
+function hasResponsablePedagogiqueRole(){
+    $rolename = getMainRole();
+    if ($rolename == "super-admin" || $rolename == "manager" || $rolename == "smalleditingteacher") {
+        return true;
+    }
+    return false;
+}
+
 function formatGroupName($inputString)
 {
     $parts = explode(" - ", $inputString, 2);
@@ -1535,7 +1543,7 @@ function getCourseType($courseid){
     return $coursetype;
 }
 
-function getActualUserSession($courseid, $userid = null){
+function getActualUserSessions($courseid, $userid = null){
     global $DB, $USER;
     if(!$userid){
         $userid = $USER->id;
@@ -1549,6 +1557,21 @@ function getActualUserSession($courseid, $userid = null){
     AND g.courseid = ' . $courseid . '
     AND ss.startdate < ' . $actualdate . '
     AND ss.enddate > ' . $actualdate, null);
+
+    return $allsessions;
+}
+function getUserSessions($courseid, $userid = null){
+    global $DB, $USER;
+    if(!$userid){
+        $userid = $USER->id;
+    }
+    $actualdate = time();
+    $allsessions = $DB->get_records_sql('SELECT DISTINCT ss.id, ss.startdate, ss.enddate
+    FROM mdl_groups g
+    JOIN mdl_groups_members gm ON gm.groupid = g.id
+    JOIN mdl_smartch_session ss ON ss.groupid = g.id
+    WHERE gm.userid = ' . $userid . ' 
+    AND g.courseid = ' . $courseid, null);
 
     return $allsessions;
 }
@@ -1600,16 +1623,24 @@ function checkUserCanPassAttempt($moduleid, $courseid, $userid){
     if($coursetype == "Certifications Fédérales"){
         
         $useractualsessions = [];
+        $useractualsessions = [];
         $userattempts = [];
+        //on regarde le nombre de session de l'apprenant
+        $usertotalsessions = getUserSessions($courseid, $userid);
+        // var_dump($usertotalsessions);
         //on regarde le nombre de session actuelle de l'apprenant
-        $useractualsessions = getActualUserSession($courseid, $userid);
+        $useractualsessions = getActualUserSessions($courseid, $userid);
         // var_dump($useractualsessions);
         //on regarde le nombre de tentative de l'apprenant
         $userattempts = getUserQuizAttempts($moduleid, $userid);
         // var_dump($userattempts);
 
         //si il y a plus ou autant de tentative que de session actuelle
-        if(count($useractualsessions) >= count($userattempts)){
+        if(count($usertotalsessions) > count($userattempts)){
+            //si il n'a pas de session en cours
+            if(count($useractualsessions) == 0){
+                return false;
+            } 
             return true;
         } 
         return false;
