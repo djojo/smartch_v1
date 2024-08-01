@@ -423,6 +423,8 @@ if (countCourseActivities($courseid) == 0) {
                         $type = "devoir";
                     } else if ($activity->activitytype == "resource") {
                         $type = "fichier";
+                    } else if ($activity->activitytype == "smartchfolder") {
+                        $type = "dossier de ligue";
                     } else if ($activity->activitytype == "folder") {
 
                         $requestfolder = "SELECT COUNT(*) count

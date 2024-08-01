@@ -664,6 +664,9 @@ function getCourseActivities($courseid)
         SELECT a.id, a.name AS activityname, 'bigbluebuttonbn' AS activitytype, a.intro AS summary
         FROM mdl_bigbluebuttonbn a
         UNION
+        SELECT a.id, a.name AS activityname, 'smartchfolder' AS activitytype, a.intro AS summary
+        FROM mdl_smartchfolder a
+        UNION
         SELECT a.id, a.name AS activityname, 'book' AS activitytype, a.intro AS summary
         FROM mdl_book a
         UNION
@@ -822,6 +825,9 @@ function getSectionActivity($activityid)
         UNION
         SELECT a.id, a.name AS activityname, 'book' AS activitytype, a.intro AS summary
         FROM mdl_book a
+        UNION
+        SELECT a.id, a.name AS activityname, 'smartchfolder' AS activitytype, a.intro AS summary
+        FROM mdl_smartchfolder a
         UNION
         SELECT a.id, a.name AS activityname, 'face2face' AS activitytype, a.intro AS summary
         FROM mdl_face2face a
@@ -2758,6 +2764,29 @@ function createFreeCategory()
         $newcat->visible = 1; // 1 pour visible, 0 pour masquer la catégorie
         core_course_category::create($newcat);
     }
+}
+
+function stringToAlphabetPositionSum($string) {
+    $string = strtoupper($string); // Convertir la chaîne en majuscules pour uniformité
+    $sum = 0;
+    $chain = "";
+
+    // Parcourir chaque caractère de la chaîne
+    for ($i = 0; $i < strlen($string); $i++) {
+        $char = $string[$i];
+
+        // Vérifier si le caractère est une lettre de l'alphabet
+        if (ctype_alpha($char)) {
+            // Ajouter la position de la lettre dans l'alphabet a la somme
+            $chain .= ord($char);
+            // Calculer la position de la lettre dans l'alphabet (A=1, B=2, ..., Z=26)
+            // $position = ord($char) - ord('A') + 1;
+            // $sum += $position;
+        } else {
+            $chain .= ord($char);
+        }
+    }
+    return intval($chain);
 }
 
 function addUserToGroupFreeCourse($courseid, $userid)

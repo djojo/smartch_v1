@@ -602,6 +602,7 @@ require_once('./courses_modules.php');
 
 echo $content;
 
+//les dépots (caché pour l'instant)
 require_once('./team_dropbox.php');
 
 echo $OUTPUT->footer();

@@ -13,6 +13,13 @@ class edit extends moodleform
 
         // $plateforme = getPlateforme();
 
+        // $id = $this->_customdata['variables']['id'];
+        // $mform->addElement('hidden', 'id', $id);
+        // $mform->setType('id', PARAM_INT); // Set the data type to integer
+
+        // var_dump($moduleid);
+        // die();
+
         $teamid = $this->_customdata['variables']['teamid'];
         $mform->addElement('hidden', 'teamid', $teamid);
         $mform->setType('teamid', PARAM_INT); // Set the data type to integer
@@ -20,7 +27,7 @@ class edit extends moodleform
         $mform->addElement(
             'filemanager',
             'attachments',
-            'Fichiers disponnibles',
+            'Fichiers disponibles',
             null,
             [
                 'subdirs' => 0,

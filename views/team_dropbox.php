@@ -23,22 +23,31 @@ echo '<style>
 
 if (!hasResponsablePedagogiqueRole()){
     echo '<style>
-        .fp-restrictions.p-mt-4.text-paragraph{
+        .moodle-dialogue-base .moodle-dialogue-wrap .moodle-dialogue-hd.yui3-widget-hd > h3 {
+            display:none;
+        }
+        .fp-restrictions.p-mt-4.text-paragraph {
             display:none;
         }
         .form-filetypes-descriptions.w-100 {
             display:none;
         }
-        .filemanager~p{
+        .fp-restrictions {
             display:none;
         }
-        .fp-toolbar.d-flex.align-items-center.flex-gap-4{
+        .fp-toolbar {
+            display:none;
+        }
+        .filemanager~p {
+            display:none;
+        }
+        .fp-toolbar.d-flex.align-items-center.flex-gap-4 {
             display:none !important;
         }
-        .fp-file-delete{
+        .fp-file-delete {
             display:none !important;
         }
-        .fp-saveas, .fp-author, .fp-license, .fp-path, .fp-select-buttons{
+        .fp-saveas, .fp-author, .fp-license, .fp-path, .fp-select-buttons {
             display:none !important;
         }
     </style>';

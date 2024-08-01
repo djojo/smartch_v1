@@ -183,15 +183,16 @@ if($rolename == "student") {
     // JOIN mdl_groups_members gm ON g.id = gm.groupid 
     // WHERE gm.userid = '.$USER->id.'
     // ORDER BY startdate ASC');
-    if(count($allsessions) > 0){
-        $teamid = reset($allsessions)->id;
-        require_once('./team_dropbox.php');
-    }
-    // foreach($allsessions as $session){
-    //     $teamid = $session->id;
-    //     echo $session->id . '/';
+    // if(count($allsessions) > 0){
+    //     $teamid = reset($allsessions)->id;
     //     require_once('./team_dropbox.php');
     // }
+    foreach($allsessions as $session){
+        $teamid = $session->id;
+        // echo $session->id . '/';
+        //les dépots (caché pour l'instant)
+        // require_once('./team_dropbox.php');
+    }
 }
 
 
