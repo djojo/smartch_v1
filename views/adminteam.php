@@ -123,7 +123,7 @@ if ($search != "") {
 $teamates = $DB->get_records_sql($queryusers, null);
 
 $context = context_system::instance();
-$PAGE->set_url(new moodle_url('/theme/remui/views/adminteam.php'));
+$PAGE->set_url(new moodle_url('/theme/remui/views/adminteam.php', ['teamid' => $teamid]));
 $PAGE->set_context(\context_system::instance());
 $PAGE->set_title($group->name);
 
@@ -324,7 +324,8 @@ if ($session) {
 }
 
 
-$content .= '<div id="group"></div>';
+$content .= '<div id="group">
+</div>';
 
 
 //le tableau des parametres pour la recherche
@@ -336,7 +337,15 @@ array_push($params, $param1);
 $content .= '<div class="row">
 <div class="col-sm-12 col-md-12 col-lg-12 col-xl-12">
     <div class="smartch_flex_mobile" style="margin-top:30px;">
-        <h1 style="letter-spacing:1px;cursor:pointer;" class="smartch_title FFF-Hero-Bold FFF-Blue">' . extraireNomEquipe($group->name) . '</h1> 
+        <div class="smartch_flex_mobile">
+            <h1 style="letter-spacing:1px;cursor:pointer;" class="smartch_title FFF-Hero-Bold FFF-Blue">' . extraireNomEquipe($group->name) . '</h1> 
+            <a class="smartch_btn ml-3" href="' . new moodle_url('/theme/remui/views/groupmessage.php') . '?teamid=' . $teamid . '&returnurl='.$PAGE->url.'">
+                        <svg style="width:20px;margin-right:5px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                        </svg>
+                        Envoyer un message
+                    </a>
+        </div>
         <div>
             <form style="display: inline;" id="search-form" method="get" action="{{formurl}}">
                 <input id="inputTeam" onkeyup="searchTeam()" class="smartch_input" type="text" name="search" placeholder="Rechercher un membre" value=""/>
@@ -589,11 +598,11 @@ if ($sent) {
 echo $content;
 
 
-echo '<div id="messageteam" style="display:none;">';
+// echo '<div id="messageteam" style="display:none;">';
 
-require_once('./include_message_team.php');
+// require_once('./include_message_team.php');
 
-echo '</div>';
+// echo '</div>';
 
 
 $content = "";
@@ -603,7 +612,7 @@ require_once('./courses_modules.php');
 echo $content;
 
 //les dépots (caché pour l'instant)
-require_once('./team_dropbox.php');
+// require_once('./team_dropbox.php');
 
 echo $OUTPUT->footer();
 

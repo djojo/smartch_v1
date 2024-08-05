@@ -7,7 +7,6 @@ require_once('./utils.php');
 require_once($CFG->dirroot . '/theme/remui/classes/form/messagecohort.php');
 
 require_login();
-isPortailRH();
 isAdminFormation();
 
 global $USER, $DB, $CFG;

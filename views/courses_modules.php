@@ -425,6 +425,8 @@ if (countCourseActivities($courseid) == 0) {
                         $type = "fichier";
                     } else if ($activity->activitytype == "smartchfolder") {
                         $type = "dossier de ligue";
+                        //on vire la completion
+                        $completion = "";
                     } else if ($activity->activitytype == "folder") {
 
                         $requestfolder = "SELECT COUNT(*) count
@@ -997,6 +999,10 @@ echo '
             if (matches) {
                 // Si des correspondances sont trouvées, on check 
                 matches.forEach(function(match) {
+
+                    //dossier de ligue new
+                    element.parentNode.parentNode.parentNode.parentNode.remove();
+
                     if(firstDigit){
                         if (!element.textContent.includes(firstDigit)){
                             //on supprime

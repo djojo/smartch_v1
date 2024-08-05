@@ -7,8 +7,9 @@ require_once('./utils.php');
 require_once($CFG->dirroot . '/theme/remui/classes/form/messageuser.php');
 
 require_login();
-isPortailRH();
-isAdminFormation();
+if(!hasResponsablePedagogiqueRole()){
+    redirect('/');
+};
 
 global $USER, $DB, $CFG;
 

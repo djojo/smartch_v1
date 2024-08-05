@@ -39,13 +39,13 @@ class messagegroup extends moodleform
 
         // $mform->addElement('html', '<h1 style="margin-bottom:50px;letter-spacing:1px;" class="smartch_title FFF-Hero-Black FFF-Blue">Nouveau message pour le groupe ' . $this->_customdata['variables']['teamname'] . '</h1>');
 
-        $return = $this->_customdata['variables']['return'];
+        $returnurl = $this->_customdata['variables']['returnurl'];
         $teamid = $this->_customdata['variables']['teamid'];
         // $backurl = $this->_customdata['variables']['backurl'];
 
         // hidden
-        $mform->addElement('hidden', 'return', $return);
-        $mform->setType('return', PARAM_TEXT); // Set the data type to integer
+        $mform->addElement('hidden', 'returnurl', $returnurl);
+        $mform->setType('returnurl', PARAM_TEXT); // Set the data type to integer
 
         $mform->addElement('hidden', 'teamid', $teamid);
         $mform->setType('teamid', PARAM_INT); // Set the data type to integer

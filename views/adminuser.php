@@ -51,7 +51,7 @@ isStudent();
 $user = $DB->get_record('user', ['id' => $userid]);
 
 $context = context_system::instance();
-$PAGE->set_url(new moodle_url('/theme/remui/views/adminuser.php'));
+$PAGE->set_url(new moodle_url('/theme/remui/views/adminuser.php'), ['userid'=>$userid]);
 $PAGE->set_context(\context_system::instance());
 $PAGE->set_title($user->firstname . ' ' . $user->lastname);
 
@@ -182,7 +182,7 @@ $content .= '
                 <h5 class="FFF-Blue" style="font-size:12px;">' . $role . '</h5>
             </div>
         </div>
-        <div style="cursor:pointer;" onclick="window.location.href=\'' . new moodle_url('/theme/remui/views/adminusermessage.php?userid=' . $user->id) . '\'" class="fff-course-box-info-details">
+        <div style="cursor:pointer;" onclick="window.location.href=\'' . new moodle_url('/theme/remui/views/usermessage.php') . '?userid=' . $user->id . '&returnurl='.$PAGE->url . '\'" class="fff-course-box-info-details">
             <svg class="mr-2" width="20" height="16" viewBox="0 0 20 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M1 4L8.8906 9.2604C9.5624 9.70827 10.4376 9.70827 11.1094 9.2604L19 4M3 15H17C18.1046 15 19 14.1046 19 13V3C19 1.89543 18.1046 1 17 1H3C1.89543 1 1 1.89543 1 3V13C1 14.1046 1.89543 15 3 15Z" stroke="#004687" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
