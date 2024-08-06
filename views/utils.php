@@ -74,18 +74,18 @@ function isPortailRH(){
 function getConfigPortail(){
     global $DB;
 
-    $test = $DB->get_record_sql('SELECT *
-    FROM information_schema.COLUMNS
-    WHERE TABLE_NAME = "mdl_smartch_config"
-    AND COLUMN_NAME = "value"', null);
+    // $test = $DB->get_record_sql('SELECT *
+    // FROM information_schema.COLUMNS
+    // WHERE TABLE_NAME = "mdl_smartch_config"
+    // AND COLUMN_NAME = "value"', null);
     
-    //si on doit mettre les nouveaux noms de colonne
-    // key renvoyait des bugs
-    if($test){
-        //on change la keyvalue
-        $DB->execute('ALTER TABLE `mdl_smartch_config` CHANGE `key` `config_key` LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL', null);
-        $DB->execute('ALTER TABLE `mdl_smartch_config` CHANGE `value` `config_value` LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL', null);
-    }
+    // //si on doit mettre les nouveaux noms de colonne
+    // // key renvoyait des bugs
+    // if($test){
+    //     //on change la keyvalue
+    //     $DB->execute('ALTER TABLE `mdl_smartch_config` CHANGE `key` `config_key` LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL', null);
+    //     $DB->execute('ALTER TABLE `mdl_smartch_config` CHANGE `value` `config_value` LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL', null);
+    // }
     
     
     $portail = $DB->get_record_sql('SELECT * 

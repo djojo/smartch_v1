@@ -46,12 +46,12 @@ function xmldb_theme_remui_install()
         // Define the table smartch_config to be created.
         $table = new xmldb_table('smartch_config');
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
-        $table->add_field('key', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
-        $table->add_field('value', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('config_key', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('config_value', XMLDB_TYPE_TEXT, null, null, null, null, null);
 
         // Adding keys to table smartch_config.
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
-        $table->add_key('key', XMLDB_KEY_UNIQUE, ['key']);
+        $table->add_key('key', XMLDB_KEY_UNIQUE, ['config_key']);
 
         // Conditionally launch create table for smartch_config.
         if (!$dbman->table_exists($table)) {
@@ -76,6 +76,7 @@ function xmldb_theme_remui_install()
 
         // Adding keys to table smartch_slider.
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('key', XMLDB_KEY_UNIQUE, ['key']);
 
         // Conditionally launch create table for smartch_slider.
         if (!$dbman->table_exists($table)) {
