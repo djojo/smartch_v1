@@ -76,7 +76,6 @@ function xmldb_theme_remui_install()
 
         // Adding keys to table smartch_slider.
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
-        $table->add_key('key', XMLDB_KEY_UNIQUE, ['key']);
 
         // Conditionally launch create table for smartch_slider.
         if (!$dbman->table_exists($table)) {

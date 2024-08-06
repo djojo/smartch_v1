@@ -219,57 +219,65 @@ trait get_smartch_my_courses
                     FROM mdl_groups g
                     JOIN mdl_groups_members gm ON gm.groupid = g.id
                     JOIN mdl_smartch_session ss ON ss.groupid = g.id
-                    WHERE gm.userid = ' . $USER->id . ' AND g.courseid = ' . $course->id, null);
+                    WHERE gm.userid = ' . $USER->id . ' AND g.courseid = ' . $course->id . '
+                    AND ss.startdate > 1578309539
+                    ORDER BY ss.startdate ASC', null);
                     
                     //si il y a plusieurs session avec ce cours
                     if (count($allsessions) > 1) {
                         //on regarde le role 
                         if($rolename == "student"){
+
+                            
                             $multiplesession = true;
                             //on créer autant de vignette que de sessions
                             foreach($allsessions as $onesession){
                                 
-                                $el['notavailable'] = false;
-                                $displaycourse = true;
+                                //on check que ce ne soit pas une erreur d'ajout de session en bdd
+                                if($onesession->startdate != 0 && $onesession->enddate != 0){
+                                    $el['notavailable'] = false;
+                                    $displaycourse = true;
 
-                                if($certification){
-                                    
-                                    if($onesession->enddate < time()){
-                                        //si la session de la certification est terminé
-                                        $displaycourse = false;
-                                        $el['date1'] = '';
-                                        $el['date2'] = '';
-                                    } else if($onesession->startdate < time()){
-                                        //si la session de la certification a commencé
-                                        $el['notavailable'] = false;
+                                    if($certification){
+                                        
+                                        if($onesession->enddate < time()){
+                                            //si la session de la certification est terminé
+                                            $displaycourse = false;
+                                            $el['date1'] = '';
+                                            $el['date2'] = '';
+                                        } else if($onesession->startdate < time()){
+                                            //si la session de la certification a commencé
+                                            $el['notavailable'] = false;
+                                            $el['date1'] = 'Du  ' . userdate($onesession->startdate, '%d/%m/%Y');
+                                            $el['date2'] = 'Au ' . userdate($onesession->enddate, '%d/%m/%Y');
+                                        } else {
+                                            $el['notavailable'] = true;
+                                            if($onesession->startdate){
+                                                $el['date1'] = 'À partir du  ' . userdate($onesession->startdate, '%d/%m/%Y');
+                                            } else {
+                                                $el['date1'] = 'Date manquante';
+                                            }
+                                            $el['date2'] = '';
+                                        }
+                                        
+                                    } else if ($onesession) {
                                         $el['date1'] = 'Du  ' . userdate($onesession->startdate, '%d/%m/%Y');
                                         $el['date2'] = 'Au ' . userdate($onesession->enddate, '%d/%m/%Y');
                                     } else {
-                                        $el['notavailable'] = true;
-                                        if($onesession->startdate){
-                                            $el['date1'] = 'À partir du  ' . userdate($onesession->startdate, '%d/%m/%Y');
-                                        } else {
-                                            $el['date1'] = 'Date manquante';
-                                        }
+                                        $el['date1'] = '';
                                         $el['date2'] = '';
                                     }
-                                    
-                                } else if ($onesession) {
-                                    $el['date1'] = 'Du  ' . userdate($onesession->startdate, '%d/%m/%Y');
-                                    $el['date2'] = 'Au ' . userdate($onesession->enddate, '%d/%m/%Y');
-                                } else {
-                                    $el['date1'] = '';
-                                    $el['date2'] = '';
-                                }
 
-                                //On ajoute la vignette pour la certif
-                                if($displaycourse){
-                                    //si la session n'est pas terminé
-                                    $el['id'] = $course->id;
-                                    $el['freecategory'] = $freecategory;
-                                    $el['url'] = $CFG->wwwroot . "/theme/remui/views/formation.php?id=" . $course->id . "&return=dashboard";    
-                                    array_push($mycourses, $el);
+                                    //On ajoute la vignette pour la certif
+                                    if($displaycourse){
+                                        //si la session n'est pas terminé
+                                        $el['id'] = $course->id;
+                                        $el['freecategory'] = $freecategory;
+                                        $el['url'] = $CFG->wwwroot . "/theme/remui/views/formation.php?id=" . $course->id . "&return=dashboard";    
+                                        array_push($mycourses, $el);
+                                    }
                                 }
+                                
                                 
                             }
                         } else {

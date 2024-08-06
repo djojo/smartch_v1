@@ -48,6 +48,15 @@ foreach ($assignments as $assignment) {
 }
 
 
+$allsessionsgeo = $DB->get_records_sql('SELECT DISTINCT g.id as groupid, ss.id, ss.startdate, ss.enddate
+                    FROM mdl_groups g
+                    JOIN mdl_groups_members gm ON gm.groupid = g.id
+                    JOIN mdl_smartch_session ss ON ss.groupid = g.id
+                    WHERE gm.userid = ' . $USER->id . ' AND g.courseid = 106', null);
+                    
+var_dump($allsessionsgeo);
+die();
+
 
 if ($rolename == "super-admin" || $rolename == "manager") {
     //on va chercher tous les cours

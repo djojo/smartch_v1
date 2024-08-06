@@ -336,7 +336,8 @@ foreach ($allcourses as $onecourse) {
     $count++;
 
     //on va chercher les groupes session de l'utilisateur
-    $groups = $DB->get_records_sql('SELECT g.id, g.name FROM mdl_groups g
+    $groups = $DB->get_records_sql('SELECT g.id, g.name 
+    FROM mdl_groups g
     JOIN mdl_groups_members gm ON gm.groupid = g.id
     WHERE gm.userid = ' . $user->id . ' AND g.courseid = ' . $onecourse->id, null);
 
