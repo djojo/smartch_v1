@@ -10,6 +10,7 @@ require_login();
 isAdminFormation();
 
 global $USER, $DB, $CFG;
+$content= "";
 
 $cohortid = required_param('cohortid', PARAM_INT);
 $cohort = $DB->get_record('cohort', ['id' => $cohortid]);
@@ -17,7 +18,13 @@ $cohort = $DB->get_record('cohort', ['id' => $cohortid]);
 $courseid = optional_param('courseid', null, PARAM_INT);
 $template = optional_param('template', null, PARAM_TEXT);
 
+$context = context_system::instance();
+$PAGE->set_url(new moodle_url('/theme/remui/views/cohortmessage.php'));
+$PAGE->set_context(\context_system::instance());
+$PAGE->set_title("Nouveau message");
+
 $templatecontent = "";
+$templatesubject = "";
 if($courseid && $template == "notif"){
 
     $titleconfig = $DB->get_record_sql('SELECT * 
@@ -25,8 +32,6 @@ if($courseid && $template == "notif"){
     WHERE sc.config_key = "email_template_subscribe_title"', null);
     if($titleconfig){
         $templatesubject = $titleconfig->config_value;
-    } else {
-        $templatesubject = "";
     }
 
     $contentconfig = $DB->get_record_sql('SELECT * 
@@ -67,12 +72,19 @@ if ($mform->is_cancelled()) {
         AND u.deleted = 0 AND u.suspended = 0', null);
         //on va chercher l'utilisateur connecté
         $from = $DB->get_record('user', ['id' => $USER->id]);
+        // var_dump($from);
+        // die();
+        $msgsubject = $fromform->subject;
+        $msgcontent = reset($fromform->content);
+        
         foreach($cohortmembers as $cohortmember){
+            // var_dump($cohortmember);
             //on envoi le message à chaque membre sauf à l'utilisateur connecté
             if($USER->id != $cohortmember->id){
-                email_to_user($cohortmember, $from, $fromform->subject, reset($fromform->content), reset($fromform->content));
+                email_to_user($cohortmember, $from, $msgsubject, $msgcontent, $msgcontent);
             }
         }
+        // die();
         redirect($CFG->wwwroot . '/theme/remui/views/cohort.php?messagesent=' . count($cohortmembers) . '&cohortid='.$cohortid);
     } else {
         $content .= "Le groupe n'existe pas...";
@@ -82,10 +94,7 @@ if ($mform->is_cancelled()) {
 
 
 
-$context = context_system::instance();
-$PAGE->set_url(new moodle_url('/theme/remui/views/cohortmessage.php'));
-$PAGE->set_context(\context_system::instance());
-$PAGE->set_title("Nouveau message");
+
 
 echo '<style>
 

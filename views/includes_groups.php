@@ -1,6 +1,7 @@
 <?php
 
 $totalteam = count($groups);
+$s = '';
 
 if ($totalteam > 1) {
     $s = 's';

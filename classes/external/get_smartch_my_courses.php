@@ -210,6 +210,7 @@ trait get_smartch_my_courses
                             
 
                         }
+                        // $certification = true;
                     }
 
 
@@ -227,7 +228,6 @@ trait get_smartch_my_courses
                     if (count($allsessions) > 1) {
                         //on regarde le role 
                         if($rolename == "student"){
-
                             
                             $multiplesession = true;
                             //on créer autant de vignette que de sessions
@@ -238,9 +238,10 @@ trait get_smartch_my_courses
                                     $el['notavailable'] = false;
                                     $displaycourse = true;
 
+                                    //c'est une certification
                                     if($certification){
-                                        
-                                        if($onesession->enddate < time()){
+                                        // a j+1 car la date de fin est a 2h du matin
+                                        if(intval($onesession->enddate) + (24 * 60 * 60 * 2) < time()){
                                             //si la session de la certification est terminé
                                             $displaycourse = false;
                                             $el['date1'] = '';
@@ -289,9 +290,11 @@ trait get_smartch_my_courses
                         //sinon il y a une seule session avec ce cours
                         $session = reset($allsessions);
                         if($certification){
-                            if ($session->enddate < time()){
-                                //si la session de la certif est terminé
+                            if (intval($session->enddate) + (24 * 60 * 60 * 2) < time()){
+                                //si la session de la certif est terminé depuis plus de 2 jours
                                 $displaycourse = false;
+                                $el['date1'] = '';
+                                $el['date2'] = '';
                             } else if($session->startdate < time()){
                                 //si la session a  commencé
                                 $el['notavailable'] = false;

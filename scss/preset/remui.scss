@@ -511,6 +511,21 @@ div[aria-label="Forum"]{
     border-radius: 10px;
     font-family: "FFF-Equipe-Regular";
   }
+  .smartch_input_search {
+    color: $fffblue;
+    border: 1px solid $fffgold;
+    font-family: "FFF-Equipe-Regular";
+    background-repeat: no-repeat;
+    width: 250px;
+    font-size: 1rem;
+    padding: 5px 20px 5px 40px;
+    border: 1px solid #ddd;
+    margin-bottom: 12px;
+    border-radius: 20px;
+    background-image: url('/theme/remui/pix/searchicon.png'); /* Add a search icon to input */
+    background-position: 12px 10px;
+    background-size: 16px;
+  }
   .smartch_submit {
     cursor:pointer;
     font-size: 0.8rem;

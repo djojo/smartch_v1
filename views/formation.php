@@ -33,7 +33,7 @@ $group = null;
 $session = null;
 $completion = '';
 
-
+$iscategoryfree = false;
 
 //On va chercher le rôle le plus haut de l'utilisateur
 $rolename = getMainRole();

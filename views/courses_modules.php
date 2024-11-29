@@ -195,6 +195,11 @@ if (countCourseActivities($courseid) == 0) {
 
     foreach ($sections as $section) {
 
+
+        $useractualsessions = [];
+        $userattempts = [];
+        $attemptshtml = "";
+
         $plannings = [];
 
         if ($session) {

@@ -116,6 +116,7 @@ function isAdminFormation()
 {
     $rolename = getMainRole();
     if ($rolename == "super-admin" || $rolename == "manager") {
+        echo '<h1>Admin Formation</h1>';
     } else {
         redirect('/');
     }
@@ -1554,15 +1555,22 @@ function getActualUserSessions($courseid, $userid = null){
     if(!$userid){
         $userid = $USER->id;
     }
+    
     $actualdate = time();
-    $allsessions = $DB->get_records_sql('SELECT DISTINCT ss.id, ss.startdate, ss.enddate
+    //On enleve 2 jours à la date actuelle
+    $newenddate = $actualdate - (24 * 60 * 60 * 2);
+    //On construit la requête SQL
+    $requestsql = 'SELECT DISTINCT ss.id, ss.startdate, ss.enddate
     FROM mdl_groups g
     JOIN mdl_groups_members gm ON gm.groupid = g.id
     JOIN mdl_smartch_session ss ON ss.groupid = g.id
     WHERE gm.userid = ' . $userid . ' 
     AND g.courseid = ' . $courseid . '
     AND ss.startdate < ' . $actualdate . '
-    AND ss.enddate > ' . $actualdate, null);
+    AND ss.enddate > ' . $newenddate;
+    $allsessions = $DB->get_records_sql($requestsql, null);
+
+    // echo '<script>console.log("' . $requestsql . '")</script>';
 
     return $allsessions;
 }
@@ -1641,15 +1649,22 @@ function checkUserCanPassAttempt($moduleid, $courseid, $userid){
         $userattempts = getUserQuizAttempts($moduleid, $userid);
         // var_dump($userattempts);
 
+        echo '<script>console.log("Nombre de session totale: '.count($usertotalsessions).'")</script>';
+        echo '<script>console.log("Nombre de session actuelle: '.count($useractualsessions).'")</script>';
+        echo '<script>console.log("Nombre de tentative: '.count($userattempts).'")</script>';
+
         //si il y a plus ou autant de tentative que de session actuelle
         if(count($usertotalsessions) > count($userattempts)){
             //si il n'a pas de session en cours
             if(count($useractualsessions) == 0){
+                echo '<script>console.log("Il n\'y a pas de session en cours")</script>';
                 return false;
             } 
             return true;
-        } 
-        return false;
+        } else {
+            echo '<script>console.log("Nombre de tentative > nombre de session actuelle")</script>';
+            return false;
+        }
     }
 }
 

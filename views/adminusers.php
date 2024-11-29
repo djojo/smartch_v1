@@ -36,7 +36,7 @@ $nexturl = '';
 //On va chercher le rôle le plus haut de l'utilisateur
 $rolename = getMainRole();
 
-isStudent();
+isAdminFormation();
 
 $context = context_system::instance();
 $PAGE->set_url(new moodle_url('/theme/remui/views/adminusers.php'));

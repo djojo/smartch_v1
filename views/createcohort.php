@@ -7,7 +7,7 @@ global $DB;
 require_once($CFG->dirroot . '/theme/remui/views/utils.php');
 require_once($CFG->dirroot . '/theme/remui/classes/form/cohort_create.php');
 
-isAdmin();
+isAdminFormation();
 isPortailRH();
 
 // $type = optional_param('type', null, PARAM_TEXT);

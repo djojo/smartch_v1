@@ -8,6 +8,7 @@ require_login();
 global $USER, $DB, $CFG;
 
 $content = "";
+$slider = false;
 
 //On va chercher le rôle le plus haut de l'utilisateur
 $rolename = getMainRole();

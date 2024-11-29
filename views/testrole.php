@@ -157,4 +157,38 @@ $stats['statsgeneralprogress'] = $activitiesprogress;
 // $stats['activitiescomplete'] = 4;
 // $stats['statsgeneralprogress'] = 5;
 
-var_dump($stats);
+// var_dump($stats);
+
+echo '<div id="coucou" style="height:100vh;width:100vw;position:fixed;top:0;left:0;">
+
+</div>';
+
+echo '<script>
+
+var pos = 0;
+
+startAnimation();
+
+function startAnimation(){
+    setInterval(()=>{
+        changeColor();
+    }, 100);
+}
+
+function changeColor(){
+    let back = document.querySelector("#coucou");
+    if(back){
+        if(pos == 0){
+            back.style.backgroundColor = "red";
+            pos = 1;
+        } else {
+            back.style.backgroundColor = "white";
+            pos = 0;
+        }
+        
+    }
+}
+
+</script>';
+
+

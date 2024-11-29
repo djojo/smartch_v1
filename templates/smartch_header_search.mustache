@@ -51,10 +51,10 @@
                     {{#paramscategory}}
                         <input type="hidden" name="{{paramname}}" value="{{paramvalue}}"/>
                     {{/paramscategory}}
-                    <input class="smartch_input" type="text" name="search" placeholder="{{lang_search}}" value="{{search}}" autocomplete="off"/>
+                    <input class="smartch_input_search" type="text" name="search" placeholder="{{lang_search}}" value="{{search}}" autocomplete="off"/>
 
                     {{! <input /> }}
-                    <a onmouseover="this.style.display='none'; document.getElementsByClassName('smartch_submit_hover')[0].style.display='inline-block'" class="smartch_submit"  onclick="document.getElementById('search-form').submit()" >
+                    {{! <a onmouseover="this.style.display='none'; document.getElementsByClassName('smartch_submit_hover')[0].style.display='inline-block'" class="smartch_submit"  onclick="document.getElementById('search-form').submit()" >
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M19 19L13 13M15 8C15 11.866 11.866 15 8 15C4.13401 15 1 11.866 1 8C1 4.13401 4.13401 1 8 1C11.866 1 15 4.13401 15 8Z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
@@ -63,7 +63,7 @@
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M19 19L13 13M15 8C15 11.866 11.866 15 8 15C4.13401 15 1 11.866 1 8C1 4.13401 4.13401 1 8 1C11.866 1 15 4.13401 15 8Z" stroke="#004687" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                    </a>
+                    </a> }}
 
                     <input type="hidden" name="visible" value="{{visible}}" />
 
