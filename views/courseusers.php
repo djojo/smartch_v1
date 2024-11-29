@@ -130,8 +130,8 @@ $total_pages = ceil($total_rows / $no_of_records_per_page);
 
 //le header avec bouton de retour au panneau admin
 $templatecontextheader = (object)[
-    'url' => new moodle_url('/theme/remui/views/adminmenu.php'),
-    'textcontent' => 'Retour au panneau d\'administration'
+    'url' => new moodle_url('/theme/remui/views/adminformations.php'),
+    'textcontent' => 'Retour'
 ];
 $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_back', $templatecontextheader);
 

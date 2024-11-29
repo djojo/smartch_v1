@@ -116,7 +116,6 @@ function isAdminFormation()
 {
     $rolename = getMainRole();
     if ($rolename == "super-admin" || $rolename == "manager") {
-        echo '<h1>Admin Formation</h1>';
     } else {
         redirect('/');
     }
@@ -2183,8 +2182,12 @@ function getCompletionPourcent($courseid, $userid = null)
     }
 
     $modulesstatus = getModulesStatus($courseid, null, $userid);
-    $pourcent = $modulesstatus[0]/($modulesstatus[0]+$modulesstatus[1])*100;
-    return number_format($pourcent, 2);;
+    $total = $modulesstatus[0] + $modulesstatus[1];
+    if ($total == 0) {
+        return 0;
+    }
+    $pourcent = $modulesstatus[0]/$total*100;
+    return number_format($pourcent, 2);
     
 
 

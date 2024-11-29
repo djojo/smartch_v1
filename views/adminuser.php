@@ -61,28 +61,28 @@ $no_of_records_per_page = 10;
 $offset = ($pageno - 1) * $no_of_records_per_page;
 
 if ($search != "") {
-    $querycourses = 'SELECT c.id, c.fullname FROM mdl_course c
+    $querycourses = 'SELECT DISTINCT c.id, c.fullname FROM mdl_course c
             JOIN mdl_role_assignments ra ON ra.userid = ' . $userid . '
             JOIN mdl_context ct ON ct.id = ra.contextid AND c.id = ct.instanceid
             JOIN mdl_role r ON r.id = ra.roleid
             WHERE c.format != "site" AND c.visible = 1
             AND (lower(c.fullname) LIKE "%' . $search . '%")
             LIMIT ' . $offset . ', ' . $no_of_records_per_page;
-    $total_pages_sql = 'SELECT c.id, c.fullname FROM mdl_course c
+    $total_pages_sql = 'SELECT DISTINCT c.id, c.fullname FROM mdl_course c
         JOIN mdl_role_assignments ra ON ra.userid = ' . $userid . '
         JOIN mdl_context ct ON ct.id = ra.contextid AND c.id = ct.instanceid
         JOIN mdl_role r ON r.id = ra.roleid
         WHERE c.format != "site" AND c.visible = 1
         AND lower(c.fullname) LIKE "%' . $search . '%"';
 } else {
-    $querycourses = 'SELECT c.id, c.fullname FROM mdl_course c
+    $querycourses = 'SELECT DISTINCT c.id, c.fullname FROM mdl_course c
             JOIN mdl_role_assignments ra ON ra.userid = ' . $userid . '
             JOIN mdl_context ct ON ct.id = ra.contextid AND c.id = ct.instanceid
             JOIN mdl_role r ON r.id = ra.roleid
             WHERE format != "site" AND c.visible = 1
             LIMIT ' . $offset . ', ' . $no_of_records_per_page . '
             ';
-    $total_pages_sql = 'SELECT c.id, c.fullname FROM mdl_course c
+    $total_pages_sql = 'SELECT DISTINCT c.id, c.fullname FROM mdl_course c
     JOIN mdl_role_assignments ra ON ra.userid = ' . $userid . '
     JOIN mdl_context ct ON ct.id = ra.contextid AND c.id = ct.instanceid
     JOIN mdl_role r ON r.id = ra.roleid
@@ -286,7 +286,7 @@ $count = 0;
 foreach ($allcourses as $onecourse) {
 
     //on va chercher la session du cours
-    $groups = $DB->get_records_sql('SELECT g.id, g.name FROM mdl_groups g
+    $groups = $DB->get_records_sql('SELECT DISTINCT g.id, g.name FROM mdl_groups g
     JOIN mdl_groups_members gm ON gm.groupid = g.id
     WHERE gm.userid = ' . $user->id . ' AND g.courseid = ' . $onecourse->id, null);
 
@@ -296,8 +296,13 @@ foreach ($allcourses as $onecourse) {
         $groupid = $group->id;
 
         //on va chercher les informations de session 
-        $session = $DB->get_record('smartch_session', ['groupid' => $group->id]);
-        $modulesstatus = getModulesStatus($onecourse->id, $session->id, $user->id);
+        $sessions = $DB->get_records_sql('SELECT * FROM mdl_smartch_session WHERE groupid = ' . $group->id . ' LIMIT 1', null);
+        if ($sessions) {
+            $session = reset($sessions);
+        } else {
+            $session = null;
+        }
+        $modulesstatus = getModulesStatus($onecourse->id, ($session ? $session->id : null), $user->id);
 
         $total = $modulesstatus[1] + $modulesstatus[0];
         $ratio = $modulesstatus[0] . '/' . $total;
@@ -315,10 +320,12 @@ foreach ($allcourses as $onecourse) {
     $courseprog = getCompletionPourcent($onecourse->id, $user->id);
     // $courseprog = getCourseProgression($user->id, $onecourse->id);
 
-    $img = $onecourse->img;
-    if (!$img) {
+    if(isset($onecourse->img) && $onecourse->img){
+        $img = $onecourse->img;
+    } else {
         $img = new moodle_url('/theme/remui/pix/screenshot.png');
     }
+
     if ($count == 0) {
         $content .= '<div class="fff-admin-user-course-box row" style="border-radius: 15px 0 0 0;">
             <div class="col-sm-12 col-md-4 col-lg-4 fff-admin-user-course-thumbnail">
@@ -348,9 +355,15 @@ foreach ($allcourses as $onecourse) {
             $coach = getResponsablePedagogique($group->id, $onecourse->id);
 
             //on va chercher la session 
-            $session = $DB->get_record('smartch_session', ['groupid' => $group->id]);
+            $sessions = $DB->get_records_sql('SELECT * FROM mdl_smartch_session WHERE groupid = ' . $group->id . ' LIMIT 1', null);
+            if ($sessions) {
+                $session = reset($sessions);
+            } else {
+                $session = null;
+            }
+            
 
-            if ($session->startdate && $session->enddate) {
+            if ($session && $session->startdate && $session->enddate) {
                 $sessiondate .= '<div style="margin-top: 10px;">Session du ' . userdate($session->startdate, '%d/%m/%Y') . ' au ' . userdate($session->enddate, '%d/%m/%Y') . '</div>';
                 $sessiondate .= '<div>Responsable pédagogique : ' . $coach[0] . '</div>';
             }
