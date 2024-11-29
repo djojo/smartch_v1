@@ -130,6 +130,25 @@ function hasResponsablePedagogiqueRole(){
     return false;
 }
 
+function getUserRoleFromCourse($courseid, $userid = null){
+    global $USER;
+    if(!$userid){
+        $userid = $USER->id;
+    }
+    $context = context_course::instance($courseid);
+    // Récupérer le rôle de l'utilisateur dans le contexte du cours
+    $roles = get_user_roles($context, $userid, false);
+
+    // Filtrer pour ne récupérer que les rôles assignés dans ce contexte précis
+    $course_roles = array_filter($roles, function($role) use ($context) {
+        return $role->contextid == $context->id;
+    });
+
+    $role = reset($course_roles);
+    
+    return $role;
+}
+
 function formatGroupName($inputString)
 {
     $parts = explode(" - ", $inputString, 2);
@@ -139,6 +158,7 @@ function formatGroupName($inputString)
         return $inputString;
     }
 }
+
 
 function displayHeaderEditActivity($backurl, $coursetitle, $activityname, $isactivity)
 {

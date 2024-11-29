@@ -74,7 +74,7 @@ $offset = ($pageno - 1) * $no_of_records_per_page;
 //on divise les requetes en fonction des rôles
 if ($rolename == "super-admin" || $rolename == "manager") {
     if ($search != "") {
-        $queryusers = 'SELECT u.id, u.username, u.firstname, u.lastname, u.email
+        $queryusers = 'SELECT DISTINCT u.id, u.username, u.firstname, u.lastname, u.email, u.lastaccess
                 FROM mdl_user u
                 JOIN mdl_user_enrolments ue ON ue.userid = u.id
                 JOIN mdl_enrol e ON e.id = ue.enrolid
@@ -96,7 +96,7 @@ if ($rolename == "super-admin" || $rolename == "manager") {
                 OR lower(u.username) LIKE "%' . $search . '%"
                 OR lower(u.email) LIKE "%' . $search . '%")';
     } else {
-        $queryusers = 'SELECT u.id, u.username, u.firstname, u.lastname, u.email
+        $queryusers = 'SELECT DISTINCT u.id, u.username, u.firstname, u.lastname, u.email, u.lastaccess
                 FROM mdl_user u
                 JOIN mdl_user_enrolments ue ON ue.userid = u.id
                 JOIN mdl_enrol e ON e.id = ue.enrolid
@@ -111,7 +111,7 @@ if ($rolename == "super-admin" || $rolename == "manager") {
         
     }
     // } else if ($rolename == "smalleditingteacher" || $rolename == "editingteacher" || $rolename == "teacher") {
-        $queryallusers = 'SELECT u.id, u.username, u.firstname, u.lastname, u.email
+        $queryallusers = 'SELECT DISTINCT u.id, u.username, u.firstname, u.lastname, u.email
         FROM mdl_user u
         JOIN mdl_user_enrolments ue ON ue.userid = u.id
         JOIN mdl_enrol e ON e.id = ue.enrolid
@@ -234,17 +234,18 @@ $content .= '<div class="row">
                     <tr>
                         <th>Utilisateur</th>
                         <th>Email</th>
-                        <th>Dernier accès</th>
+                        <th>Rôle sur le cours</th>
                         <th>Options</th>
                     </tr>
                 </thead>
                 <tbody>';
 foreach ($users as $user) {
-
-    if ($user->lastaccess == 0) {
+    $lastaccess = isset($user->lastaccess) ? $user->lastaccess : 0;
+    
+    if ($lastaccess == 0) {
         $lastaccess = "Jamais";
     } else {
-        $lastaccess = userdate($user->lastaccess, get_string('strftimedate'));
+        $lastaccess = userdate($lastaccess, get_string('strftimedate'));
     }
 
     $content .= '<tr>
@@ -256,9 +257,20 @@ foreach ($users as $user) {
                         </svg>
                         <span style="margin-left: 10px;"><a href="' . new moodle_url('/theme/remui/views/adminuser.php') . '?return=users&userid=' . $user->id . '">' . $user->firstname . ' ' . $user->lastname . '</a></span>
                     </td>
-                    <td>' . $user->email . '</td>
-                    <td>' . $lastaccess . '</td>
-                    <td><a class="smartch_table_btn" href="' . new moodle_url('/theme/remui/views/adminuser.php') . '?return=users&userid=' . $user->id . '">Consulter</a></td>
+                    <td>' . $user->email . '</td>';
+
+                    $role = getUserRoleFromCourse($courseid, $user->id);
+                    if($role){
+                        if($role->name){
+                            $rolename = $role->name;
+                        } else {
+                            $rolename = $role->shortname;
+                        }
+                    }
+
+                    $content .= '<td>' . $rolename . '</td>';
+
+                    $content .= '<td><a class="smartch_table_btn" href="' . new moodle_url('/theme/remui/views/adminuser.php') . '?return=users&userid=' . $user->id . '">Consulter</a></td>
                 </tr>';
 }
 
