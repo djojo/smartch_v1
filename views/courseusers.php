@@ -9,8 +9,29 @@ global $USER, $DB, $CFG;
 
 $courseid = required_param('courseid', PARAM_INT);
 $course = $DB->get_record('course', ['id' => $courseid]);
-// var_dump($course);
-// die();
+
+$newroleuserid = isset($_POST["newroleuserid"]) ? $_POST["newroleuserid"] : null;
+$newroleid = isset($_POST["newroleid"]) ? $_POST["newroleid"] : null;
+
+$messagenotif = null;
+
+if($newroleuserid && $newroleid){
+
+    
+    // Charger le contexte du cours
+    $context = context_course::instance($courseid);
+    //on va chercher le rôle actuel de l'utilisateur
+    $oldrole = getUserRoleFromCourse($courseid, $newroleuserid);
+    
+    // Enlever le rôle
+    role_unassign($oldrole->roleid, $newroleuserid, $context->id);
+    // // Ajouter le nouveau rôle
+    role_assign($newroleid, $newroleuserid, $context->id);
+
+    $messagenotif = "Le rôle a été modifié";
+
+}
+
 $content = '';
 $paginationtitle = '';
 $prevurl = '';
@@ -25,6 +46,8 @@ $context = context_system::instance();
 $PAGE->set_url(new moodle_url('/theme/remui/views/courseusers.php'));
 $PAGE->set_context(\context_system::instance());
 $PAGE->set_title("Utilisateurs");
+
+smartchModalRole();
 
 echo '<style>
 
@@ -46,6 +69,10 @@ echo '<style>
 </style>';
 
 echo $OUTPUT->header();
+
+if ($messagenotif) {
+    displayNotification($messagenotif);
+}
 
 // echo html_writer::start_div('container');
 
@@ -268,7 +295,11 @@ foreach ($users as $user) {
                         }
                     }
 
-                    $content .= '<td>' . $rolename . '</td>';
+                    // $content .= '<td>' . $rolename . '</td>';
+                    $content .= '<td>
+                        <div style="display:none;">' . $rolename . '</div>
+                        <a onclick="modifyRole('.$user->id.', '.$courseid.', '.$role->roleid.');" >' . $rolename . '</a>
+                    </td>';
 
                     $content .= '<td><a class="smartch_table_btn" href="' . new moodle_url('/theme/remui/views/adminuser.php') . '?return=users&userid=' . $user->id . '">Consulter</a></td>
                 </tr>';
@@ -306,3 +337,19 @@ echo '<script>
     });
 
 </script>';
+
+
+
+echo '<script>
+        function modifyRole(userid, courseid, actualroleid){
+            let htmlrole = "";
+            htmlrole += "<h3>Modifier le rôle</h3>";
+            // htmlrole += "<div>Le rôle actuel est "+actualroleid+"</div>";
+            // htmlrole += "<div>Rôle actuel sur la formation :</div>";
+            document.querySelector("#newroleid").value = actualroleid;
+            document.querySelector("#newroleuserid").value = userid;
+            document.querySelector("#modal_content").innerHTML = htmlrole;
+            document.querySelector(".smartch_modal_container").style.display = "flex";
+        }
+                            
+    </script>';

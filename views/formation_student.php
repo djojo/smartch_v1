@@ -168,7 +168,7 @@ if (count($groups) > 0) {
 $content .= $OUTPUT->render_from_template('theme_remui/smartch_course_info', $templatecontextcourse);
 
 //on va chercher les stats
-$sessionid;
+$sessionid = null;
 
 if ($session) {
     $sessionid = $session->id;

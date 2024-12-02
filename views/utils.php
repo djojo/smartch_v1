@@ -3423,3 +3423,42 @@ function checkIfUsernameIsINNO($chaine) {
         return false; // La chaîne est un email
     }
 }
+
+function smartchModalRole()
+{
+    global $DB;
+    echo '<div class="smartch_modal_container">';
+    echo '<div class="smartch_modal" style="text-align:center;">';
+
+    echo '<svg style="width:50px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" /></svg>';
+
+    echo '<div id="modal_content" style="text-align:center;margin:30px 0;"></div>';
+
+    echo '<form action="" method="post" >';
+    //On va chercher les roles
+    $rolesavailables = $DB->get_records_sql('SELECT *
+              FROM mdl_role r 
+              WHERE r.shortname = "teacher" 
+              OR r.shortname = "editingteacher"
+              OR r.shortname = "student"', null);
+    echo '<select name="newroleid" id="newroleid" class="form-control my-5" style="padding: 10px;">';
+    foreach($rolesavailables as $role){
+        $rolename = $role->name;
+        if(!$rolename){
+            $rolename = $role->shortname;
+        }
+        echo '<option value="'.$role->id.'">' . $rolename . '</option>';
+    }
+    echo '</select>';
+    echo '<input type="hidden" value="" name="newroleuserid" id="newroleuserid"/>';
+
+    echo '<div style="display:flex;align-items:center;justify-content:center;">';
+    echo '<a onclick="document.querySelector(\'.smartch_modal_container\').style.display=\'none\'" class="smartch_btn">Annuler</a>';
+    echo '<button onclick="this.form.submit()" style="margin-left:20px;" id="modal_btn" class="smartch_btn">Modifier</button>';
+    echo '</div>';
+
+    echo '</form>';
+
+    echo '</div>'; // smartch_modal_container
+    echo '</div>'; // smartch_modal
+}
