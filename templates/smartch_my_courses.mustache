@@ -282,6 +282,7 @@ fading();
                     //alert(courses.length)
                     
                     courses.forEach(el=>{
+                        {{! alert(el.fullname + el.rolecourse +el.freecategory); }}
                         {{! console.log(el.notavailable); }}
                         if(el.notavailable){
                             html += '<div onmouseout="resetAnimation(this.childNodes[1])" class="fff-course-thumbnail-box" style="opacity:0;background-position: center;background-image:url('+el.img+');"><div class="smartch_layer_thumbnail"></div><h5 class="fff-course-thumbnail-title">'+el.fullname+'<br><span style="font-size: 0.8rem;font-family: \'FFF-Equipe-Regular\';">Pas encore accessible</span><br><span style="font-size: 0.8rem;font-family: \'FFF-Equipe-Regular\';">'+el.date1+'</span></h5></div>';
@@ -289,10 +290,10 @@ fading();
                             {{! html += '<div onmouseover="animateUp(this.childNodes[1])" onmouseout="resetAnimation(this.childNodes[1])" onclick="location.href=`'+el.url+'`" class="fff-course-thumbnail-box" style="opacity:0;background-position: center;background-image:url('+el.img+');"><div class="smartch_layer_thumbnail"></div><h5 class="fff-course-thumbnail-title">'+el.fullname+'<br><span style="font-size: 0.8rem;font-family: \'FFF-Equipe-Regular\';">'+el.category+'</span></h5></div>'; }}
                             html += '<div onmouseover="animateUp(this.childNodes[1])" onmouseout="resetAnimation(this.childNodes[1])" onclick="location.href=`'+el.url+'`" class="fff-course-thumbnail-box" style="opacity:0;background-position: center;background-image:url('+el.img+');"><div class="smartch_layer_thumbnail"></div><h5 class="fff-course-thumbnail-title">'+el.fullname+'<br><span style="font-size: 0.8rem;font-family: \'FFF-Equipe-Regular\';">Formation gratuite</span></h5></div>';
                         } else {
-                            if(data.rolename == "teacher" || data.rolename == "editingteacher" ){
+                            if(el.rolecourse == "teacher" || el.rolecourse == "editingteacher" ){
                             //on va chercher les equipes associés au cours
                             html += '<div onmouseover="animateUp(this.childNodes[1])" onmouseout="resetAnimation(this.childNodes[1])" onclick="getTeams(\''+el.id+'\');let sel = document.querySelector(\'.selectedgold\');if(sel){sel.classList.remove(\'selectedgold\');}this.classList.add(\'selectedgold\')" class="fff-course-thumbnail-box" style="opacity:0;background-position: center;background-image:url('+el.img+');"><div class="smartch_layer_thumbnail"></div><h5 class="fff-course-thumbnail-title">'+el.fullname+'<br><span style="font-size: 0.8rem;font-family: \'FFF-Equipe-Regular\';">'+el.date1+'</span><br><span style="font-size: 0.8rem;font-family: \'FFF-Equipe-Regular\';">'+el.date2+'</span></h5></div>';
-                            } else if(data.rolename == "super-admin" || data.rolename == "manager" || data.rolename == "smalleditingteacher"){
+                            } else if(el.rolecourse == "super-admin" || el.rolecourse == "manager" || el.rolecourse == "smalleditingteacher"){
                                 //On affiche tous les cours
                                 html += '<div onmouseover="animateUp(this.childNodes[1])" onmouseout="resetAnimation(this.childNodes[1])" onclick="location.href=`'+el.url+'`" class="fff-course-thumbnail-box" style="opacity:0;background-position: center;background-image:url('+el.img+');"><div class="smartch_layer_thumbnail"></div><h5 class="fff-course-thumbnail-title">'+el.fullname+'<br><span style="font-size: 0.8rem;font-family: \'FFF-Equipe-Regular\';">'+el.category+'</span></h5></div>';
                             } else {

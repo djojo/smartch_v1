@@ -16,7 +16,6 @@ $newroleid = isset($_POST["newroleid"]) ? $_POST["newroleid"] : null;
 $messagenotif = null;
 
 if($newroleuserid && $newroleid){
-
     
     // Charger le contexte du cours
     $context = context_course::instance($courseid);

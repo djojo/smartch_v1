@@ -34,6 +34,7 @@ use stdClass;
 
 require_once($CFG->dirroot . '/course/lib.php');
 require_once($CFG->libdir . '/completionlib.php');
+require_once($CFG->dirroot . '/theme/remui/views/utils.php');
 // require_once('/../../views/utils.php');
 // require_once($CFG->dirroot . '/course/lib.php');
 // require_once('./smartch_functions.php');
@@ -133,6 +134,18 @@ trait get_smartch_my_courses
 
         foreach ($courses as $course) {
 
+            $rolecourse = "";
+
+            if($rolename == "super-admin" || $rolename == "manager"){
+                $rolecourse = $rolename;
+            } else {
+                //On va chercher le role de l'utilisateur dans le cours
+                $rolecourseobject = getUserRoleFromCourse($course->id, $USER->id);
+                $rolecourse = $rolecourseobject->shortname;
+            }
+
+            $el['rolecourse'] = $rolecourse;
+
             $multiplesession = false;
             $displaycourse = true;
             $certification = false;
@@ -175,14 +188,14 @@ trait get_smartch_my_courses
             //on va chercher le type de cours
             $category = $DB->get_record('course_categories', ['id' => $course->category]);
             if ($category->name == "Formation gratuite") {
-                if ($rolename == "super-admin" || $rolename == "manager" || $rolename == "smalleditingteacher") {
+                if ($rolecourse == "super-admin" || $rolecourse == "manager" || $rolecourse == "smalleditingteacher") {
                     $el['category'] = "";
                 } else{
                     $el['date1'] = '';
                     $el['date2'] = '';
                 }
             } else {
-                if ($rolename == "super-admin" || $rolename == "manager" || $rolename == "smalleditingteacher") {
+                if ($rolecourse == "super-admin" || $rolecourse == "manager" || $rolecourse == "smalleditingteacher") {
                     //on affiche la catégorie
                     $el['category'] = $DB->get_record('course_categories', ['id' => $course->category])->name;
                 } else {
@@ -226,8 +239,8 @@ trait get_smartch_my_courses
                     
                     //si il y a plusieurs session avec ce cours
                     if (count($allsessions) > 1) {
-                        //on regarde le role 
-                        if($rolename == "student"){
+                        //on regarde le role dans le cours
+                        if($rolecourse == "student"){
                             
                             $multiplesession = true;
                             //on créer autant de vignette que de sessions
@@ -328,9 +341,10 @@ trait get_smartch_my_courses
                 $el['url'] = $CFG->wwwroot . "/theme/remui/views/formation.php?id=" . $course->id . "&return=dashboard";    
                 array_push($mycourses, $el);
             }
+            
         }
 
-        $data['rolename'] = $rolename;
+        // $data['rolename'] = $rolename;
         $data['mycourses'] = $mycourses;
 
         return json_encode($data);
