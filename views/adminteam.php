@@ -56,7 +56,7 @@ $offset = ($pageno - 1) * $no_of_records_per_page;
 
 if ($search != "") {
     $queryusers = '
-    SELECT u.id, u.firstname, u.lastname, r.shortname, r.id as roleid
+    SELECT DISTINCT u.id, u.firstname, u.lastname, r.shortname, r.id as roleid
     FROM mdl_role_assignments AS ra 
     JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
     JOIN mdl_role AS r ON ra.roleid = r.id 
@@ -76,7 +76,7 @@ if ($search != "") {
 
 
     $total_pages_sql = '
-    SELECT COUNT(u.id) count
+    SELECT COUNT(DISTINCT u.id) count
     FROM mdl_role_assignments AS ra 
     JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
     JOIN mdl_role AS r ON ra.roleid = r.id 
@@ -93,7 +93,7 @@ if ($search != "") {
     OR lower(u.email) LIKE "%' . $search . '%")';
 } else {
     $queryusers = '
-    SELECT u.id, u.firstname, u.lastname, r.shortname, r.id as roleid
+    SELECT DISTINCT u.id, u.firstname, u.lastname, r.shortname, r.id as roleid
     FROM mdl_role_assignments AS ra 
     JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
     JOIN mdl_role AS r ON ra.roleid = r.id 
@@ -108,7 +108,7 @@ if ($search != "") {
        ';
     //LIMIT ' . $offset . ', ' . $no_of_records_per_page . '
     $total_pages_sql = '
-    SELECT COUNT(u.id) count
+    SELECT COUNT(DISTINCT u.id) count
     FROM mdl_role_assignments AS ra 
     JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
     JOIN mdl_role AS r ON ra.roleid = r.id 
