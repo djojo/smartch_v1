@@ -142,8 +142,21 @@ if ($rolename == "super-admin" || $rolename == "manager") {
     //pour super admin et admin formateur
     require_once('./formation_admin.php');
 } else if ($rolename == "teacher" || $rolename == "smalleditingteacher" || $rolename == "editingteacher") {
-    //pour responsable pédagogique et formateur
-    require_once('./formation_formateur.php');
+    if(hasResponsablePedagogiqueRole()){
+        //pour responsable pedagogique
+        require_once('./formation_formateur.php');
+    } else {
+        //On va chercher le role sur la formation
+        $rolename = getUserRoleFromCourse($courseid);
+        if($rolename == "teacher"){
+            //pour formateur
+            require_once('./formation_formateur.php');
+        }else{
+            //pour les etudiants
+            require_once('./formation_student.php');
+        }
+    }
+    
 } else if ($rolename == "student") {
     require_once('./formation_student.php');
 } else {

@@ -197,7 +197,7 @@ foreach ($users as $user) {
 //barre de recherche des parcours
 $templatecontext = (object)[
     'formurl' => new moodle_url('/theme/remui/views/courseusers.php'),
-    'textcontent' => "Apprenants dans la formation " . $course->fullname,
+    'textcontent' => "Utilisateurs dans la formation " . $course->fullname,
     'lang_search' => "Rechercher",
     'params' => $params,
     'search' => $search
