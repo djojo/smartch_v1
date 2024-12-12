@@ -26,12 +26,14 @@ $timeplus30 = time() + 30 * 24 * 60 * 60;
 $timemoins30 = time() - 30 * 24 * 60 * 60;
 
 
+//pas de limite car formateur, et trié par date de début de session
 $groups = $DB->get_records_sql(
     'SELECT g.id, g.name FROM mdl_groups g
 JOIN mdl_groups_members gm ON gm.groupid = g.id
 JOIN mdl_smartch_session ss ON ss.groupid = g.id
 WHERE g.courseid = ' . $courseid . '
-AND gm.userid = ' . $USER->id,
+AND gm.userid = ' . $USER->id . '
+ORDER BY ss.startdate ASC',
     null
 );
 

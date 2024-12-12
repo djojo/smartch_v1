@@ -58,7 +58,7 @@ foreach ($groups as $team) {
     // $teamates = $DB->get_records('groups_members', ['groupid' => $team->id], '', '*', 0, 6);
 
     $querysixmates = '
-    SELECT u.id, u.firstname, u.lastname, r.shortname, r.id as roleid
+    SELECT DISTINCT u.id, u.firstname, u.lastname, r.shortname, r.id as roleid
        FROM mdl_role_assignments AS ra 
        LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
        LEFT JOIN mdl_role AS r ON ra.roleid = r.id 
@@ -75,7 +75,7 @@ foreach ($groups as $team) {
     $teamates = $DB->get_records_sql($querysixmates, null);
 
     $queryallmates = '
-    SELECT u.id
+    SELECT DISTINCT u.id
        FROM mdl_role_assignments AS ra 
        LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
        LEFT JOIN mdl_role AS r ON ra.roleid = r.id 

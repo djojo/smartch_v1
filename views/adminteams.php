@@ -29,11 +29,15 @@ require_login();
 
 global $USER, $DB, $CFG;
 
+$courseid = optional_param('courseid', null, PARAM_INT);
+$return = optional_param('return', null, PARAM_INT);
+
 $params = null;
 $content = '';
 $paginationtitle = '';
 $prevurl = '';
 $nexturl = '';
+
 
 //On va chercher le rôle le plus haut de l'utilisateur
 $rolename = getMainRole();
@@ -46,6 +50,39 @@ $PAGE->set_context(\context_system::instance());
 $PAGE->set_title("Tous les groupes");
 
 echo '<style>
+
+.select2-dropdown{
+    width: 250px !important;
+}
+
+.select2-container {
+    width: auto !important;
+    margin-bottom: 10px !important;
+}
+
+.select2-container--default .select2-selection--single{
+    border:none !important;
+    
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered{
+    font-size: 1.25rem;
+    color: #0b4785 !important;
+    line-height: normal !important;
+    font-family: "FFF-Equipe-Bold";
+}
+
+.select2-container--default .select2-results__option--highlighted.select2-results__option--selectable{
+    background: #0b4785 !important;
+}
+
+.select2-container .select2-selection--single{
+    height: auto !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow{
+    top: 4px !important;
+    right: -10px !important;
+}
 
 #page{
     background:transparent !important;
@@ -65,6 +102,13 @@ echo '<style>
 </style>';
 
 echo $OUTPUT->header();
+
+echo '<script
+  src="https://code.jquery.com/jquery-3.7.1.min.js"
+  integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+  crossorigin="anonymous"></script>';
+echo '<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>';
 
 
 // echo html_writer::start_div('container');
@@ -86,6 +130,9 @@ if ($search != '') {
 
 if ($rolename == "super-admin" || $rolename == "manager") {
     $filteradmin = '';
+    if($courseid){
+        $filteradmin .= ' AND g.courseid = '. $courseid . ' ';
+    }
 } else {
     if ($search != "") {
         $filteradmin = '
@@ -150,25 +197,67 @@ $result = $DB->get_records_sql($total_pages_sql, null);
 $total_rows = reset($result)->count;
 $total_pages = ceil($total_rows / $no_of_records_per_page);
 
-//le header avec bouton de retour au panneau admin
-$templatecontextheader = (object)[
+if($return == "course"){
+    //le header avec bouton de retour au panneau admin
+    $templatecontextheader = (object)[
+        'url' => new moodle_url('/theme/remui/views/formation.php?id='.$courseid),
+        'textcontent' => 'Retour au parcours'
+    ];
+    $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_back', $templatecontextheader);
+} else {
+    //le header avec bouton de retour au panneau admin
+    $templatecontextheader = (object)[
     'url' => new moodle_url('/theme/remui/views/adminmenu.php'),
     'textcontent' => 'Retour au panneau d\'administration'
-];
-$content .= $OUTPUT->render_from_template('theme_remui/smartch_header_back', $templatecontextheader);
+    ];
+    $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_back', $templatecontextheader);
+}
+
+$content .= '<div class="row" style="margin:55px 0;"></div>';
 
 
-$content .= '<div class="row" style="margin:30px 0;"></div>';
+if($rolename == "super-admin" || $rolename == "manager"){
 
-//barre de recherche des utilisateurs de l'équipe
-$templatecontext = (object)[
-    'formurl' => new moodle_url('/theme/remui/views/adminteams.php'),
-    'textcontent' => "Tous les groupes",
-    'params' => $params,
-    'lang_search' => "Rechercher",
-    'search' => $search
-];
-$content .= $OUTPUT->render_from_template('theme_remui/smartch_header_search', $templatecontext);
+    //le select des groupes
+    $content .= '<div class="row">';
+    $content .= '<div class="col-sm-12 col-md-12 col-lg-12 col-xl-12">';
+    $content .= '<form style="display: inline;" id="search-form" method="get" action="'.new moodle_url('/theme/remui/views/adminteams.php').'">';
+    $content .= '<div class="smartch_flex_mobile" style="justify-content: space-between;align-items: center;">';
+    $content .= '<select class="select2" name="courseid" onchange="this.form.submit();">';
+    $content .= '<option>Tous les Groupes</option>';
+    //On va chercher toutes les formations
+    $allcourses = $DB->get_records_sql('SELECT * FROM mdl_course WHERE format != "site" AND visible = 1', null);
+    foreach ($allcourses as $onecourse) {
+        if($onecourse->id == $courseid){
+            $content .= '<option selected value="' . $onecourse->id . '">Groupes de ' . $onecourse->fullname . '</option>';
+        } else {
+            $content .= '<option value="' . $onecourse->id . '">Groupes de ' . $onecourse->fullname . '</option>';
+        }
+    } 
+    $content .= '</select>';
+                // <h2 style="letter-spacing:1px;max-width:70%;cursor:pointer;" onclick="location.href='{{formurl}}'" class="FFABold FFF-Blue">{{textcontent}}</h2> 
+    $content .= '<div>';
+    // $content .= '<input type="hidden" name="{{paramname}}" value="{{paramvalue}}"/>';
+    $content .= '<input autocomplete="off" class="smartch_input_search" type="text" name="search" placeholder="Rechercher" value="'.$search.'" autocomplete="off"/>';
+    $content .= '</div>';
+    $content .= '</div>';
+    $content .= '</form>';
+    $content .= '</div>';
+    $content .= '</div>';
+} else {
+
+    //barre de recherche des utilisateurs de l'équipe
+    $templatecontext = (object)[
+        'formurl' => new moodle_url('/theme/remui/views/adminteams.php'),
+        'textcontent' => "Tous les groupes",
+        'params' => $params,
+        'lang_search' => "Rechercher",
+        'search' => $search
+    ];
+    $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_search', $templatecontext);
+
+}
+
 
 //La pagination
 if (count($groups) == 0) {
@@ -296,6 +385,9 @@ foreach ($groups as $group) {
 
     foreach ($el['teamates'] as $mate) {
         $userteam = $DB->get_record('user', ['id' => $mate->userid]);
+        if(!$userteam){
+            continue;
+        }
         $courseprog = getCompletionPourcent($group->courseid, $userteam->id);
         $content .= '<div class="col-sm-12 col-md-6 col-lg-4" style="padding: 15px 5px;">
                     <div onclick="window.location.href=\'' . new moodle_url('/theme/remui/views/adminuser.php?return=teams&userid=' . $userteam->id) . '\'" style="cursor:pointer;display: flex;justify-content: space-between;width: 100%;"> 
@@ -308,7 +400,7 @@ foreach ($groups as $group) {
                         </div>
                         <div style="margin-left: 10px;width: 100%;">';
         $matenamestring =  $userteam->firstname . '<br>' . $userteam->lastname;
-        if (strlen($user->lastname) > 15 || strlen($user->firstname) > 15 || strlen($user->firstname . $user->lastname) > 30) {
+        if (strlen($userteam->lastname) > 15 || strlen($userteam->firstname) > 15 || strlen($userteam->firstname . $userteam->lastname) > 30) {
             $content .= '<div style="line-height: 17px;" class="matename FFF-Equipe-Regular" style="height: 50px;">
                                 ' . $matenamestring . '
                             </div>';
@@ -362,5 +454,10 @@ window.onload = function(){
         el.setAttribute("selected", "selected");
     });
 };
+
+
+$(document).ready(function() {
+    $(".select2").select2();
+});
 
 </script>';

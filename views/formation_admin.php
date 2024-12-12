@@ -145,8 +145,34 @@ $content .= $OUTPUT->render_from_template('theme_remui/smartch_course_info', $te
 
 
 
-//les groupes
-require_once('./includes_groups.php');
+$totalteam = count($groups);
+$s = '';
+
+if ($totalteam > 1) {
+    $s = 's';
+}
+
+$content .= '<h3 class="FFF-title1" style="display: flex;align-items: center;margin-top:50px;">
+<span class="FFF-Hero-Black FFF-Blue" style="margin-right:10px;">' . $totalteam . '</span><span style="letter-spacing:1px;" class="FFF-Hero-Black FFF-Gold">groupe' . $s . '</span>  
+</h3>';
+
+if ($totalteam == 0) {
+    $content .= nothingtodisplay("Vous n'avez pas de groupe sur ce parcours");
+}
+
+$content .= '<div class="row mt-3">';
+$content .= '<div>';
+$content .= '<a class="smartch_btn gap-2" href="'.new moodle_url("/theme/remui/views/adminteams.php").'?courseid='.$courseid.'&return=course">
+Voir tous les groupes de ce parcours
+<svg style="width:20px;height:20px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+  <path stroke-linecap="round" stroke-linejoin="round" d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+</svg>
+</a>';
+$content .= '</div>';
+$content .= '</div>';
+
+//les groupes //OLD
+// require_once('./includes_groups.php');
 
 
 if ($group) {

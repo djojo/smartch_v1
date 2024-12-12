@@ -2512,12 +2512,14 @@ function getCourseCompletionRatio($userid, $courseid)
     
                 $arr = $DB->get_records_sql($query, null);
     
-                if (reset($arr)->completionstate >= 1) {
-                    $activitiescomplete++;
-                } else {
-                    $activitiesdue++;
+                $res = reset($arr);
+                if($res){
+                    if ($res->completionstate >= 1) {
+                        $activitiescomplete++;
+                    } else {
+                        $activitiesdue++;
+                    }
                 }
-    
     
                 //old
                 // $moduledata = $completion->get_data($module, false, $userid);

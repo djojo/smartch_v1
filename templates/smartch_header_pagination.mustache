@@ -4,10 +4,10 @@
             <h5 class="smartch_pagination_title">{{paginationtitle}}</h5>
             <form method="post" action="{{formurl}}">
                 {{#previous}}
-                    <div onclick="window.location.href='{{prevurl}}'" class="smartch_submit">page précedente</div>
+                    <div onclick="window.location.href='{{prevurl}}'" class="smartch_submit" style="padding: 5px 10px;">page précedente</div>
                 {{/previous}}
                 {{#next}}
-                    <div onclick="window.location.href='{{nexturl}}'" class="smartch_submit">page suivante</div>
+                    <div onclick="window.location.href='{{nexturl}}'" class="smartch_submit" style="padding: 5px 10px;">page suivante</div>
                 {{/next}}
                 <select class="smartch_select" name="pageno" onchange="this.parentElement.submit()">
                     {{#paginationarray}}
