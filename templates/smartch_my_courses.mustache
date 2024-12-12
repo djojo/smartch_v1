@@ -81,45 +81,43 @@
 
     var positionNextIcon = 0;
 
-    function moveIconCourse(move){
-
-        //on regarde la largeur de l'ecran
+    function moveIconCourse(move) {
+        // Calcul des dimensions
         let largeur = window.innerWidth;
         let largeurInterval = Math.floor((largeur - 180)/220);
-        let rest = numbercourses-largeurInterval;
+        // Calcul du nombre de "pages" de défilement possibles
+        let rest = Math.ceil(numbercourses/largeurInterval) - 1;
         
-        //si il y a des encarts gris
-        if(maxelements < 0){
-            if(move == "next" && positionNextIcon < rest){
+        // Vérification si défilement nécessaire (plus de cartes que l'espace disponible)
+        if (rest > 0) {
+            // Gestion du défilement
+            if (move === "next" && positionNextIcon < rest) {
                 positionNextIcon++;
-                document.getElementById('fff-my-courses').scrollBy({top: 0, left: 30, behavior: 'smooth'});
-            } else if(move == "prev" && positionNextIcon > 0){
-                document.getElementById('fff-my-courses').scrollBy({top: 0, left: -30, behavior: 'smooth'});
+                document.getElementById('fff-my-courses').scrollBy({
+                    top: 0, 
+                    left: largeur-250, 
+                    behavior: 'smooth'
+                });
+            } else if (move === "prev" && positionNextIcon > 0) {
                 positionNextIcon--;
+                document.getElementById('fff-my-courses').scrollBy({
+                    top: 0, 
+                    left: -(largeur-250), 
+                    behavior: 'smooth'
+                });
             }
 
-            //si on est à la position 0
-            if(positionNextIcon == 0){
-                document.getElementById('leftcourseicon').style.opacity=0.3; 
-            } else {
-                document.getElementById('leftcourseicon').style.opacity=1; 
-            }
-
+            // Mise à jour de l'opacité des icônes
+            document.getElementById('leftcourseicon').style.opacity = 
+                positionNextIcon === 0 ? 0.3 : 1;
             
-            //console.log('actual :'+positionNextIcon+ ' & max :'+rest );
-            let max = rest - 1;
-
-            //si on est à la position max
-            if(positionNextIcon == rest){
-                document.getElementById('rightcourseicon').style.opacity=0.3; 
-            } else {
-                document.getElementById('rightcourseicon').style.opacity=1; 
-            }
-
-            console.log(positionNextIcon);
-
+            document.getElementById('rightcourseicon').style.opacity = 
+                positionNextIcon >= rest ? 0.3 : 1;
+        } else {
+            // Si toutes les cartes sont visibles, griser les deux icônes
+            document.getElementById('leftcourseicon').style.opacity = 0.3;
+            document.getElementById('rightcourseicon').style.opacity = 0.3;
         }
-        
     }
 
     function getTeams(courseid){
