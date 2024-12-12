@@ -107,8 +107,8 @@ echo $OUTPUT->header();
 //   src="https://code.jquery.com/jquery-3.7.1.min.js"
 //   integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
 //   crossorigin="anonymous"></script>';
-echo '<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>';
+// echo '<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+// <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>';
 
 
 // echo html_writer::start_div('container');
@@ -223,7 +223,7 @@ if($rolename == "super-admin" || $rolename == "manager"){
     $content .= '<div class="col-sm-12 col-md-12 col-lg-12 col-xl-12">';
     $content .= '<form style="display: inline;" id="search-form" method="get" action="'.new moodle_url('/theme/remui/views/adminteams.php').'">';
     $content .= '<div class="smartch_flex_mobile" style="justify-content: space-between;align-items: center;">';
-    $content .= '<select class="select2" name="courseid" onchange="this.form.submit();">';
+    $content .= '<select class="select2 smartch_select" name="courseid" onchange="this.form.submit();">';
     $content .= '<option>Tous les Groupes</option>';
     //On va chercher toutes les formations
     $allcourses = $DB->get_records_sql('SELECT * FROM mdl_course WHERE format != "site" AND visible = 1', null);
