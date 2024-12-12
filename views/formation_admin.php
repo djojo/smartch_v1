@@ -19,14 +19,13 @@ $content .= $OUTPUT->render_from_template('theme_remui/smartch_course_header', $
 $timeplus30 = time() + 30 * 24 * 60 * 60;
 $timemoins30 = time() - 30 * 24 * 60 * 60;
 
-//on limite volontairement à 50
+
 $groups = $DB->get_records_sql('SELECT DISTINCT g.id, g.name 
 FROM mdl_groups g
 JOIN mdl_groups_members gm ON gm.groupid = g.id
 -- NE PAS OUBLIER DE REMETTRE
 JOIN mdl_smartch_session ss ON ss.groupid = g.id
-WHERE g.courseid = ' . $courseid . '
-LIMIT 0, 50 ', null);
+WHERE g.courseid = ' . $courseid . '', null);
 
 //echo '<script>alert("' . count($groups) . '")</script>';
 
