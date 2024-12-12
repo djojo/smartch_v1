@@ -223,7 +223,7 @@ if($rolename == "super-admin" || $rolename == "manager"){
     $content .= '<div class="col-sm-12 col-md-12 col-lg-12 col-xl-12">';
     $content .= '<form style="display: inline;" id="search-form" method="get" action="'.new moodle_url('/theme/remui/views/adminteams.php').'">';
     $content .= '<div class="smartch_flex_mobile" style="justify-content: space-between;align-items: center;">';
-    $content .= '<select class="select2 smartch_select" name="courseid" onchange="this.form.submit();">';
+    $content .= '<select class="select2" name="courseid" onchange="this.form.submit();">';
     $content .= '<option>Tous les Groupes</option>';
     //On va chercher toutes les formations
     $allcourses = $DB->get_records_sql('SELECT * FROM mdl_course WHERE format != "site" AND visible = 1', null);
