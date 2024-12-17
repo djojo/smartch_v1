@@ -27,6 +27,7 @@ require_once('./utils.php');
 
 require_login();
 
+$message = "";
 $subject = optional_param('subject', "", PARAM_TEXT);
 $body = optional_param('body', "", PARAM_TEXT);
 
@@ -37,9 +38,17 @@ if ($subject && $body) {
     //on va chercher l'utilisateur pour le support
     // $senduser = $DB->get_record('user', ['email' => 'servicedigital.ieff@fff.fr']);
     
+
+    $portail = getConfigPortail();
+    if ($portail == "portailrh") {
+        $emailSupport = 'servicedigital.ieff@fff.fr';
+    } else {
+        $emailSupport = 'omonchery@fff.fr';
+    }
+
     //on créer l'objet user
     $senduser = new stdClass();
-    $senduser->email = "servicedigital.ieff@fff.fr";
+    $senduser->email = $emailSupport;
     $senduser->firstname = "Portail";
     $senduser->lastname = "Formation FFF";
     $senduser->maildisplay = true;
@@ -74,9 +83,7 @@ $content .= "<style>
 img.FFF_background_header{
     display:none;
 }
-#smartch-header{
-    display:none;
-}
+
 #page-footer{
     z-index:20;
 }
@@ -87,7 +94,7 @@ img.FFF_background_header{
 if ($message) {
     $content .= '<div id="page" style="margin: 0;background-image:url(\'' . new moodle_url('/theme/remui/pix/background-header.png') . '\');background-size: cover;height:100vh;width:100vw;top: 0;text-align: center;left: 0;position: fixed;">
 
-<div style="background: white; position: fixed; top: 50%; padding: 30px 80px; border-radius: 15px; min-width: 350px; left: 50%; transform: translate(-50%, -50%);">
+<div style="background: white; position: fixed; top: 50%; padding: 30px 80px; border-radius: 15px; max-width: 90vw; width: 600px; left: 50%; transform: translate(-50%, -50%);">
 
 <h2 class="FFF-Hero-Bold" style="margin: 30px 0;text-transform:uppercase; color:#004685;letter-spacing:2px;padding:0 20px;">Contactez le support</h2>
 <h5>' . $message . '</h5>
@@ -99,7 +106,7 @@ if ($message) {
 
     $content .= '<div id="page" style="margin: 0;background-image:url(\'' . new moodle_url('/theme/remui/pix/background-header.png') . '\');background-size: cover;height:100vh;width:100vw;top: 0;text-align: center;left: 0;position: fixed;">
 
-    <div style="background: white; position: fixed; top: 50%; padding: 30px 80px; border-radius: 15px; min-width: 350px; left: 50%; transform: translate(-50%, -50%);">
+    <div style="background: white; position: fixed; top: 50%; padding: 30px 80px; border-radius: 15px; max-width: 90vw; width: 600px; left: 50%; transform: translate(-50%, -50%);">
     
     <h2 class="FFF-Hero-Bold" style="margin: 30px 0;text-transform:uppercase; color:#004685;letter-spacing:2px;padding:0 20px;">Contactez le support</h2>
     <form method="POST" action="' . new moodle_url('/theme/remui/views/support.php') . '">
@@ -110,7 +117,7 @@ if ($message) {
     </select>
     <textarea name="body" rows="4" cols="30" class="form-control" placeholder="Contenu du message">
     </textarea>
-    <div style="text-align:right;">
+    <div style="text-align:center;">
     <button type="submit" style="margin:20px 0;" class="smartch_btn">Envoyer</button>
     </div>
     </form>

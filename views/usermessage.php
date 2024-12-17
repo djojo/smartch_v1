@@ -7,9 +7,6 @@ require_once('./utils.php');
 require_once($CFG->dirroot . '/theme/remui/classes/form/messageuser.php');
 
 require_login();
-if(!hasResponsablePedagogiqueRole()){
-    redirect('/');
-};
 
 global $USER, $DB, $CFG;
 
@@ -17,6 +14,14 @@ $userid = required_param('userid', PARAM_INT);
 $user = $DB->get_record('user', ['id' => $userid]);
 
 $returnurl = required_param('returnurl', PARAM_TEXT);
+
+
+$PAGE->set_url(new moodle_url('/theme/remui/views/cohortmessage.php'));
+$PAGE->set_context(\context_system::instance());
+$PAGE->set_title("Nouveau message");
+
+
+$content = '';
 
 $to_form = array('variables' => array('userid' => $userid, 'returnurl' => $returnurl));
 $mform = new create(null, $to_form);
@@ -43,10 +48,6 @@ if ($mform->is_cancelled()) {
 
 
 
-$context = context_system::instance();
-$PAGE->set_url(new moodle_url('/theme/remui/views/cohortmessage.php'));
-$PAGE->set_context(\context_system::instance());
-$PAGE->set_title("Nouveau message");
 
 echo '<style>
 

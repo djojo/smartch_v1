@@ -466,6 +466,17 @@ function getResponsablePedagogique($groupid, $courseid)
     }
 }
 
+function getManagerPortailRH()
+{
+    global $DB;
+    $adminUsers = $DB->get_records_sql('SELECT u.id, u.firstname, u.lastname 
+    FROM mdl_user u
+    JOIN mdl_role_assignments ra ON ra.userid = u.id
+    JOIN mdl_role r ON r.id = ra.roleid
+    WHERE r.shortname = "manager"', null);
+    return reset($adminUsers);
+}
+
 
 function isStudent()
 {

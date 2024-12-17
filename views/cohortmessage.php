@@ -68,26 +68,28 @@ if ($mform->is_cancelled()) {
         FROM mdl_cohort co
         JOIN mdl_cohort_members cm ON cm.cohortid = co.id
         JOIN mdl_user u ON u.id = cm.userid
-        WHERE co.id = ' . $cohort->id . '
-        AND u.deleted = 0 AND u.suspended = 0', null);
+        WHERE co.id = ? 
+        AND u.deleted = 0 AND u.suspended = 0', [$cohort->id]);
         //on va chercher l'utilisateur connecté
         $from = $DB->get_record('user', ['id' => $USER->id]);
-        // var_dump($from);
-        // die();
+
         $msgsubject = $fromform->subject;
         $msgcontent = reset($fromform->content);
         
         foreach($cohortmembers as $cohortmember){
-            // var_dump($cohortmember);
-            //on envoi le message à chaque membre sauf à l'utilisateur connecté
-            if($USER->id != $cohortmember->id){
-                email_to_user($cohortmember, $from, $msgsubject, $msgcontent, $msgcontent);
+            try {
+                if($USER->id != $cohortmember->id){
+                    // echo $msgcontent;
+                    // die();
+                    email_to_user($cohortmember, $from, $msgsubject, $msgcontent, $msgcontent);
+                }
+            } catch (Exception $e) {
+                // Gérer l'erreur
+                debugging("Erreur d'envoi d'email: " . $e->getMessage());
             }
         }
         // die();
         redirect($CFG->wwwroot . '/theme/remui/views/cohort.php?messagesent=' . count($cohortmembers) . '&cohortid='.$cohortid);
-    } else {
-        $content .= "Le groupe n'existe pas...";
     }
     
 }

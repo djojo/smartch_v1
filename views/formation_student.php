@@ -43,7 +43,6 @@ WHERE gm.userid = ' . $USER->id . ' AND g.courseid = ' . $courseid, null);
 //si l'utilisateur à un groupe
 if (count($groups) > 0) {
 
-
     $group = reset($groups);
     $groupid = $group->id;
 
@@ -53,21 +52,6 @@ if (count($groups) > 0) {
     $session = $DB->get_record('smartch_session', ['groupid' => $group->id]);
 
     if ($session) {
-
-        // $nbadresse = rand(1, 6);
-        // if ($nbadresse == 1) {
-        //     $sessionadress = '19 Rue Paul Bert, 92700 Colombes';
-        // } else if ($nbadresse == 2) {
-        //     $sessionadress = '111 Rue de Lorient, 35000 Rennes, France';
-        // } else if ($nbadresse == 3) {
-        //     $sessionadress = 'Chem. des Bruyères, 78120 Clairefontaine-en-Yvelines';
-        // } else if ($nbadresse == 4) {
-        //     $sessionadress = '7 Rue Henri Poincaré, 75020 Paris';
-        // } else if ($nbadresse == 5) {
-        //     $sessionadress = '87 Bd de Grenelle, 75015 Paris';
-        // } else if ($nbadresse == 6) {
-        //     $sessionadress = '90 Av. Marceau, 92400 Courbevoie';
-        // }
 
         $sessionadress = "";
         if ($session->adress1 != "") {
@@ -89,32 +73,14 @@ if (count($groups) > 0) {
             $hassessionadress = true;
         }
 
-        // $sessionadress = $session->adress1 . ', ' . $session->adress2 . ', ' . $session->zip . ',  ' . $session->city;
-
-
-        //on genere le cache misere
-        // $nbtimeplanning = rand(1, 4);
-        // if ($nbtimeplanning == 1) {
-        //     $timestampplanningstart = 1694332800;
-        //     $timestampplanningend = 1702890000;
-        // } else if ($nbtimeplanning == 2) {
-        //     $timestampplanningstart = 1696233600;
-        //     $timestampplanningend = 1710493200;
-        // } else if ($nbtimeplanning == 3) {
-        //     $timestampplanningstart = 1704445200;
-        //     $timestampplanningend = 1715328000;
-        // } else if ($nbtimeplanning == 4) {
-        //     $timestampplanningstart = 1705741200;
-        //     $timestampplanningend = 1713427200;
-        // }
-        // $sessiondate = 'Session du ' . userdate($timestampplanningstart, get_string('strftimedate')) . ' au ' . userdate($timestampplanningend, get_string('strftimedate'));
-
         $sessiondate = 'Du ' . userdate($session->startdate, '%d/%m/%Y') . ' au ' . userdate($session->enddate, '%d/%m/%Y');
 
         //On va chercher le responsable pédagogique
         $coach = getResponsablePedagogique($groupid, $courseid);
 
         // var_dump($coach);
+
+        
 
         if ($coach[1]) {
             // $backurl = $_SERVER['REQUEST_URI'];
@@ -124,6 +90,8 @@ if (count($groups) > 0) {
         //le context du template du parcours
         $templatecontextcourse = (object)[
             'course' => $course,
+            'iscoach' => true,
+            'coach' => $coach[0],
             'urlmessageresponsable' => $urlmessageresponsable,
             'coursesummary' => html_entity_decode($course->summary),
             'session' => true,
@@ -132,8 +100,6 @@ if (count($groups) > 0) {
             'sessionadress' => $sessionadress,
             'hassessionadress' => $hassessionadress,
             'sessiondate' => $sessiondate,
-            'coach' => $coach[0],
-            'iscoach' => true,
             'courseduration' => $courseduration,
             'coursetype' => $coursetype,
             'diplome' => $diplome,
@@ -151,15 +117,36 @@ if (count($groups) > 0) {
         ];
     }
 } else {
-    // $content .= '<p style="color:white;">Pas de groupe...</p>';
 
-    //le context du template du parcours
-    $templatecontextcourse = (object)[
-        'course' => $course,
-        'session' => false,
-        'coursesummary' => html_entity_decode($course->summary),
-        'format' => "fff-course-box-info"
-    ];
+    $portail = getConfigPortail();
+    if ($portail == "portailrh") {
+
+        //get the admin user with the role manager
+        $adminUser = getManagerPortailRH();
+
+        $urlmessageadmin = new moodle_url('/theme/remui/views/usermessage.php?userid=' . $adminUser->id) . '&returnurl=' . $PAGE->url;
+
+        $templatecontextcourse = (object)[
+            'iscoach' => true,
+            'adminmanager' => $adminUser->firstname . ' ' . $adminUser->lastname,
+            'urlmessageresponsable' => $urlmessageadmin,
+            'course' => $course,
+            'session' => false,
+            'coursesummary' => html_entity_decode($course->summary),
+            'format' => "fff-course-box-info"
+        ];
+    } else {
+        //le context du template du parcours
+        $templatecontextcourse = (object)[
+            'course' => $course,
+            'session' => false,
+            'coursesummary' => html_entity_decode($course->summary),
+            'format' => "fff-course-box-info"
+        ];
+    }
+
+
+    
 }
 
 
@@ -175,10 +162,6 @@ if ($session) {
 }
 
 $modulesstatus = getModulesStatus($courseid, $sessionid);
-
-// var_dump($modulesstatus);
-
-// $actsccc = getCourseActivitiesStats($courseid);
 
 //on va chercher les logs de l'utilisateur
 $logs = $DB->get_records_sql('SELECT * FROM mdl_smartch_activity_log WHERE course = ' . $courseid . ' AND userid = ' . $USER->id, null);

@@ -46,7 +46,7 @@ $PAGE->set_url(new moodle_url('/theme/remui/views/courseusers.php'));
 $PAGE->set_context(\context_system::instance());
 $PAGE->set_title("Utilisateurs");
 
-// smartchModalRole();
+smartchModalRole();
 
 echo '<style>
 
@@ -294,11 +294,11 @@ foreach ($users as $user) {
                         }
                     }
 
-                    $content .= '<td>' . $rolename . '</td>';
-                    // $content .= '<td>
-                    //     <div style="display:none;">' . $rolename . '</div>
-                    //     <a onclick="modifyRole('.$user->id.', '.$courseid.', '.$role->roleid.');" >' . $rolename . '</a>
-                    // </td>';
+                    // $content .= '<td>' . $rolename . '</td>';
+                    $content .= '<td>
+                        <div style="display:none;">' . $rolename . '</div>
+                        <a onclick="modifyRole('.$user->id.', '.$courseid.', '.$role->roleid.');" >' . $rolename . '</a>
+                    </td>';
 
                     $content .= '<td><a class="smartch_table_btn" href="' . new moodle_url('/theme/remui/views/adminuser.php') . '?return=users&userid=' . $user->id . '">Consulter</a></td>
                 </tr>';
@@ -339,16 +339,16 @@ echo '<script>
 
 
 
-// echo '<script>
-//         function modifyRole(userid, courseid, actualroleid){
-//             let htmlrole = "";
-//             htmlrole += "<h3>Modifier le rôle</h3>";
-//             // htmlrole += "<div>Le rôle actuel est "+actualroleid+"</div>";
-//             // htmlrole += "<div>Rôle actuel sur la formation :</div>";
-//             document.querySelector("#newroleid").value = actualroleid;
-//             document.querySelector("#newroleuserid").value = userid;
-//             document.querySelector("#modal_content").innerHTML = htmlrole;
-//             document.querySelector(".smartch_modal_container").style.display = "flex";
-//         }
+echo '<script>
+        function modifyRole(userid, courseid, actualroleid){
+            let htmlrole = "";
+            htmlrole += "<h3>Modifier le rôle</h3>";
+            // htmlrole += "<div>Le rôle actuel est "+actualroleid+"</div>";
+            // htmlrole += "<div>Rôle actuel sur la formation :</div>";
+            document.querySelector("#newroleid").value = actualroleid;
+            document.querySelector("#newroleuserid").value = userid;
+            document.querySelector("#modal_content").innerHTML = htmlrole;
+            document.querySelector(".smartch_modal_container").style.display = "flex";
+        }
                             
-//     </script>';
+    </script>';

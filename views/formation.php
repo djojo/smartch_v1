@@ -42,6 +42,7 @@ $sent = optional_param('sent', false, PARAM_BOOL);
 $courseid = required_param('id', PARAM_INT);
 $userid = optional_param('userid', '', PARAM_INT);
 $sectionid = optional_param('sectionid', null, PARAM_INT);
+$messagesent = optional_param('messagesent', null, PARAM_TEXT);
 
 if (!$userid) {
     $userid = $USER->id;
@@ -90,11 +91,15 @@ if ($coursedurationobject) {
 // echo '<h1>' . $diplome . $courseduration . $coursetype . '</h1>';
 
 $context = context_system::instance();
-$PAGE->set_url(new moodle_url('/theme/remui/views/formation.php'));
+$PAGE->set_url(new moodle_url('/theme/remui/views/formation.php', array('id' => $courseid)));
 $PAGE->set_context(\context_system::instance());
 $PAGE->set_title($course->fullname);
 
 echo $OUTPUT->header();
+
+if($messagesent){
+    displayNotification('Message envoyé');
+}
 
 echo '<style>
 .main-inner {
@@ -173,9 +178,7 @@ if ($rolename == "super-admin" || $rolename == "manager") {
 // $content .= $OUTPUT->render_from_template('theme_remui/smartch_my_courses', null);
 
 
-if ($sent) {
-    displayMessageSent();
-}
+
 
 echo $content;
 
