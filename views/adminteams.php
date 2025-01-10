@@ -274,7 +274,11 @@ if ($pageno == 1) {
 } else {
     $previous = true;
     $newpage = $pageno - 1;
-    $prevurl = new moodle_url('/theme/remui/views/adminteams.php?pageno=' . $newpage) . $filter;
+    $prevurl = new moodle_url('/theme/remui/views/adminteams.php?pageno=' . $newpage);
+    if ($courseid) {
+        $prevurl .= '&courseid=' . $courseid;
+    }
+    $prevurl .= $filter;
 }
 
 if ($pageno == $total_pages) {
@@ -282,7 +286,11 @@ if ($pageno == $total_pages) {
 } else {
     $next = true;
     $newpage = $pageno + 1;
-    $nexturl = new moodle_url('/theme/remui/views/adminteams.php?pageno=' . $newpage) . $filter;
+    $nexturl = new moodle_url('/theme/remui/views/adminteams.php?pageno=' . $newpage);
+    if ($courseid) {
+        $nexturl .= '&courseid=' . $courseid;
+    }
+    $nexturl .= $filter;
 }
 
 //la pagination en haut
