@@ -913,7 +913,7 @@ function downloadCSVTeam($groupid)
     ];
 
     //on va chercher les membres du groupe
-    $querygroupmembers = 'SELECT u.id, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
+    $querygroupmembers = 'SELECT DISTINCT u.id, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
 FROM mdl_role_assignments AS ra 
 LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
 LEFT JOIN mdl_role AS r ON ra.roleid = r.id 
@@ -1089,7 +1089,9 @@ WHERE sa.course = ' . $course->id . ' AND gm.groupid =  ' . $groupid, null);
 
     // Parcourir les données et les écrire au format CSV
     foreach ($data as $row) {
-        fputcsv($output, $row);
+        if (is_array($row)) {
+            fputcsv($output, $row);
+        }
     }
 
     // Fermer le flux de sortie
@@ -1126,7 +1128,7 @@ function downloadXLSTeam($groupid)
     ];
 
     //on va chercher les membres du groupe
-    $querygroupmembers = 'SELECT u.id, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
+    $querygroupmembers = 'SELECT DISTINCT u.id, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
 FROM mdl_role_assignments AS ra 
 LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
 LEFT JOIN mdl_role AS r ON ra.roleid = r.id 
@@ -1324,11 +1326,13 @@ WHERE sa.course = ' . $course->id . ' AND gm.groupid =  ' . $groupid, null);
     // Remplir les données dans le Spreadsheet
     $rowNumber = 1;
     foreach ($data as $row) {
-        $column = 'A';
-        foreach ($row as $cell) {
-            $sheet->setCellValue($column++ . $rowNumber, $cell);
+        if (is_array($row)) {
+            $column = 'A';
+            foreach ($row as $cell) {
+                $sheet->setCellValue($column++ . $rowNumber, $cell);
+            }
+            $rowNumber++;
         }
-        $rowNumber++;
     }
 
     // Écrire dans un fichier .xlsx

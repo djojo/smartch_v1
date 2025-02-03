@@ -35,7 +35,7 @@ $content .= '<div style="margin:10px 0;">Extraction du rapport le ' . userdate(T
 
 
 //on va chercher les membres du groupe
-$querygroupmembers = 'SELECT u.id, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
+$querygroupmembers = 'SELECT DISTINCT u.id, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
 FROM mdl_role_assignments AS ra 
 LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
 LEFT JOIN mdl_role AS r ON ra.roleid = r.id 
@@ -56,179 +56,149 @@ $sections = getCourseSections($course->id);
 $activities = getCourseActivitiesRapport($course->id);
 
 
-$content .= '<table>';
-$content .= '<tbody>';
-$content .= '<tr>';
-$content .= '<td  rowspan="2">Nom Prénom de l\'apprenant</td>';
-$content .= '<td  rowspan="2">Adresse courriel</td>';
-$content .= '<td  rowspan="2">N° individu</td>';
-$content .= '<td  rowspan="2">% de progression totale</td>';
-$content .= '<td  rowspan="2">Temps total passé</td>';
+// On va découper les sections en groupes de 10
+$sectionsChunks = array_chunk($sections, 5);
 
-foreach ($sections as $section) {
-
-  ///////////////
-  if ($session) {
-    //on va chercher le nombre de planning dans la section disponible
-    $sectionsplannings = getSectionPlannings($course->id, $session->id, $section->id);
-    $totalsectionsplannings = count($sectionsplannings);
-  }
-  //////////
-
-  //on compte le nombre de matière
-  $tableau = explode(',', $section->sequence);
-  $nbmodule = 0;
-  foreach ($tableau as $moduleid) {
-    //on cherche dans le tableau des activités
-    foreach ($activities as $activityy) {
-      if ($activityy->id == $moduleid) {
-        $activity = $activityy;
-        break; // Sortir de la boucle dès que l'élément est trouvé
-      }
-    }
-    if ($activity->activitytype == 'face2face') {
-      //On va chercher le nombre de planning dans cette section
-      if ($totalsectionsplannings > 0) {
-        //si il reste des plannings dans cette section à mettre
-        $totalsectionsplannings--;
-        $nbmodule++;
-      }
-    } else if ($activity->activityname && $activity->activitytype != "folder") {
-      $nbmodule++;
-    }
-  }
-  $sectionname = $section->name;
-  if ($sectionname == "") {
-    $sectionname = "Généralités";
-  }
-  $content .= '<td  colspan="' . $nbmodule . '">' . $sectionname . '</td>';
-}
-
-$content .= '</tr>';
-$content .= '<tr>';
-
-foreach ($sections as $section) {
-
-  ///////////////
-  if ($session) {
-    //on va chercher le nombre de planning dans la section disponible
-    $sectionsplannings = getSectionPlannings($course->id, $session->id, $section->id);
-    $totalsectionsplannings = count($sectionsplannings);
-
-    // //on compte le nombre de planning de la section dans le ruban
-    // $sectionplannings = getSectionActivityPlannings($course->id, $session->id, $section->id);
-    // //le nombre d'activité planning de la section
-    // $countactivityplanning = count($sectionplannings);
-  }
-  //////////
-
-  //on compte le nombre de matière
-  $tableau = explode(',', $section->sequence);
-  foreach ($tableau as $moduleid) {
-    //on cherche dans le tableau des activités
-    foreach ($activities as $activityy) {
-      if ($activityy->id == $moduleid) {
-        $activity = $activityy;
-        break; // Sortir de la boucle dès que l'élément est trouvé
-      }
-    }
-    // $content .= '<td style="writing-mode: vertical-rl; text-orientation: upright;">' . $activity->activityname . '</td>';
-    if ($activity->activitytype == 'face2face') {
-      //On va chercher le nombre de planning dans cette section
-      if ($totalsectionsplannings > 0) {
-        $totalsectionsplannings--;
-        $content .= '<td>' . $activity->activityname . '</td>';
-        // $content .= '<td>Planning</td>';
-      }
-    } else if ($activity->activityname && $activity->activitytype != "folder") {
-      $content .= '<td>' . $activity->activityname . '</td>';
-    }
-  }
-}
-
-$content .= '</tr>';
-
+// Calculer le temps total passé avant la boucle des tableaux
+$totaltimespent = 0;
 foreach ($groupmembers as $groupmember) {
+    $totaltimespent += strtotime("1970-01-01 " . getTimeSpentOnCourse($groupmember->id, $course->id) . " UTC");
+}
+// Convertir le temps total en format lisible
+$totaltimespent = format_time($totaltimespent);
 
-  $progression = getCompletionPourcent($course->id, $groupmember->id) . '%';
-  // $progression = getCourseProgression($groupmember->id, $course->id) . '%';
-  $timespent = getTimeSpentOnCourse($groupmember->id, $course->id);
+foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
+    if ($chunkIndex > 0) {
+        $content .= '<div style="page-break-before: always;"></div>'; // Saut de page
+    }
+    
+    $content .= '<table>';
+    $content .= '<tbody>';
+    $content .= '<tr>';
+    $content .= '<td rowspan="2">Nom Prénom de l\'apprenant</td>';
+    $content .= '<td rowspan="2">Adresse courriel</td>';
+    $content .= '<td rowspan="2">N° individu</td>';
+    $content .= '<td rowspan="2">% de progression totale</td>';
+    $content .= '<td rowspan="2">Temps total passé</td>';
 
-  $content .= '<tr>';
+    // Première ligne avec les noms des sections
+    foreach ($sectionsChunk as $section) {
+        if ($session) {
+            $sectionsplannings = getSectionPlannings($course->id, $session->id, $section->id);
+            $totalsectionsplannings = count($sectionsplannings);
+        }
 
-  $content .= '<td>' . $groupmember->firstname . ' ' . $groupmember->lastname . '</td>';
-  $content .= '<td>' . $groupmember->email . '</td>';
-  $content .= '<td>' . $groupmember->id . '</td>';
-  $content .= '<td>' . $progression . '</td>';
-  $content .= '<td>' . $timespent . '</td>';
-
-  foreach ($sections as $section) {
-
-    if ($session) {
-      //on compte le nombre de planning de la section dans le ruban
-      $sectionplannings = getSectionActivityPlannings($course->id, $session->id, $section->id);
-      //le nombre d'activité planning de la section
-      $countactivityplanning = count($sectionplannings);
-
-      $sectionsplannings = getSectionPlannings($course->id, $session->id, $section->id);
-      $totalsectionsplannings = count($sectionsplannings);
+        $tableau = explode(',', $section->sequence);
+        $nbmodule = 0;
+        foreach ($tableau as $moduleid) {
+            $activity = null;
+            foreach ($activities as $activityy) {
+                if ($activityy->id == $moduleid) {
+                    $activity = $activityy;
+                    break;
+                }
+            }
+            if ($activity && $activity->activitytype == 'face2face') {
+                if ($totalsectionsplannings > 0) {
+                    $totalsectionsplannings--;
+                    $nbmodule++;
+                }
+            } else if ($activity && $activity->activityname && $activity->activitytype != "folder") {
+                $nbmodule++;
+            }
+        }
+        $sectionname = $section->name ?: "Généralités";
+        $content .= '<td colspan="' . $nbmodule . '">' . $sectionname . '</td>';
     }
 
-    //on compte le nombre de matière
-    $tableau = explode(',', $section->sequence);
-    foreach ($tableau as $moduleid) {
-      //on cherche dans le tableau des activités
-      foreach ($activities as $activityy) {
-        if ($activityy->id == $moduleid) {
-          $activity = $activityy;
-          break; // Sortir de la boucle dès que l'élément est trouvé
+    $content .= '</tr>';
+    $content .= '<tr>';
+
+    // Deuxième ligne avec les noms des activités
+    foreach ($sectionsChunk as $section) {
+        if ($session) {
+            $sectionsplannings = getSectionPlannings($course->id, $session->id, $section->id);
+            $totalsectionsplannings = count($sectionsplannings);
         }
-      }
-      if ($activity->activitytype == 'face2face') {
-        //On va chercher le nombre de planning dans cette section
-        if ($totalsectionsplannings > 0) {
-          //on va chercher le planning correspondant
-          $completion = getPlanningCompletion($course->id, $session->id, $section->id);
-          $content .= '<td>' . $completion . '</td>';
-          //si il reste des plannings dans cette section à mettre
-          $totalsectionsplannings--;
+
+        $tableau = explode(',', $section->sequence);
+        foreach ($tableau as $moduleid) {
+            $activity = null;
+            foreach ($activities as $activityy) {
+                if ($activityy->id == $moduleid) {
+                    $activity = $activityy;
+                    break;
+                }
+            }
+            if ($activity && $activity->activitytype == 'face2face') {
+                if ($totalsectionsplannings > 0) {
+                    $totalsectionsplannings--;
+                    $content .= '<td>' . $activity->activityname . '</td>';
+                }
+            } else if ($activity && $activity->activityname && $activity->activitytype != "folder") {
+                $content .= '<td>' . $activity->activityname . '</td>';
+            }
         }
-      } else if ($activity->activityname && $activity->activitytype != "folder") {
-        $completion = getActivityCompletionStatusRapport($moduleid, $groupmember->id);
-        // $completion = getActivityCompletionStatusRapport($moduleid, $groupmember->id);
-        $content .= '<td>' . $completion . '</td>';
-      }
     }
-  }
 
-  $content .= '</tr>';
+    $content .= '</tr>';
+
+    // Lignes des étudiants
+    foreach ($groupmembers as $groupmember) {
+        $progression = getCompletionPourcent($course->id, $groupmember->id) . '%';
+        $timespent = getTimeSpentOnCourse($groupmember->id, $course->id);
+
+        $content .= '<tr>';
+        $content .= '<td>' . $groupmember->firstname . ' ' . $groupmember->lastname . '</td>';
+        $content .= '<td>' . $groupmember->email . '</td>';
+        $content .= '<td>' . $groupmember->id . '</td>';
+        $content .= '<td>' . $progression . '</td>';
+        $content .= '<td>' . $timespent . '</td>';
+
+        foreach ($sectionsChunk as $section) {
+            if ($session) {
+                $sectionsplannings = getSectionPlannings($course->id, $session->id, $section->id);
+                $totalsectionsplannings = count($sectionsplannings);
+            }
+
+            $tableau = explode(',', $section->sequence);
+            foreach ($tableau as $moduleid) {
+                $activity = null;
+                foreach ($activities as $activityy) {
+                    if ($activityy->id == $moduleid) {
+                        $activity = $activityy;
+                        break;
+                    }
+                }
+                if ($activity && $activity->activitytype == 'face2face') {
+                    if ($totalsectionsplannings > 0) {
+                        $completion = getPlanningCompletion($course->id, $session->id, $section->id);
+                        $content .= '<td>' . $completion . '</td>';
+                        $totalsectionsplannings--;
+                    }
+                } else if ($activity && $activity->activityname && $activity->activitytype != "folder") {
+                    $completion = getActivityCompletionStatusRapport($moduleid, $groupmember->id);
+                    $content .= '<td>' . $completion . '</td>';
+                }
+            }
+        }
+        $content .= '</tr>';
+    }
+
+    // Ligne de progression générale
+    if ($chunkIndex == count($sectionsChunks) - 1) { // Seulement sur le dernier tableau
+        $content .= '<tr>';
+        $content .= '<td>PROGRESSION GÉNÉRALE</td>';
+        $content .= '<td></td>';
+        $content .= '<td></td>';
+        $content .= '<td>' . getTeamProgress($course->id, $groupid)[0] . '</td>';
+        $content .= '<td>' . $totaltimespent . '</td>';
+        $content .= '</tr>';
+    }
+
+    $content .= '</tbody>';
+    $content .= '</table>';
 }
-
-//on va chercher les logs du groupe
-$logs = $DB->get_records_sql('SELECT sa.id, sa.timespent FROM mdl_smartch_activity_log sa
-JOIN mdl_groups_members gm ON gm.userid = sa.userid
-WHERE sa.course = ' . $course->id . ' AND gm.groupid =  ' . $groupid, null);
-
-// var_dump($logs);
-$timetotal = 0;
-foreach ($logs as $log) {
-  $timetotal += $log->timespent;
-}
-
-$totaltimespent = convert_to_string_time($timetotal);
-
-
-$content .= '<tr>';
-$content .= '<td>PROGRESSION GÉNÉRALE</td>';
-$content .= '<td></td>';
-$content .= '<td></td>';
-$content .= '<td>' . getTeamProgress($course->id, $groupid)[0] . '</td>';
-$content .= '<td>' . $totaltimespent . '</td>';
-$content .= '</tr>';
-
-$content .= '</tbody>';
-$content .= '</table>';
-
 
 $content .= '<div>';
 $content .= '
@@ -236,6 +206,9 @@ $content .= '
 <p>Pas terminé : -</p>';
 
 $content .= '</div>';
+
+// echo $content;
+// exit;
 
 
 require_once '../dompdf/autoload.inc.php';
