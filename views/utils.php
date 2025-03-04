@@ -913,7 +913,7 @@ function downloadCSVTeam($groupid)
     ];
 
     //on va chercher les membres du groupe
-    $querygroupmembers = 'SELECT DISTINCT u.id, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
+    $querygroupmembers = 'SELECT DISTINCT u.id, u.username, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
 FROM mdl_role_assignments AS ra 
 LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
 LEFT JOIN mdl_role AS r ON ra.roleid = r.id 
@@ -936,7 +936,7 @@ ORDER BY u.lastname ASC';
 
     array_push($data, ""); //saut de ligne
 
-    $headertable = ['Nom Prénom de l\'apprenant', 'Adresse courriel', 'N° individu', '% de progression totale', 'Temps total passé'];
+    $headertable = ['Nom Prénom de l\'apprenant', 'N° INNO', '% de progression totale', 'Temps total passé'];
 
     foreach ($sections as $section) {
         //on compte le nombre de matière
@@ -1011,17 +1011,15 @@ ORDER BY u.lastname ASC';
         $membertable = [];
 
         $progression = getCourseProgression($groupmember->id, $course->id) . '%';
-        $timespent = getTimeSpentOnCourse($groupmember->id, $course->id);
+        $timespent = getTotalTimeSpentOnCourse($groupmember->id, $course->id);
 
 
 
         array_push($membertable, $groupmember->firstname . ' ' . $groupmember->lastname);
-        array_push($membertable, $groupmember->email);
-        array_push($membertable, $groupmember->id);
+        // array_push($membertable, $groupmember->email);
+        array_push($membertable, $groupmember->username);
         array_push($membertable, $progression);
-        array_push($membertable, $timespent);
-
-
+        array_push($membertable, convert_to_string_minutes($timespent));
 
         foreach ($sections as $section) {
 
@@ -1071,7 +1069,7 @@ WHERE sa.course = ' . $course->id . ' AND gm.groupid =  ' . $groupid, null);
     $totaltimespent = convert_to_string_time($timetotal);
 
 
-    $timegrouptable = ['PROGRESSION GÉNÉRALE', '', '', getTeamProgress($course->id, $groupid)[0], $totaltimespent];
+    $timegrouptable = ['PROGRESSION GÉNÉRALE', '', getTeamProgress($course->id, $groupid)[0], $totaltimespent];
     array_push($data, $timegrouptable);
 
     $legendtable = ['Terminé : X', 'Pas terminé : -'];
@@ -1128,7 +1126,7 @@ function downloadXLSTeam($groupid)
     ];
 
     //on va chercher les membres du groupe
-    $querygroupmembers = 'SELECT DISTINCT u.id, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
+    $querygroupmembers = 'SELECT DISTINCT u.id, u.username, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
 FROM mdl_role_assignments AS ra 
 LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
 LEFT JOIN mdl_role AS r ON ra.roleid = r.id 
@@ -1151,7 +1149,7 @@ ORDER BY u.lastname ASC';
 
     array_push($data, ""); //saut de ligne
 
-    $headertable = ['Nom Prénom de l\'apprenant', 'Adresse courriel', 'N° individu', '% de progression totale', 'Temps total passé'];
+    $headertable = ['Nom Prénom de l\'apprenant', 'N° INNO', '% de progression totale', 'Temps total passé'];
 
     foreach ($sections as $section) {
         //on compte le nombre de matière
@@ -1226,15 +1224,15 @@ ORDER BY u.lastname ASC';
         $membertable = [];
 
         $progression = getCourseProgression($groupmember->id, $course->id) . '%';
-        $timespent = getTimeSpentOnCourse($groupmember->id, $course->id);
+        $timespent = getTotalTimeSpentOnCourse($groupmember->id, $course->id);
 
 
 
         array_push($membertable, $groupmember->firstname . ' ' . $groupmember->lastname);
-        array_push($membertable, $groupmember->email);
-        array_push($membertable, $groupmember->id);
+        // array_push($membertable, $groupmember->email);
+        array_push($membertable, $groupmember->username);
         array_push($membertable, $progression);
-        array_push($membertable, $timespent);
+        array_push($membertable, convert_to_string_minutes($timespent));
 
 
 
@@ -1287,7 +1285,7 @@ WHERE sa.course = ' . $course->id . ' AND gm.groupid =  ' . $groupid, null);
     $totaltimespent = convert_to_string_time($timetotal);
 
 
-    $timegrouptable = ['PROGRESSION GÉNÉRALE', '', '', getTeamProgress($course->id, $groupid)[0], $totaltimespent];
+    $timegrouptable = ['PROGRESSION GÉNÉRALE', '', getTeamProgress($course->id, $groupid)[0], $totaltimespent];
     array_push($data, $timegrouptable);
 
     $legendtable = ['Terminé : X', 'Pas terminé : -'];
@@ -1365,7 +1363,7 @@ function getDataTeamGrades($course, $groupid){
     ];
 
     //on va chercher les membres du groupe
-    $querygroupmembers = 'SELECT u.id, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
+    $querygroupmembers = 'SELECT DISTINCT u.id, u.username, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
 FROM mdl_role_assignments AS ra 
 LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
 LEFT JOIN mdl_role AS r ON ra.roleid = r.id 
@@ -1388,7 +1386,7 @@ ORDER BY u.lastname ASC';
 
     // array_push($data, ""); //saut de ligne
 
-    $headertable = ['Nom Prénom de l\'apprenant', 'Adresse courriel', 'N° individu'];
+    $headertable = ['Nom Prénom de l\'apprenant', 'N° INNO'];
 
     foreach ($sections as $section) {
         //on compte le nombre de matière
@@ -1453,8 +1451,8 @@ ORDER BY u.lastname ASC';
         // $timespent = getTimeSpentOnCourse($groupmember->id, $course->id);
 
         array_push($membertable, $groupmember->firstname . ' ' . $groupmember->lastname);
-        array_push($membertable, $groupmember->email);
-        array_push($membertable, $groupmember->id);
+        // array_push($membertable, $groupmember->email);
+        array_push($membertable, $groupmember->username);
         // array_push($membertable, $progression);
         // array_push($membertable, $timespent);
 
@@ -1723,6 +1721,26 @@ function generateGUID()
     }
 }
 
+function convert_to_string_minutes($time) 
+{
+    $stringtime = "";
+
+    $m = floor($time / 60);
+    $s = $time % 60;
+
+    if ($m != 0) {
+        $stringtime .= $m . "m";
+    }
+    if ($s != 0) {
+        $stringtime .= $s . "s";
+    }
+
+    if ($stringtime == "") {
+        $stringtime = "0m";
+    }
+    return $stringtime;
+}
+
 function convert_to_string_time($time)
 {
     $stringtime = "";
@@ -1762,6 +1780,20 @@ function getTimeSpentOnCourse($userid, $courseid)
     }
 
     return convert_to_string_time($timetotal);
+}
+
+function getTotalTimeSpentOnCourse($userid, $courseid)
+{
+    global $DB;
+    //on va chercher les logs de l'utilisateur
+    $logs = $DB->get_records_sql('SELECT * FROM mdl_smartch_activity_log WHERE course = ' . $courseid . ' AND userid = ' . $userid, null);
+
+    $timetotal = 0;
+    foreach ($logs as $log) {
+        $timetotal += $log->timespent;
+    }
+
+    return $timetotal;
 }
 
 function getActivityCompletionStatus($activityid, $userid = null, $type = null)

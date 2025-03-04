@@ -35,7 +35,7 @@ $content .= '<div style="margin:10px 0;">Extraction du rapport le ' . userdate(T
 
 
 //on va chercher les membres du groupe
-$querygroupmembers = 'SELECT DISTINCT u.id, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
+$querygroupmembers = 'SELECT DISTINCT u.id, u.username, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
 FROM mdl_role_assignments AS ra 
 LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
 LEFT JOIN mdl_role AS r ON ra.roleid = r.id 
@@ -61,11 +61,11 @@ $sectionsChunks = array_chunk($sections, 5);
 
 // Calculer le temps total passé avant la boucle des tableaux
 $totaltimespent = 0;
-foreach ($groupmembers as $groupmember) {
-    $totaltimespent += strtotime("1970-01-01 " . getTimeSpentOnCourse($groupmember->id, $course->id) . " UTC");
-}
-// Convertir le temps total en format lisible
-$totaltimespent = format_time($totaltimespent);
+// foreach ($groupmembers as $groupmember) {
+//     $totaltimespent += strtotime("1970-01-01 " . getTimeSpentOnCourse($groupmember->id, $course->id) . " UTC");
+// }
+// // Convertir le temps total en format lisible
+// $totaltimespent = format_time($totaltimespent);
 
 foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
     if ($chunkIndex > 0) {
@@ -76,8 +76,8 @@ foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
     $content .= '<tbody>';
     $content .= '<tr>';
     $content .= '<td rowspan="2">Nom Prénom de l\'apprenant</td>';
-    $content .= '<td rowspan="2">Adresse courriel</td>';
-    $content .= '<td rowspan="2">N° individu</td>';
+    // $content .= '<td rowspan="2">Adresse courriel</td>';
+    $content .= '<td rowspan="2">N° INNO</td>';
     $content .= '<td rowspan="2">% de progression totale</td>';
     $content .= '<td rowspan="2">Temps total passé</td>';
 
@@ -146,14 +146,15 @@ foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
     // Lignes des étudiants
     foreach ($groupmembers as $groupmember) {
         $progression = getCompletionPourcent($course->id, $groupmember->id) . '%';
-        $timespent = getTimeSpentOnCourse($groupmember->id, $course->id);
+        $timespent = getTotalTimeSpentOnCourse($groupmember->id, $course->id);
+        $totaltimespent += $timespent;
 
         $content .= '<tr>';
-        $content .= '<td>' . $groupmember->firstname . ' ' . $groupmember->lastname . '</td>';
-        $content .= '<td>' . $groupmember->email . '</td>';
-        $content .= '<td>' . $groupmember->id . '</td>';
+        $content .= '<td>' . $groupmember->firstname . ' ' . $groupmember->lastname . ' (' . $groupmember->shortname . ')</td>';
+        // $content .= '<td>' . $groupmember->email . '</td>';
+        $content .= '<td>' . $groupmember->username . '</td>';
         $content .= '<td>' . $progression . '</td>';
-        $content .= '<td>' . $timespent . '</td>';
+        $content .= '<td>' . convert_to_string_minutes($timespent) . '</td>';
 
         foreach ($sectionsChunk as $section) {
             if ($session) {
@@ -190,9 +191,8 @@ foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
         $content .= '<tr>';
         $content .= '<td>PROGRESSION GÉNÉRALE</td>';
         $content .= '<td></td>';
-        $content .= '<td></td>';
         $content .= '<td>' . getTeamProgress($course->id, $groupid)[0] . '</td>';
-        $content .= '<td>' . $totaltimespent . '</td>';
+        $content .= '<td>' . convert_to_string_time($totaltimespent) . '</td>';
         $content .= '</tr>';
     }
 

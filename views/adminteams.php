@@ -30,9 +30,14 @@ require_login();
 global $USER, $DB, $CFG;
 
 $courseid = optional_param('courseid', null, PARAM_INT);
-$return = optional_param('return', null, PARAM_INT);
+$return = optional_param('return', null, PARAM_TEXT);
 
-$params = null;
+$search = optional_param('search', '', PARAM_TEXT);
+$pageno = optional_param('pageno', 1, PARAM_TEXT);
+
+//le tableau des parametres pour la recherche et pagination
+$params = array();
+$filter = '';
 $content = '';
 $paginationtitle = '';
 $prevurl = '';
@@ -103,29 +108,25 @@ echo '<style>
 
 echo $OUTPUT->header();
 
-// echo '<script
-//   src="https://code.jquery.com/jquery-3.7.1.min.js"
-//   integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
-//   crossorigin="anonymous"></script>';
-// echo '<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-// <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>';
+if(!empty($courseid)){
+    $param1['paramname'] = "courseid";
+    $param1['paramvalue'] = $courseid;
+    array_push($params, $param1);
+    $filter .= '&courseid=' . $courseid;
+}
 
+if(!empty($return)){
+    $param1['paramname'] = "return";
+    $param1['paramvalue'] = $return;
+    array_push($params, $param1);
+    $filter .= '&return=' . $return;
+}
 
-// echo html_writer::start_div('container');
-
-
-$search = optional_param('search', '', PARAM_TEXT);
-$pageno = optional_param('pageno', 1, PARAM_TEXT);
-
-//le tableau des parametres pour la recherche et pagination
-$params = array();
-$filter = '';
-
-if ($search != '') {
+if (!empty($search)) {
     $param1['paramname'] = "search";
     $param1['paramvalue'] = $search;
     array_push($params, $param1);
-    $filter = '&search=' . $search;
+    $filter .= '&search=' . $search;
 }
 
 if ($rolename == "super-admin" || $rolename == "manager") {
@@ -275,9 +276,7 @@ if ($pageno == 1) {
     $previous = true;
     $newpage = $pageno - 1;
     $prevurl = new moodle_url('/theme/remui/views/adminteams.php?pageno=' . $newpage);
-    if ($courseid) {
-        $prevurl .= '&courseid=' . $courseid;
-    }
+    
     $prevurl .= $filter;
 }
 
@@ -287,9 +286,7 @@ if ($pageno == $total_pages) {
     $next = true;
     $newpage = $pageno + 1;
     $nexturl = new moodle_url('/theme/remui/views/adminteams.php?pageno=' . $newpage);
-    if ($courseid) {
-        $nexturl .= '&courseid=' . $courseid;
-    }
+    
     $nexturl .= $filter;
 }
 

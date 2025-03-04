@@ -35,7 +35,7 @@ $content .= '<div style="margin:10px 0;">Extraction du carnet de note le ' . use
 
 
 //on va chercher les membres du groupe
-$querygroupmembers = 'SELECT DISTINCT u.id, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
+$querygroupmembers = 'SELECT DISTINCT u.id, u.username, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
 FROM mdl_role_assignments AS ra 
 LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
 LEFT JOIN mdl_role AS r ON ra.roleid = r.id 
@@ -60,8 +60,8 @@ $content .= '<table>';
 $content .= '<tbody>';
 $content .= '<tr>';
 $content .= '<td  rowspan="2">Nom Prénom de l\'apprenant</td>';
-$content .= '<td  rowspan="2">Adresse courriel</td>';
-$content .= '<td  rowspan="2">N° individu</td>';
+// $content .= '<td  rowspan="2">Adresse courriel</td>';
+$content .= '<td  rowspan="2">N° INNO</td>';
 // $content .= '<td  rowspan="2">% de progression totale</td>';
 // $content .= '<td  rowspan="2">Temps total passé</td>';
 
@@ -144,8 +144,8 @@ foreach ($groupmembers as $groupmember) {
   $content .= '<tr>';
 
   $content .= '<td>' . $groupmember->firstname . ' ' . $groupmember->lastname . '</td>';
-  $content .= '<td>' . $groupmember->email . '</td>';
-  $content .= '<td>' . $groupmember->id . '</td>';
+  // $content .= '<td>' . $groupmember->email . '</td>';
+  $content .= '<td>' . $groupmember->username . '</td>';
 
   foreach ($sections as $section) {
     
