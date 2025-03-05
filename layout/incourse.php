@@ -62,3 +62,11 @@ if ($PAGE->pagetype == "enrol-index" & get_config('theme_remui', 'enrolment_page
 require_once($CFG->dirroot . '/theme/remui/layout/common_end.php');
 
 echo $OUTPUT->render_from_template($template, $templatecontext);
+
+if($PAGE->cm->modname == "quiz"){
+    echo '<script>
+        // console.log("on cache les boutons de navigation prev-activity-link et next-activity-link");
+        document.querySelector("#prev-activity-link").remove();
+        document.querySelector("#next-activity-link").remove();
+    </script>';
+}
