@@ -913,7 +913,7 @@ function downloadCSVTeam($groupid)
     ];
 
     //on va chercher les membres du groupe
-    $querygroupmembers = 'SELECT DISTINCT u.id, u.username, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
+    $querygroupmembers = 'SELECT DISTINCT u.id, u.username, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid, r.shortname as rolename
 FROM mdl_role_assignments AS ra 
 LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
 LEFT JOIN mdl_role AS r ON ra.roleid = r.id 
@@ -1008,12 +1008,15 @@ ORDER BY u.lastname ASC';
 
     foreach ($groupmembers as $groupmember) {
 
+        //TODOOOOOOOO
+        if($groupmember->rolename != "student"){
+            continue;
+        }
+
         $membertable = [];
 
         $progression = getCourseProgression($groupmember->id, $course->id) . '%';
         $timespent = getTotalTimeSpentOnCourse($groupmember->id, $course->id);
-
-
 
         array_push($membertable, $groupmember->firstname . ' ' . $groupmember->lastname);
         // array_push($membertable, $groupmember->email);
@@ -1126,7 +1129,7 @@ function downloadXLSTeam($groupid)
     ];
 
     //on va chercher les membres du groupe
-    $querygroupmembers = 'SELECT DISTINCT u.id, u.username, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
+    $querygroupmembers = 'SELECT DISTINCT u.id, u.username, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid, r.shortname as rolename
 FROM mdl_role_assignments AS ra 
 LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
 LEFT JOIN mdl_role AS r ON ra.roleid = r.id 
@@ -1220,6 +1223,11 @@ ORDER BY u.lastname ASC';
 
 
     foreach ($groupmembers as $groupmember) {
+
+        //TODOOOOOOOO
+        if($groupmember->rolename != "student"){
+            continue;
+        }
 
         $membertable = [];
 
@@ -2712,7 +2720,6 @@ function exportXLS($title, $data)
     $sheet = $spreadsheet->getActiveSheet();
 
     // Ajouter des données
-    // $sheet->setCellValue('A1', 'Hello World !');
 
     // Remplir les données dans le Spreadsheet
     $rowNumber = 1;
