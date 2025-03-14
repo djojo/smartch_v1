@@ -915,15 +915,17 @@ function downloadCSVTeam($groupid)
     //on va chercher les membres du groupe
     $querygroupmembers = 'SELECT DISTINCT u.id, u.username, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid, r.shortname as rolename
 FROM mdl_role_assignments AS ra 
-LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
+LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid
 LEFT JOIN mdl_role AS r ON ra.roleid = r.id 
 LEFT JOIN mdl_context AS c ON c.id = ra.contextid 
 LEFT JOIN mdl_enrol AS e ON e.courseid = c.instanceid AND ue.enrolid = e.id 
 LEFT JOIN mdl_user u ON u.id = ue.userid
 LEFT JOIN mdl_groups_members gm ON u.id = gm.userid
 WHERE gm.groupid = ' . $groupid . '
+AND c.instanceid = ' . $course->id . '
 AND r.shortname = "student"
 ORDER BY u.lastname ASC';
+
 
     $groupmembers = $DB->get_records_sql($querygroupmembers, null);
 
@@ -975,6 +977,8 @@ ORDER BY u.lastname ASC';
     $sectiontable = ['', '', '', '', ''];
     foreach ($sections as $section) {
 
+        $totalsectionsplannings = 0;
+
         if ($session) {
             //on va chercher le nombre de planning dans la section disponible
             $sectionsplannings = getSectionPlannings($course->id, $session->id, $section->id);
@@ -1008,7 +1012,6 @@ ORDER BY u.lastname ASC';
 
     foreach ($groupmembers as $groupmember) {
 
-        //TODOOOOOOOO
         if($groupmember->rolename != "student"){
             continue;
         }
@@ -1019,6 +1022,7 @@ ORDER BY u.lastname ASC';
         $timespent = getTotalTimeSpentOnCourse($groupmember->id, $course->id);
 
         array_push($membertable, $groupmember->firstname . ' ' . $groupmember->lastname);
+        // array_push($membertable, $groupmember->firstname . ' ' . $groupmember->lastname . ' (' . $groupmember->rolename . ')');
         // array_push($membertable, $groupmember->email);
         array_push($membertable, $groupmember->username);
         array_push($membertable, $progression);
@@ -1131,13 +1135,14 @@ function downloadXLSTeam($groupid)
     //on va chercher les membres du groupe
     $querygroupmembers = 'SELECT DISTINCT u.id, u.username, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid, r.shortname as rolename
 FROM mdl_role_assignments AS ra 
-LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
+LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid
 LEFT JOIN mdl_role AS r ON ra.roleid = r.id 
 LEFT JOIN mdl_context AS c ON c.id = ra.contextid 
 LEFT JOIN mdl_enrol AS e ON e.courseid = c.instanceid AND ue.enrolid = e.id 
 LEFT JOIN mdl_user u ON u.id = ue.userid
 LEFT JOIN mdl_groups_members gm ON u.id = gm.userid
 WHERE gm.groupid = ' . $groupid . '
+AND c.instanceid = ' . $course->id . '
 AND r.shortname = "student"
 ORDER BY u.lastname ASC';
 
@@ -1190,6 +1195,8 @@ ORDER BY u.lastname ASC';
 
     $sectiontable = ['', '', '', '', ''];
     foreach ($sections as $section) {
+
+        $totalsectionsplannings = 0;
 
         if ($session) {
             //on va chercher le nombre de planning dans la section disponible
@@ -1371,15 +1378,16 @@ function getDataTeamGrades($course, $groupid){
     ];
 
     //on va chercher les membres du groupe
-    $querygroupmembers = 'SELECT DISTINCT u.id, u.username, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
+    $querygroupmembers = 'SELECT DISTINCT u.id, u.username, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid, r.shortname as rolename
 FROM mdl_role_assignments AS ra 
-LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
+LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid
 LEFT JOIN mdl_role AS r ON ra.roleid = r.id 
 LEFT JOIN mdl_context AS c ON c.id = ra.contextid 
 LEFT JOIN mdl_enrol AS e ON e.courseid = c.instanceid AND ue.enrolid = e.id 
 LEFT JOIN mdl_user u ON u.id = ue.userid
 LEFT JOIN mdl_groups_members gm ON u.id = gm.userid
 WHERE gm.groupid = ' . $groupid . '
+AND c.instanceid = ' . $course->id . '
 AND r.shortname = "student"
 ORDER BY u.lastname ASC';
 

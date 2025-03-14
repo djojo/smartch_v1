@@ -35,15 +35,16 @@ $content .= '<div style="margin:10px 0;">Extraction du carnet de note le ' . use
 
 
 //on va chercher les membres du groupe
-$querygroupmembers = 'SELECT DISTINCT u.id, u.username, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid 
+$querygroupmembers = 'SELECT DISTINCT u.id, u.username, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid, r.shortname as rolename
 FROM mdl_role_assignments AS ra 
-LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
+LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid
 LEFT JOIN mdl_role AS r ON ra.roleid = r.id 
 LEFT JOIN mdl_context AS c ON c.id = ra.contextid 
 LEFT JOIN mdl_enrol AS e ON e.courseid = c.instanceid AND ue.enrolid = e.id 
 LEFT JOIN mdl_user u ON u.id = ue.userid
 LEFT JOIN mdl_groups_members gm ON u.id = gm.userid
 WHERE gm.groupid = ' . $groupid . '
+AND c.instanceid = ' . $course->id . '
 AND r.shortname = "student"
 ORDER BY u.lastname ASC';
 
@@ -68,6 +69,7 @@ $content .= '<td  rowspan="2">N° INNO</td>';
 foreach ($sections as $section) {
 
   $tableau = [];
+  $totalsectionsplannings = 0;
   ///////////////
   if ($session) {
     //on va chercher le nombre de planning dans la section disponible
