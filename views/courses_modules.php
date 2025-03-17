@@ -585,11 +585,18 @@ if (countCourseActivities($courseid) == 0) {
                                                     $content .= '<a href="' . $urlactivity . '">';
                                                 }
                                                 $content .= '<div class="FFF-Equipe-Bold fff-name-activity">' . $activity->activityname . '</div>';
+                                                
                                                 if ($activity->activitytype != "face2face") {
                                                     $content .= '</a>'; //flex
                                                 }
+
                                                 $content .= '<div class="smartchmoduletype" style="font-size: 0.8rem;">' . $type . '</div>';
 
+                                                //la description
+                                                if(!empty($activity->summary)){
+                                                    $content .= '<div class="FFF-Equipe-Regular" style="padding: 20px 0;">' . $activity->summary . '</div>';
+                                                }
+                                                
                                                 //on affiche les tentatives
                                                 if($activity->activitytype == "quiz"){
                                                     $content .= $attemptshtml;
