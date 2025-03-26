@@ -367,6 +367,8 @@ $content .= '</tbody>
 //la pagination en bas
 if (count($users) > 0) {
     $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_pagination', $templatecontextpagination);
+} else {
+    $content .= nothingtodisplay("Aucun utilisateur trouvé");
 }
 
 // $content .= html_writer::end_div(); //container
