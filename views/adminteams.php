@@ -129,11 +129,10 @@ if (!empty($search)) {
     $filter .= '&search=' . $search;
 }
 
+$filteradmin = '';
+
 if ($rolename == "super-admin" || $rolename == "manager") {
-    $filteradmin = '';
-    if($courseid){
-        $filteradmin .= ' AND g.courseid = '. $courseid . ' ';
-    }
+    
 } else {
     if ($search != "") {
         $filteradmin = '
@@ -143,6 +142,11 @@ if ($rolename == "super-admin" || $rolename == "manager") {
         JOIN mdl_user u ON u.id = gm.userid
         WHERE u.id = ' . $USER->id . '';
     }
+}
+
+
+if($courseid){
+    $filteradmin .= ' AND g.courseid = '. $courseid . ' ';
 }
 
 
