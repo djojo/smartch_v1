@@ -134,9 +134,8 @@ $filteradmin = '';
 if ($rolename == "super-admin" || $rolename == "manager") {
     
 } else {
-    if ($search != "") {
-        $filteradmin = '
-        AND u.id = ' . $USER->id . '';
+    if (!empty($search)) {
+        $filteradmin = ' AND u.id = ' . $USER->id . '';
     } else {
         $filteradmin = 'JOIN mdl_groups_members gm ON gm.groupid = g.id
         JOIN mdl_user u ON u.id = gm.userid
@@ -154,7 +153,7 @@ if($courseid){
 $no_of_records_per_page = 4;
 $offset = ($pageno - 1) * $no_of_records_per_page;
 
-if ($search != "") {
+if (!empty($search)) {
     $querygroups = 'SELECT DISTINCT g.id as id, c.id as courseid, c.shortname as coursename, g.name as groupname, g.courseid as courseid 
         FROM mdl_groups g
         JOIN mdl_course c ON c.id = g.courseid
@@ -193,9 +192,8 @@ if ($search != "") {
         ' . $filteradmin . '';
 }
 
-// echo $querygroups;
+
 $groups = $DB->get_records_sql($querygroups, null);
-// echo json_encode($groups);
 $allgroups = $DB->get_records('groups', null);
 
 $result = $DB->get_records_sql($total_pages_sql, null);
@@ -221,7 +219,7 @@ if($return == "course"){
 $content .= '<div class="row" style="margin:55px 0;"></div>';
 
 
-if($rolename == "super-admin" || $rolename == "manager"){
+if($rolename == "super-admin" || $rolename == "manager" || $rolename == "smalleditingteacher"){
 
     //le select des groupes
     $content .= '<div class="row">';
@@ -230,8 +228,22 @@ if($rolename == "super-admin" || $rolename == "manager"){
     $content .= '<div class="smartch_flex_mobile" style="justify-content: space-between;align-items: center;">';
     $content .= '<select class="select2 smartch_select" name="courseid" onchange="this.form.submit();">';
     $content .= '<option>Tous les Groupes</option>';
+
+    $filterCourse = '';
+    if($rolename == "smalleditingteacher"){
+        $filterCourseJOIN = ' JOIN mdl_groups_members gm ON gm.groupid = g.id
+        JOIN mdl_user u ON u.id = gm.userid ';
+        $filterCourseWHERE = ' gm.id = ' . $USER->id . ' ';
+    }
+
     //On va chercher toutes les formations
-    $allcourses = $DB->get_records_sql('SELECT * FROM mdl_course WHERE format != "site" AND visible = 1', null);
+    $allcourses = $DB->get_records_sql('SELECT * 
+    FROM mdl_course 
+    ' . $filterCourseJOIN . '
+    WHERE format != "site" 
+    AND visible = 1
+    ' . $filterCourseWHERE, null);
+
     foreach ($allcourses as $onecourse) {
         if($onecourse->id == $courseid){
             $content .= '<option selected value="' . $onecourse->id . '">Groupes de ' . $onecourse->fullname . '</option>';
