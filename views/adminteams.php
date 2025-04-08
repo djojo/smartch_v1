@@ -238,7 +238,7 @@ if($rolename == "super-admin" || $rolename == "manager" || $rolename == "smalled
     }
 
     //On va chercher toutes les formations
-    $allcourses = $DB->get_records_sql('SELECT * 
+    $allcourses = $DB->get_records_sql('SELECT c.id, c.fullname 
     FROM mdl_course c
     ' . $filterCourseJOIN . '
     WHERE c.format != "site" 
