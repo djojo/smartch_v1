@@ -159,6 +159,7 @@ if (!empty($search)) {
         JOIN mdl_course c ON c.id = g.courseid
         JOIN mdl_groups_members gm ON gm.groupid = g.id
         JOIN mdl_user u ON u.id = gm.userid
+        LEFT JOIN mdl_smartch_session ss ON ss.groupid = g.id
         WHERE (lower(g.name) LIKE "%' . $search . '%" 
         OR lower(c.shortname) LIKE "%' . $search . '%"
         OR lower(u.email) LIKE "%' . $search . '%"
@@ -166,7 +167,7 @@ if (!empty($search)) {
         OR lower(u.firstname) LIKE "%' . $search . '%"
         OR lower(u.lastname) LIKE "%' . $search . '%")
         ' . $filteradmin . '
-        ORDER BY g.id ASC
+        ORDER BY ss.startdate DESC, g.id ASC
         LIMIT ' . $offset . ', ' . $no_of_records_per_page;
     $total_pages_sql = 'SELECT g.id, COUNT(*) count FROM mdl_groups g
         JOIN mdl_course c ON c.id = g.courseid
