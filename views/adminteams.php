@@ -234,7 +234,7 @@ if($rolename == "super-admin" || $rolename == "manager" || $rolename == "smalled
         $filterCourseJOIN = ' JOIN mdl_groups g ON c.id = g.courseid 
         JOIN mdl_groups_members gm ON gm.groupid = g.id
         JOIN mdl_user u ON u.id = gm.userid ';
-        $filterCourseWHERE = ' u.id = ' . $USER->id . ' ';
+        $filterCourseWHERE = ' AND u.id = ' . $USER->id . ' ';
     }
 
     //On va chercher toutes les formations
