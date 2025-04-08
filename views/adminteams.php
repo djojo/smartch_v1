@@ -167,7 +167,7 @@ if (!empty($search)) {
         OR lower(u.firstname) LIKE "%' . $search . '%"
         OR lower(u.lastname) LIKE "%' . $search . '%")
         ' . $filteradmin . '
-        ORDER BY ss.startdate ASC, g.id ASC
+        ORDER BY ss.startdate DESC, g.id ASC
         LIMIT ' . $offset . ', ' . $no_of_records_per_page;
     $total_pages_sql = 'SELECT g.id, COUNT(*) count FROM mdl_groups g
         JOIN mdl_course c ON c.id = g.courseid
