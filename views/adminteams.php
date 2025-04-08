@@ -154,7 +154,7 @@ $no_of_records_per_page = 4;
 $offset = ($pageno - 1) * $no_of_records_per_page;
 
 if (!empty($search)) {
-    $querygroups = 'SELECT DISTINCT g.id as id, c.id as courseid, c.shortname as coursename, g.name as groupname, g.courseid as courseid 
+    $querygroups = 'SELECT DISTINCT g.id as id, c.id as courseid, c.shortname as coursename, g.name as groupname, g.courseid as courseid, ss.startdate
         FROM mdl_groups g
         JOIN mdl_course c ON c.id = g.courseid
         JOIN mdl_groups_members gm ON gm.groupid = g.id
@@ -181,10 +181,12 @@ if (!empty($search)) {
         OR lower(u.lastname) LIKE "%' . $search . '%")
         ' . $filteradmin;
 } else {
-    $querygroups = 'SELECT g.id as id, c.id as courseid, c.shortname as coursename, g.name as groupname, g.courseid as courseid 
+    $querygroups = 'SELECT g.id as id, c.id as courseid, c.shortname as coursename, g.name as groupname, g.courseid as courseid, ss.startdate
         FROM mdl_groups g
         JOIN mdl_course c ON c.id = g.courseid
+        LEFT JOIN mdl_smartch_session ss ON ss.groupid = g.id
         ' . $filteradmin . '
+        ORDER BY ss.startdate DESC, g.id ASC
         LIMIT ' . $offset . ', ' . $no_of_records_per_page . '
         ';
     $total_pages_sql = 'SELECT COUNT(*) count 
