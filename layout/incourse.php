@@ -69,4 +69,16 @@ if($PAGE->cm->modname == "quiz"){
         document.querySelector("#prev-activity-link").remove();
         document.querySelector("#next-activity-link").remove();
     </script>';
+} else if ($PAGE->cm->modname == "face2face") {
+    $rolename = getMainRole($USER->id);
+    if ($rolename == "super-admin" || $rolename == "manager" || $rolename == "smalleditingteacher") {
+        
+    } else{
+        echo '<script>
+            let nextBtn = document.querySelector("#next-activity-link");
+            if(nextBtn){
+                nextBtn.click();
+            }
+        </script>';
+    }
 }
