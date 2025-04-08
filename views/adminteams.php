@@ -231,17 +231,18 @@ if($rolename == "super-admin" || $rolename == "manager" || $rolename == "smalled
 
     $filterCourse = '';
     if($rolename == "smalleditingteacher"){
-        $filterCourseJOIN = ' JOIN mdl_groups_members gm ON gm.groupid = g.id
+        $filterCourseJOIN = ' JOIN mdl_groups g ON c.id = g.courseid 
+        JOIN mdl_groups_members gm ON gm.groupid = g.id
         JOIN mdl_user u ON u.id = gm.userid ';
-        $filterCourseWHERE = ' gm.id = ' . $USER->id . ' ';
+        $filterCourseWHERE = ' u.id = ' . $USER->id . ' ';
     }
 
     //On va chercher toutes les formations
     $allcourses = $DB->get_records_sql('SELECT * 
-    FROM mdl_course 
+    FROM mdl_course c
     ' . $filterCourseJOIN . '
-    WHERE format != "site" 
-    AND visible = 1
+    WHERE c.format != "site" 
+    AND c.visible = 1
     ' . $filterCourseWHERE, null);
 
     foreach ($allcourses as $onecourse) {
