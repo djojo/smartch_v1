@@ -1638,18 +1638,53 @@ function getUserSessions($courseid, $userid = null){
     return $allsessions;
 }
 
-function getUserQuizAttempts($moduleid, $userid = null){
+// function getUserQuizAttempts($moduleid, $userid = null){
+//     global $DB, $USER;
+//     if(!$userid){
+//         $userid = $USER->id;
+//     }
+//     // $query = 'SELECT gi.courseid, g.timemodified, g.rawgrade, g.rawgrademax, cm.id AS moduleid, gi.itemname AS modulename, gi.itemmodule
+//     // FROM mdl_grade_items gi
+//     // JOIN mdl_grade_grades g ON gi.id = g.itemid
+//     // JOIN mdl_course_modules cm ON cm.course = gi.courseid AND cm.instance = gi.iteminstance
+//     // JOIN mdl_modules md ON cm.module = md.id AND md.name = gi.itemmodule
+//     // WHERE gi.itemtype = "mod" AND g.userid = ' . $userid . ' AND cm.id = ' . $moduleid . '
+//     // ORDER BY g.timemodified';
+//     $query = 'SELECT 
+//     qa.id AS attemptid, 
+//     gi.courseid, 
+//     qa.timefinish AS timemodified, 
+//     qa.sumgrades AS rawgrade, 
+//     q.grade AS rawgrademax, 
+//     cm.id AS moduleid, 
+//     gi.itemname AS modulename, 
+//     gi.itemmodule, 
+//     qa.attempt
+// FROM 
+//     mdl_quiz_attempts qa
+// JOIN 
+//     mdl_quiz q ON qa.quiz = q.id
+// JOIN 
+//     mdl_course_modules cm ON cm.instance = q.id
+// JOIN 
+//     mdl_modules md ON cm.module = md.id AND md.name = "quiz"
+// JOIN 
+//     mdl_grade_items gi ON gi.iteminstance = q.id AND gi.itemmodule = "quiz"
+// WHERE 
+//     qa.userid = ' . $userid . ' 
+//     AND cm.id = ' . $moduleid . '
+// ORDER BY 
+//     qa.timefinish';
+
+//     $attempts = $DB->get_records_sql($query, null);
+//     return $attempts;
+// }
+
+function getUserQuizAttempts($moduleid, $userid = null, $actualsessions = null){
     global $DB, $USER;
     if(!$userid){
         $userid = $USER->id;
     }
-    // $query = 'SELECT gi.courseid, g.timemodified, g.rawgrade, g.rawgrademax, cm.id AS moduleid, gi.itemname AS modulename, gi.itemmodule
-    // FROM mdl_grade_items gi
-    // JOIN mdl_grade_grades g ON gi.id = g.itemid
-    // JOIN mdl_course_modules cm ON cm.course = gi.courseid AND cm.instance = gi.iteminstance
-    // JOIN mdl_modules md ON cm.module = md.id AND md.name = gi.itemmodule
-    // WHERE gi.itemtype = "mod" AND g.userid = ' . $userid . ' AND cm.id = ' . $moduleid . '
-    // ORDER BY g.timemodified';
     $query = 'SELECT 
     qa.id AS attemptid, 
     gi.courseid, 
@@ -1677,7 +1712,23 @@ ORDER BY
     qa.timefinish';
 
     $attempts = $DB->get_records_sql($query, null);
-    return $attempts;
+
+
+    if(!$actualsessions){
+        return $attempts;
+    } else {
+        $actualAttempts = [];   
+        //on va chercher les tentative sur les sessions en cours
+        foreach($actualsessions as $actualsession){
+            foreach($attempts as $attempt){
+                // si la tentative est entre la date de début et la date de fin de la session
+                if($attempt->timemodified > $actualsession->startdate && $attempt->timemodified < $actualsession->enddate){
+                    array_push($actualAttempts, $attempt);
+                }
+            }
+        }
+        return $actualAttempts;
+    }
 }
 
 function checkUserCanPassAttempt($moduleid, $courseid, $userid){
@@ -1687,34 +1738,87 @@ function checkUserCanPassAttempt($moduleid, $courseid, $userid){
         $useractualsessions = [];
         $useractualsessions = [];
         $userattempts = [];
-        //on regarde le nombre de session de l'apprenant
-        $usertotalsessions = getUserSessions($courseid, $userid);
-        // var_dump($usertotalsessions);
-        //on regarde le nombre de session actuelle de l'apprenant
+
+
+        //on va chercher la session en cours
         $useractualsessions = getActualUserSessions($courseid, $userid);
-        // var_dump($useractualsessions);
-        //on regarde le nombre de tentative de l'apprenant
-        $userattempts = getUserQuizAttempts($moduleid, $userid);
-        // var_dump($userattempts);
+        //on va chercher le nombre de tentative sur la session en cours
+        $userattempts = getUserQuizAttempts($moduleid, $userid, $useractualsessions);
 
-        echo '<script>console.log("Nombre de session totale: '.count($usertotalsessions).'")</script>';
-        echo '<script>console.log("Nombre de session actuelle: '.count($useractualsessions).'")</script>';
-        echo '<script>console.log("Nombre de tentative: '.count($userattempts).'")</script>';
-
-        //si il y a plus ou autant de tentative que de session actuelle
-        if(count($usertotalsessions) > count($userattempts)){
-            //si il n'a pas de session en cours
-            if(count($useractualsessions) == 0){
-                echo '<script>console.log("Il n\'y a pas de session en cours")</script>';
+        //si il y a une session en cours
+        if(count($useractualsessions) > 0){
+            //si il y a moins de tentative que de session en cours
+            if(count($userattempts) < count($useractualsessions)){
+                return true;
+            } else {
                 return false;
-            } 
-            return true;
+            }
         } else {
-            echo '<script>console.log("Nombre de tentative > nombre de session actuelle")</script>';
             return false;
         }
+
+        //OLD VERSION
+        // //on regarde le nombre de session de l'apprenant
+        // $usertotalsessions = getUserSessions($courseid, $userid);
+        // //on regarde le nombre de session actuelle de l'apprenant
+        // $useractualsessions = getActualUserSessions($courseid, $userid);
+        // //on regarde le nombre de tentative de l'apprenant
+        // $userattempts = getUserQuizAttempts($moduleid, $userid);
+
+        // echo '<script>console.log("Nombre de session totale: '.count($usertotalsessions).'")</script>';
+        // echo '<script>console.log("Nombre de session actuelle: '.count($useractualsessions).'")</script>';
+        // echo '<script>console.log("Nombre de tentative: '.count($userattempts).'")</script>';
+
+        // //si il y a plus ou autant de tentative que de session actuelle
+        // if(count($usertotalsessions) > count($userattempts)){
+        //     //si il n'a pas de session en cours
+        //     if(count($useractualsessions) == 0){
+        //         echo '<script>console.log("Il n\'y a pas de session en cours")</script>';
+        //         return false;
+        //     } 
+        //     return true;
+        // } else {
+        //     echo '<script>console.log("Nombre de tentative > nombre de session actuelle")</script>';
+        //     return false;
+        // }
     }
 }
+
+// function checkUserCanPassAttempt($moduleid, $courseid, $userid){
+//     $coursetype = getCourseType($courseid);
+//     if($coursetype == "Certifications Fédérales"){
+        
+//         $useractualsessions = [];
+//         $useractualsessions = [];
+//         $userattempts = [];
+//         //on regarde le nombre de session de l'apprenant
+//         $usertotalsessions = getUserSessions($courseid, $userid);
+//         // var_dump($usertotalsessions);
+//         //on regarde le nombre de session actuelle de l'apprenant
+//         $useractualsessions = getActualUserSessions($courseid, $userid);
+//         // var_dump($useractualsessions);
+//         //on regarde le nombre de tentative de l'apprenant
+//         $userattempts = getUserQuizAttempts($moduleid, $userid);
+//         // var_dump($userattempts);
+
+//         echo '<script>console.log("Nombre de session totale: '.count($usertotalsessions).'")</script>';
+//         echo '<script>console.log("Nombre de session actuelle: '.count($useractualsessions).'")</script>';
+//         echo '<script>console.log("Nombre de tentative: '.count($userattempts).'")</script>';
+
+//         //si il y a plus ou autant de tentative que de session actuelle
+//         if(count($usertotalsessions) > count($userattempts)){
+//             //si il n'a pas de session en cours
+//             if(count($useractualsessions) == 0){
+//                 echo '<script>console.log("Il n\'y a pas de session en cours")</script>';
+//                 return false;
+//             } 
+//             return true;
+//         } else {
+//             echo '<script>console.log("Nombre de tentative > nombre de session actuelle")</script>';
+//             return false;
+//         }
+//     }
+// }
 
 function generateGUID()
 {
