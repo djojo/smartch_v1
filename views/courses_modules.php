@@ -549,14 +549,31 @@ if (countCourseActivities($courseid) == 0) {
                                         $attemptshtml .= '</div>';
 
                                     
-                                    //si il y a moins de tentative que de session actuelle
-                                    // et qu'il ya une session en cours
-                                    if(count($usertotalsessions) > count($userattempts) && count($useractualsessions) > 0){
-                                        //on lui laisse faire une autre tentative
+
+                                    //on va chercher la session en cours
+                                    $useractualsessions = getActualUserSessions($courseid, $USER->id);
+                                    //on va chercher le nombre de tentative sur la session en cours
+                                    $userattempts = getUserQuizAttempts($activity->id, $USER->id, $useractualsessions);
+
+                                    // echo '<script>console.log("Nombre de session totale sur la période: '.count($useractualsessions).'")</script>';
+                                    // echo '<script>console.log("Nombre de tentative sur la période: '.count($userattempts).'")</script>';
+                                    if(count($useractualsessions) > 0){
+                                        //si il y a moins de tentative actuelle que de session en cours
+                                        if(count($userattempts) < count($useractualsessions)){
+                                        } else {
+                                            $urlactivity = "";
+                                        }
                                     } else {
                                         $urlactivity = "";
                                     }
-                                    // $urlactivity = new moodle_url('/mod/' . $activity->activitytype . '/view.php?id=' . $activity->id);
+                                    // //si il y a moins de tentative que de session actuelle
+                                    // // et qu'il ya une session en cours
+                                    // if(count($usertotalsessions) > count($userattempts) && count($useractualsessions) > 0){
+                                    //     //on lui laisse faire une autre tentative
+                                    // } else {
+                                    //     $urlactivity = "";
+                                    // }
+                                    // // $urlactivity = new moodle_url('/mod/' . $activity->activitytype . '/view.php?id=' . $activity->id);
                                         
                                 }
                                     
