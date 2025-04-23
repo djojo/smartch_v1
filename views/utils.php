@@ -1746,7 +1746,6 @@ function checkUserCanPassAttempt($moduleid, $courseid, $userid){
         $useractualsessions = [];
         $userattempts = [];
 
-
         //on va chercher la session en cours
         $useractualsessions = getActualUserSessions($courseid, $userid);
         //on va chercher le nombre de tentative sur la session en cours
@@ -1754,8 +1753,6 @@ function checkUserCanPassAttempt($moduleid, $courseid, $userid){
 
         echo '<script>console.log("Nombre de session totale sur la période: '.count($useractualsessions).'")</script>';
         echo '<script>console.log("Nombre de tentative sur la période: '.count($userattempts).'")</script>';
-
-        return true;
 
         //si il y a une session en cours
         if(count($useractualsessions) > 0){

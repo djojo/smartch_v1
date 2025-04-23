@@ -287,7 +287,7 @@ trait get_smartch_my_courses
                                         //si la session n'est pas terminé
                                         $el['id'] = $course->id;
                                         $el['freecategory'] = $freecategory;
-                                        $el['url'] = $CFG->wwwroot . "/theme/remui/views/formation.php?id=" . $course->id . "&return=dashboard";    
+                                        $el['url'] = $CFG->wwwroot . "/theme/remui/views/formation.php?id=" . $course->id . "&sessionid=" . $onesession->id . "&return=dashboard";    
                                         array_push($mycourses, $el);
                                     }
                                 }
