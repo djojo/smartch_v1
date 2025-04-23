@@ -183,33 +183,4 @@ if ($rolename == "super-admin" || $rolename == "manager") {
 echo $content;
 
 
-// echo html_writer::end_div(); //container
-
-//si il y a une session:
-//on vérifie qu'il ait une equipe
-if($rolename == "student") {
-    $allsessions = $DB->get_records_sql('SELECT DISTINCT g.id, ss.startdate, ss.enddate
-                    FROM mdl_groups g
-                    JOIN mdl_groups_members gm ON gm.groupid = g.id
-                    JOIN mdl_smartch_session ss ON ss.groupid = g.id
-                    WHERE gm.userid = ' . $USER->id . ' AND g.courseid = ' . $course->id, null);
-    // $firstsession = $DB->get_record_sql('SELECT ss.*
-    // FROM mdl_smartch_session ss
-    // JOIN mdl_groups g ON g.id = ss.groupid
-    // JOIN mdl_groups_members gm ON g.id = gm.groupid 
-    // WHERE gm.userid = '.$USER->id.'
-    // ORDER BY startdate ASC');
-    // if(count($allsessions) > 0){
-    //     $teamid = reset($allsessions)->id;
-    //     require_once('./team_dropbox.php');
-    // }
-    foreach($allsessions as $session){
-        $teamid = $session->id;
-        // echo $session->id . '/';
-        //les dépots (caché pour l'instant)
-        // require_once('./team_dropbox.php');
-    }
-}
-
-
 echo $OUTPUT->footer();

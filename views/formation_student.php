@@ -35,10 +35,21 @@ $templatecontextheader = (object)[
 ];
 $content .= $OUTPUT->render_from_template('theme_remui/smartch_course_header', $templatecontextheader);
 
+//On regarde si il y une session dans l'url
+$sessionid = optional_param('sessionid', null, PARAM_INT);
 
-$groups = $DB->get_records_sql('SELECT g.id, g.name FROM mdl_groups g
-JOIN mdl_groups_members gm ON gm.groupid = g.id
-WHERE gm.userid = ' . $USER->id . ' AND g.courseid = ' . $courseid, null);
+if(!$sessionid){
+    $groups = $DB->get_records_sql('SELECT g.id, g.name FROM mdl_groups g
+                                    JOIN mdl_groups_members gm ON gm.groupid = g.id
+                                    WHERE gm.userid = ' . $USER->id . ' AND g.courseid = ' . $courseid, null);
+} else {
+    $groups = $DB->get_records_sql('SELECT g.id, g.name FROM mdl_groups g
+                                    JOIN mdl_smartch_session ss ON ss.groupid = g.id            
+                                    JOIN mdl_groups_members gm ON gm.groupid = g.id
+                                    WHERE gm.userid = ' . $USER->id . ' AND g.courseid = ' . $courseid . ' AND ss.id = ' . $sessionid, null);
+}
+
+
 
 //si l'utilisateur à un groupe
 if (count($groups) > 0) {
