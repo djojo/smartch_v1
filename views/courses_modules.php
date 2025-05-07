@@ -273,24 +273,6 @@ if (countCourseActivities($courseid) == 0) {
                                 break; // Sortir de la boucle une fois que le planning est trouvé
                             }
                         }
-                        // if (isset($planningTrouve)) {
-                        //     // Faites quelque chose avec $objetTrouve
-                        //     //var_dump($objetTrouve);
-                        // }
-                        // var_dump('DUMP');
-                        // $content .= "<div>Il reste " . count($plannings) . ' plannings</div> ';
-
-
-                        // $content .= '<div>--------------------------</div> ';
-                        // $indexToRetrieve = 1;
-
-                        // foreach ($plannings as $key => $value) {
-                        //     if ($indexToRetrieve == 0) {
-                        //         $planning = $value;
-                        //         break;
-                        //     }
-                        //     $indexToRetrieve--;
-                        // }
 
                         // var_dump($planning);
                         if ($planningTrouve  && $countplanning <= $countactivityplanning) {

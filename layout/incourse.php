@@ -60,6 +60,7 @@ if ($PAGE->pagetype == "enrol-index" & get_config('theme_remui', 'enrolment_page
 // Must be called before rendering the template.
 // This will ease us to add body classes directly to the array.
 require_once($CFG->dirroot . '/theme/remui/layout/common_end.php');
+require_once($CFG->dirroot . '/theme/remui/views/utils.php');
 
 echo $OUTPUT->render_from_template($template, $templatecontext);
 
@@ -70,15 +71,68 @@ if($PAGE->cm->modname == "quiz"){
         document.querySelector("#next-activity-link").remove();
     </script>';
 } else if ($PAGE->cm->modname == "face2face") {
+    
     $rolename = getMainRole($USER->id);
+    
     if ($rolename == "super-admin" || $rolename == "manager" || $rolename == "smalleditingteacher") {
-        
+        // echo '<script>
+        //     alert("'.$rolename.'");
+        // </script>';
     } else{
-        echo '<script>
-            let nextBtn = document.querySelector("#next-activity-link");
-            if(nextBtn){
-                nextBtn.click();
+    
+        //On va chercher les activités de la formation dans l'ordre
+        $sections = getCourseSections($COURSE->id);
+
+        $isThisSection = false;
+        $thisSectionId = null;
+        $nextActivity = null;
+        foreach($sections as $section){
+            if(!$isThisSection){
+                // echo $section->sequence;
+                $tableact = explode(',', $section->sequence);
+                $tableact = array_map('intval', $tableact);
+        
+                foreach($tableact as $key => $activityNumber){
+                    if($activityNumber == $PAGE->cm->id){
+                        $isThisSection = true;
+                        if($key+1 < count($tableact)){
+                            $nextActivity = $tableact[$key+1];
+                        } else {
+                            $thisSectionId = $section->id;
+                        }
+                    }
+                }
             }
-        </script>';
+        }
+        if($nextActivity){
+            echo "<script>console.log('l'activité suivante est : ".$nextActivity."')</script>";
+            
+            echo '<script>
+                let nextBtn = document.querySelector("#next-activity-link");
+                console.log(nextBtn);
+                if(nextBtn){
+                    nextBtn.click();
+                } else {
+                    window.location.href = "'.$CFG->wwwroot.'/theme/remui/views/formation.php?id='.$COURSE->id. '";
+                }
+            </script>';
+
+            //On va chercher le module de l'activité suivante
+            $nextModule = getModule($nextActivity);
+            // var_dump($nextModule);
+            //on créer l'url de l'activité suivante
+            $nextUrl = $CFG->wwwroot.'/mod/'.$nextModule->activitytype.'/view.php?id='.$nextActivity;
+            // var_dump($nextUrl);
+
+        } else {
+            echo "<script>console.log('il n'y a pas d'activité suivante');</script>";
+            echo $thisSectionId;
+            if($thisSectionId){
+                redirect($CFG->wwwroot.'/theme/remui/views/formation.php?id='.$COURSE->id.'&sectionid='.$thisSectionId);
+            } else {
+                redirect($CFG->wwwroot.'/theme/remui/views/formation.php?id='.$COURSE->id);
+            }
+            
+        }
     }
 }

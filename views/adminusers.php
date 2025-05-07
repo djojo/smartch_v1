@@ -110,6 +110,7 @@ if ($rolename == "super-admin" || $rolename == "manager") {
                 OR lower(lastname) LIKE "%' . $search . '%"
                 OR lower(username) LIKE "%' . $search . '%"
                 OR concat(lower(firstname) , " " , lower(lastname)) LIKE "%' . $search . '%"
+                OR concat(lower(lastname) , " " , lower(firstname)) LIKE "%' . $search . '%"
                 OR lower(email) LIKE "%' . $search . '%")
                 LIMIT ' . $offset . ', ' . $no_of_records_per_page;
         $total_pages_sql = 'SELECT COUNT(*) count FROM mdl_user 
@@ -118,6 +119,7 @@ if ($rolename == "super-admin" || $rolename == "manager") {
                 AND (lower(firstname) LIKE "%' . $search . '%" 
                 OR lower(lastname) LIKE "%' . $search . '%"
                 OR concat(lower(firstname) , " " , lower(lastname)) LIKE "%' . $search . '%"
+                OR concat(lower(lastname) , " " , lower(firstname)) LIKE "%' . $search . '%"
                 OR lower(username) LIKE "%' . $search . '%"
                 OR lower(email) LIKE "%' . $search . '%")';
     } else {
