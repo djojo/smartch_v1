@@ -54,72 +54,43 @@ $userid = optional_param('userid', null, PARAM_INT);
 $no_of_records_per_page = 24;
 $offset = ($pageno - 1) * $no_of_records_per_page;
 
-if ($search != "") {
-    $queryusers = '
-    SELECT DISTINCT u.id, u.firstname, u.lastname, r.shortname, r.id as roleid
-    FROM mdl_role_assignments AS ra 
-    JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
-    JOIN mdl_role AS r ON ra.roleid = r.id 
-    JOIN mdl_context AS c ON c.id = ra.contextid 
-    JOIN mdl_enrol AS e ON e.courseid = c.instanceid AND ue.enrolid = e.id 
-    JOIN mdl_user u ON u.id = ue.userid
-    JOIN mdl_groups_members gm ON u.id = gm.userid
-    WHERE gm.groupid = ' . $group->id . ' 
-    AND e.courseid = ' . $courseid . '
-    AND r.shortname = "student"
-    AND (lower(u.firstname) LIKE "%' . $search . '%" 
-    OR lower(u.lastname) LIKE "%' . $search . '%"
-    OR lower(u.username) LIKE "%' . $search . '%"
-    OR lower(u.email) LIKE "%' . $search . '%")
-    ORDER BY u.lastname ASC';
-    //    --LIMIT ' . $offset . ', ' . $no_of_records_per_page;
-
-
-    $total_pages_sql = '
-    SELECT COUNT(DISTINCT u.id) count
-    FROM mdl_role_assignments AS ra 
-    JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
-    JOIN mdl_role AS r ON ra.roleid = r.id 
-    JOIN mdl_context AS c ON c.id = ra.contextid 
-    JOIN mdl_enrol AS e ON e.courseid = c.instanceid AND ue.enrolid = e.id 
-    JOIN mdl_user u ON u.id = ue.userid
-    JOIN mdl_groups_members gm ON u.id = gm.userid
-    WHERE gm.groupid = ' . $group->id . ' 
-    AND e.courseid = ' . $courseid . '
-    AND r.shortname = "student"
-    AND (lower(u.firstname) LIKE "%' . $search . '%" 
+$filter = '';
+if (!empty($search)) {
+    $search = trim(strtolower($search));
+    $filter .= ' AND (lower(u.firstname) LIKE "%' . $search . '%" 
     OR lower(u.lastname) LIKE "%' . $search . '%"
     OR lower(u.username) LIKE "%' . $search . '%"
     OR lower(u.email) LIKE "%' . $search . '%")';
-} else {
-    $queryusers = '
-    SELECT DISTINCT u.id, u.firstname, u.lastname, r.shortname, r.id as roleid
-    FROM mdl_role_assignments AS ra 
-    JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
-    JOIN mdl_role AS r ON ra.roleid = r.id 
-    JOIN mdl_context AS c ON c.id = ra.contextid 
-    JOIN mdl_enrol AS e ON e.courseid = c.instanceid AND ue.enrolid = e.id 
-    JOIN mdl_user u ON u.id = ue.userid
-    JOIN mdl_groups_members gm ON u.id = gm.userid
-    WHERE gm.groupid = ' . $group->id . ' 
-    AND e.courseid = ' . $courseid . '
-    AND r.shortname = "student"
-    ORDER BY u.lastname ASC
-       ';
-    //LIMIT ' . $offset . ', ' . $no_of_records_per_page . '
-    $total_pages_sql = '
-    SELECT COUNT(DISTINCT u.id) count
-    FROM mdl_role_assignments AS ra 
-    JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
-    JOIN mdl_role AS r ON ra.roleid = r.id 
-    JOIN mdl_context AS c ON c.id = ra.contextid 
-    JOIN mdl_enrol AS e ON e.courseid = c.instanceid AND ue.enrolid = e.id 
-    JOIN mdl_user u ON u.id = ue.userid
-    JOIN mdl_groups_members gm ON u.id = gm.userid
-    WHERE gm.groupid = ' . $group->id . ' 
-    AND e.courseid = ' . $courseid . '
-    AND r.shortname = "student"';
 }
+$queryusers = '
+SELECT DISTINCT u.id, u.firstname, u.lastname, r.shortname, r.id as roleid
+FROM mdl_role_assignments AS ra 
+JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
+JOIN mdl_role AS r ON ra.roleid = r.id 
+JOIN mdl_context AS c ON c.id = ra.contextid 
+JOIN mdl_enrol AS e ON e.courseid = c.instanceid AND ue.enrolid = e.id 
+JOIN mdl_user u ON u.id = ue.userid
+JOIN mdl_groups_members gm ON u.id = gm.userid
+WHERE gm.groupid = ' . $group->id . ' 
+AND e.courseid = ' . $courseid . '
+AND r.shortname = "student"
+' . $filter . '
+ORDER BY u.lastname ASC
+    ';
+$total_pages_sql = '
+SELECT COUNT(DISTINCT u.id) count
+FROM mdl_role_assignments AS ra 
+JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid 
+JOIN mdl_role AS r ON ra.roleid = r.id 
+JOIN mdl_context AS c ON c.id = ra.contextid 
+JOIN mdl_enrol AS e ON e.courseid = c.instanceid AND ue.enrolid = e.id 
+JOIN mdl_user u ON u.id = ue.userid
+JOIN mdl_groups_members gm ON u.id = gm.userid
+WHERE gm.groupid = ' . $group->id . ' 
+AND e.courseid = ' . $courseid . '
+AND r.shortname = "student"
+' . $filter . '';
+
 $teamates = $DB->get_records_sql($queryusers, null);
 
 $context = context_system::instance();

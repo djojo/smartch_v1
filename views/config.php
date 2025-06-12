@@ -15,8 +15,6 @@ $content = '';
 $rolename = getMainRole();
 
 isAdmin();
-// var_dump($rolename);
-// die();
 
 $configid = optional_param('configid', null, PARAM_INT);
 $action = optional_param('action', null, PARAM_TEXT);
@@ -42,17 +40,6 @@ if($newconfigkey){
     redirect( new moodle_url('/theme/remui/views/config.php'));
 }
 
-// $inputconfigkey = optional_param('inputconfigkey', null, PARAM_TEXT);
-// $inputconfigvalue = optional_param('inputconfigvalue', null, PARAM_TEXT);
-
-
-// if($inputconfigkey && $inputconfigvalue){
-//     $configtochange = $DB->get_record_sql('SELECT * 
-//     FROM mdl_smartch_config sc
-//     WHERE sc.config_key = "'.$inputconfigkey.'"', null);
-//     $configtochange->config_value = $inputconfigvalue;
-//     $DB->update_record('smartch_config', $configtochange);
-// }
 
 $portailtype = optional_param('portailtype', null, PARAM_TEXT);
 if($portailtype){
@@ -91,13 +78,6 @@ echo  '<style>
 </style>';
 
 echo $OUTPUT->header();
-
-// //le header avec bouton de retour au panneau admin
-// $templatecontextheader = (object)[
-//     'url' => new moodle_url('/theme/remui/views/adminmenu.php'),
-//     'textcontent' => 'Retour au panneau d\'administration'
-// ];
-// $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_back', $templatecontextheader);
 
 
 $content .= '<a href="' . new moodle_url('/theme/remui/views/adminmenu.php') . '" style="font-size:0.8rem;cursor: pointer; display: flex; align-items: center; position: absolute; top: 120px;">

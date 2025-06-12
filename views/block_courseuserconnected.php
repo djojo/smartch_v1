@@ -1,10 +1,5 @@
 <?php
 
-// $filterfrom = ' WHERE datecreated > ' . $startdate . ' 
-// AND datecreated < ' . $enddate . ' ';
-
-
-
 $filterfrom = ' WHERE datecreated > ' . $startdatetimestamp . ' AND datecreated < ' . $enddatetimestamp . ' ';
 
 

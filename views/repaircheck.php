@@ -1,15 +1,11 @@
 <?php
 
 require_once(__DIR__ . '/../../../config.php');
-// require_once('./utils.php');
-
 
 global $DB;
 
 $messagedeco = "";
 
-//On va chercher le rôle le plus haut de l'utilisateur
-// $rolename = getMainRole();
 
 $email = optional_param('email', '', PARAM_TEXT);
 

@@ -5,8 +5,6 @@ use tool_brickfield\local\areas\mod_choice\option;
 require_once(__DIR__ . '/../../../config.php');
 require_once('./utils.php');
 require_once($CFG->dirroot . '/cohort/lib.php');
-// require_once($CFG->dirroot.'/enrol/cohort/lib.php');
-// require_once($CFG->dirroot.'/group/lib.php');
 
 require_login();
 isPortailRH();

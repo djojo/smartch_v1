@@ -23,18 +23,8 @@ $timemoins30 = time() - 30 * 24 * 60 * 60;
 $groups = $DB->get_records_sql('SELECT DISTINCT g.id, g.name 
 FROM mdl_groups g
 JOIN mdl_groups_members gm ON gm.groupid = g.id
--- NE PAS OUBLIER DE REMETTRE
 JOIN mdl_smartch_session ss ON ss.groupid = g.id
 WHERE g.courseid = ' . $courseid . '', null);
-
-//echo '<script>alert("' . count($groups) . '")</script>';
-
-// $groups = $DB->get_records_sql('SELECT g.id, g.name FROM mdl_groups g
-// JOIN mdl_groups_members gm ON gm.groupid = g.id
-// JOIN mdl_smartch_session ss ON ss.groupid = g.id
-// WHERE g.courseid = ' . $courseid . '
-// AND ss.startdate > ' . $timemoins30 . '
-// AND ss.startdate < ' . $timeplus30, null);
 
 
 //on regarde si un utilisateur est sélectionné
@@ -52,14 +42,6 @@ if ($groupid) {
     $group = reset($groups);
     $groupid = $group->id; //pour le responsable pedagogique
 }
-
-//si il n'y a pas de groupe pour l'utilisateur on prend le premier
-// if (count($groups) == 0) {
-//     $groups = $DB->get_records_sql('SELECT g.id, g.name FROM mdl_groups g
-//     JOIN mdl_groups_members gm ON gm.groupid = g.id
-//     WHERE g.courseid = ' . $courseid, null);
-// }
-// $group = reset($groups);
 
 //si on a au moins un groupe
 if ($group) {
@@ -136,13 +118,6 @@ if ($group) {
 //la présentation du parcours
 $content .= $OUTPUT->render_from_template('theme_remui/smartch_course_info', $templatecontextcourse);
 
-//l'entete des équipes du parcours
-// $content .= $OUTPUT->render_from_template('theme_remui/smartch_teams_header', null);
-
-// $content .= '<h3 class="FFF-title1" id="equipe" style="display: flex;align-items: center;margin-top:50px;">
-// </h3>';
-
-
 
 $totalteam = count($groups);
 $s = '';
@@ -170,11 +145,6 @@ if ($totalteam == 0) {
     $content .= '</div>';
 
 }
-
-
-
-//les groupes //OLD
-// require_once('./includes_groups.php');
 
 
 if ($group) {

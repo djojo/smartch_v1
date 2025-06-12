@@ -8,10 +8,6 @@ isPortailRH();
 
 global $USER, $DB, $CFG;
 
-// $courseid = required_param('courseid', PARAM_INT);
-// $course = $DB->get_record('course', ['id' => $courseid]);
-// var_dump($course);
-// die();
 $content = '';
 $paginationtitle = '';
 $prevurl = '';

@@ -6,9 +6,6 @@ global $PAGE, $USER, $DB;
 
 $userid = optional_param('userid', null, PARAM_INT);
 
-// Validation for context is needed.
-// $context = \context_system::instance();
-// self::validate_context($context);
 
 $mycourses = array();
 

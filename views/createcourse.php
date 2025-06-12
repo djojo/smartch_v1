@@ -11,8 +11,6 @@ require_once($CFG->dirroot . '/theme/remui/classes/form/course_create.php');
 
 isAdminFormation();
 
-// $type = optional_param('type', null, PARAM_TEXT);
-
 
 $context = context_system::instance();
 

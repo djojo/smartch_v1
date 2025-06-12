@@ -65,7 +65,6 @@ $content .= '
     <span class="FFF-Hero-Black FFF-Blue" style="margin-right:10px;letter-spacing:1px;">Détails du </span><span class="FFF-Hero-Black FFF-Gold" style="letter-spacing:1px;">Parcours</span> 
 </h3>';
 
-// var_dump(countCourseActivities($courseid));
 if (countCourseActivities($courseid) == 0) {
     $content .= nothingtodisplay("Le contenu de formation n'est pas encore disponible");
 } else {

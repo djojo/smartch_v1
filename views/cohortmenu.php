@@ -1,6 +1,5 @@
 <?php
 
-
 $content .= '<div class="row">
 <div class="col-md-12">
 <h1 style="letter-spacing:1px;max-width:70%;cursor:pointer;" class="smartch_title FFF-Hero-Bold FFF-Blue">Groupe '.$cohort->name.'</h1>

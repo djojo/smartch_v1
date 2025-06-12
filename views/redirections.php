@@ -1,6 +1,5 @@
 <?php
 
-// $redirections = optional_param('redirect', 'adminmenu', PARAM_TEXT);
 
 if ($return == "teams") {
     redirect($CFG->wwwroot . '/theme/remui/views/adminteams.php');

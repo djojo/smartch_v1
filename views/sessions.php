@@ -1,29 +1,8 @@
 <?php
-// This file is part of Moodle Course Rollover Plugin
-//
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Moodle is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
-/**
- * @package     smartch
- * @author      Geoffroy Rouaix
- * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
 
 require_once(__DIR__ . '/../../../config.php');
 require_once('./utils.php');
 
-// defined('MOODLE_INTERNAL') || die();
 
 require_login();
 isAdminFormation();
@@ -89,29 +68,6 @@ if ($status == "started") {
 } else if ($status == "finished") {
     $sqlfilters .= ' AND s.enddate < ' . $startdatetimestamp;
 }
-
-
-// if (!$enddate) {
-//     $enddate = date('Y-m-d');
-// }
-// if (!$startdate) {
-//     $dateActuelle = new DateTime();
-//     $dateActuelle->sub(new DateInterval('P1M'));
-//     $startdate = $dateActuelle->format('Y-m-d');
-// }
-
-// $filter .= '&enddate=' . $enddate;
-// $filter .= '&startdate=' . $startdate;
-
-// $startdateobject = new DateTime($startdate);
-// $startdatetimestamp = $startdateobject->getTimestamp();
-// $enddateobject = new DateTime($enddate);
-// $enddatetimestamp = $enddateobject->getTimestamp();
-
-
-// if ($startdatetimestamp && $enddatetimestamp) {
-//     $sqlfilters .= ' AND s.startdate > ' . $startdatetimestamp . ' AND s.startdate < ' . $enddatetimestamp . ' ';
-// }
 
 $no_of_records_per_page = 25;
 $offset = ($pageno - 1) * $no_of_records_per_page;

@@ -1,29 +1,7 @@
 <?php
-// This file is part of Moodle Course Rollover Plugin
-//
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Moodle is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
-/**
- * @package     smartch
- * @author      Geoffroy Rouaix
- * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
 
 require_once(__DIR__ . '/../../../config.php');
 require_once('./utils.php');
-
-// defined('MOODLE_INTERNAL') || die();
 
 require_login();
 
@@ -35,9 +13,6 @@ $paginationtitle = '';
 $prevurl = '';
 $nexturl = '';
 
-// if (!$userid) {
-//     redirect($CFG->wwwroot);
-// }
 
 //On va chercher l'id de l'utilisateur
 $userid = $USER->id;
@@ -59,10 +34,6 @@ if ($rolename == "student") {
     $role = "Super Admin";
 }
 
-// $courseid = required_param('id', PARAM_INT);
-
-// $course = $DB->get_record('course', ['id' => $courseid]);
-
 $context = context_system::instance();
 $PAGE->set_url(new moodle_url('/theme/remui/views/adminuser.php'));
 $PAGE->set_context(\context_system::instance());
@@ -70,15 +41,8 @@ $PAGE->set_title("Mon profil");
 
 echo $OUTPUT->header();
 
-// require_once($CFG->dirroot . '/theme/remui/layout/common.php');
-
-// echo html_writer::start_div('container');
-
-// $userid = optional_param('userid', '', PARAM_INT);
 $search = optional_param('search', null, PARAM_TEXT);
 $pageno = optional_param('pageno', 1, PARAM_TEXT);
-
-
 
 //on regarde si l'utilisateur est bien
 
@@ -121,14 +85,6 @@ $allcourses = $DB->get_records('course', null);
 $result = $DB->get_records_sql($total_pages_sql, ['%' . strtolower($search) . '%']);
 $total_rows = count($result);
 $total_pages = ceil($total_rows / $no_of_records_per_page);
-
-//le header avec bouton de retour au panneau admin
-// $templatecontextheader = (object)[
-//     'url' => new moodle_url('/theme/remui/views/adminusers.php'),
-//     'textcontent' => 'Retour aux utilisateurs'
-// ];
-// $content .= $OUTPUT->render_from_template('theme_remui/smartch_header_back', $templatecontextheader);
-
 
 //le profil utilisateur
 $user = $DB->get_record('user', ['id' => $userid]);

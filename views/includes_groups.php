@@ -23,16 +23,6 @@ $content .= '<h3 class="FFF-title1" style="display: flex;align-items: center;mar
 <span class="FFF-Hero-Black FFF-Blue" style="margin-right:10px;">' . $totalteam . '</span><span style="letter-spacing:1px;" class="FFF-Hero-Black FFF-Gold">groupe' . $s . '</span>  
 </h3>';
 
-//on va chercher les équipes
-// $groups = $DB->get_records('groups', ['courseid' => $courseid]);
-// $groups = $DB->get_records_sql('SELECT * FROM mdl_groups WHERE courseid = ' . $courseid . ' LIMIT 0, 4', null);
-
-
-
-
-
-// $teams = array();
-
 if ($totalteam == 0) {
     $content .= nothingtodisplay("Vous n'avez pas de groupe sur ce parcours");
 }
@@ -52,10 +42,6 @@ foreach ($groups as $team) {
         $content .= '<div class="blockscroll">';
         $content .= '<div class="row">';
     }
-
-
-    //on va chercher les membres de l'équipe
-    // $teamates = $DB->get_records('groups_members', ['groupid' => $team->id], '', '*', 0, 6);
 
     $querysixmates = '
     SELECT DISTINCT u.id, u.firstname, u.lastname, r.shortname, r.id as roleid
@@ -234,10 +220,6 @@ foreach ($groups as $team) {
 $content .= '</div>'; //fff-my-courses-caroussel-items
 $content .= '</div>'; //fff-my-courses-caroussel
 
-// le BUG !!!!
-// if ($totalteam != 0) {
-//     $content .= '</div>';
-// }
 
 echo '<script>
     var positionNextIconTeam = 0;

@@ -1,7 +1,5 @@
 <?php
 
-
-
 //on va chercher la formation 
 $course = $DB->get_record('course', ['id' => $courseid]);
 

@@ -103,40 +103,28 @@ if (!empty($togglevisible)) {
 $no_of_records_per_page = 12;
 $offset = ($pageno - 1) * $no_of_records_per_page;
 
-if ($search != "") {
-    $querycourses = 'SELECT c.id, c.fullname, c.visible, cc.name as category 
-            FROM mdl_course c
-            JOIN mdl_course_categories cc ON cc.id = c.category
-            ' . $filterparcours . '
-            WHERE c.format != "site"
-            ' . $filter . '
-            AND (lower(c.fullname) LIKE "%' . $search . '%")
-            ORDER BY c.fullname ASC
-            LIMIT ' . $offset . ', ' . $no_of_records_per_page;
-    $total_pages_sql = 'SELECT COUNT(*) count 
-        FROM mdl_course c
-        JOIN mdl_course_categories cc ON cc.id = c.category
-        ' . $filterparcours . '
-        WHERE c.format != "site"
-        ' . $filter . '
-        AND (lower(c.fullname) LIKE "%' . $search . '%")';
-} else {
-    $querycourses = 'SELECT c.id, c.fullname,  c.visible, cc.name as category 
-        FROM mdl_course c
-        JOIN mdl_course_categories cc ON cc.id = c.category
-        ' . $filterparcours . '
-        WHERE c.format != "site"
-        ' . $filter . '
-        ORDER BY c.fullname ASC
-        LIMIT ' . $offset . ', ' . $no_of_records_per_page . '
-        ';
-    $total_pages_sql = 'SELECT COUNT(*) count FROM mdl_course c
-        JOIN mdl_course_categories cc ON cc.id = c.category
-        ' . $filterparcours . '
-        WHERE c.format != "site"
-        ' . $filter . '
-        ';
+
+
+if (!empty($search)) {
+    $search = trim(strtolower($search));
+    $filter .= ' AND (lower(c.fullname) LIKE "%' . $search . '%")';
 }
+$querycourses = 'SELECT c.id, c.fullname,  c.visible, cc.name as category 
+    FROM mdl_course c
+    JOIN mdl_course_categories cc ON cc.id = c.category
+    ' . $filterparcours . '
+    WHERE c.format != "site"
+    ' . $filter . '
+    ORDER BY c.fullname ASC
+    LIMIT ' . $offset . ', ' . $no_of_records_per_page . '
+    ';
+$total_pages_sql = 'SELECT COUNT(*) count FROM mdl_course c
+    JOIN mdl_course_categories cc ON cc.id = c.category
+    ' . $filterparcours . '
+    WHERE c.format != "site"
+    ' . $filter . '
+    ';
+
 $courses = $DB->get_records_sql($querycourses, null);
 
 $allcourses = $DB->get_records('course', null);

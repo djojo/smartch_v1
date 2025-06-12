@@ -17,8 +17,6 @@ if (!checkIfUserIsEnrolled($courseid, $userid)) {
 }
 
 
-
-
 $templatecontextheader = (object)[
     'url' => new moodle_url('/my'),
     'textcontent' => 'Retour au tableau de bord'
@@ -48,8 +46,6 @@ if(!$sessionid){
                                     JOIN mdl_groups_members gm ON gm.groupid = g.id
                                     WHERE gm.userid = ' . $USER->id . ' AND g.courseid = ' . $courseid . ' AND ss.id = ' . $sessionid, null);
 }
-
-
 
 //si l'utilisateur à un groupe
 if (count($groups) > 0) {

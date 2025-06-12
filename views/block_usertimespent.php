@@ -1,10 +1,6 @@
 <?php
 
-// $filterfrom = ' WHERE datecreated > ' . $startdate . ' 
-// AND datecreated < ' . $enddate . ' ';
-
 $filterfrom = ' WHERE datecreated > ' . $startdatetimestamp . ' AND datecreated < ' . $enddatetimestamp . ' ';
-
 
 $arrayusertimespent = [];
 $arraydays = [];
@@ -13,8 +9,6 @@ $sqlstats = 'SELECT *
 FROM mdl_smartch_stats_global
 ' . $filterfrom . '
 ORDER BY datecreated ASC';
-
-// echo $sqlstats;
 
 //On va chercher les stats des étudiants
 $stats = $DB->get_records_sql($sqlstats, null);

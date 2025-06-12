@@ -10,8 +10,6 @@ require_once($CFG->dirroot . '/theme/remui/classes/form/cohort_create.php');
 isAdminFormation();
 isPortailRH();
 
-// $type = optional_param('type', null, PARAM_TEXT);
-
 
 $context = context_system::instance();
 

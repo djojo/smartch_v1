@@ -1,7 +1,4 @@
-
-
 <?php
-
 
 require_once(__DIR__ . '/../../../config.php');
 
@@ -10,7 +7,6 @@ global $PAGE, $USER, $DB;
 $username = optional_param('username', null, PARAM_TEXT);
 $issuerid = optional_param('issuerid', null, PARAM_TEXT);
 
-// $username = "65255c7b49e60671af752788";
 
 //On va chercher l'utilisateur
 $user = $DB->get_record_sql('SELECT * FROM mdl_user WHERE username = "' . $username . '"', null);

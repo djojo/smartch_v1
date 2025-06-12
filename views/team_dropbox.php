@@ -1,7 +1,5 @@
 <?php
 
-// var_dump($teamid);
-
 require_once($CFG->dirroot . '/theme/remui/classes/form/dropbox_add_file.php');
 
 echo '<h3 id="dropbox" class="FFF-title1" style="display:none;margin:100px 0; display: flex; align-items: center;">

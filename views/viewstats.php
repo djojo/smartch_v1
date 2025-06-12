@@ -29,17 +29,7 @@ if ($courseid) {
 
 if ($categoryid) {
     $selectedcategory = $DB->get_record('course_categories', ['id' => $categoryid]);
-    // $courseid = null;
-    // $filtersqlcoursecategory = ' AND category = ' . $categoryid . ' ';
     $filtersqlcoursecategoryfilter = ' AND category = ' . $categoryid . ' ';
-
-    //on regarde si on a choisi un cours
-    // if (!empty($courseid)) {
-    //     //on regarde si le cours est dans la category
-    //     if($course->category != $categoryid){
-
-    //     }
-    // }
 }
 
 
@@ -188,15 +178,6 @@ $content .= '</div>';
 $content .= '<form action="" method="get" style="display: flex; align-items: center; margin:0; justify-content: space-between;">';
 $content .= '<div style="display: flex; align-items: center; justify-content: space-between;">';
 
-// $content .= '<select onchange="this.form.submit()" style="margin-bottom:0;display:none;width:200px;" class="smartch_select" name="rolename">';
-// if ($rolename == "student") {
-//     $content .= '<option selected value="student">Apprenants</option>';
-//     $content .= '<option value="teacher">Formateur</option>';
-// } else {
-//     $content .= '<option value="student">Apprenants</option>';
-//     $content .= '<option selected value="teacher">Formateur</option>';
-// }
-// $content .= '</select>';
 
 
 // ========= SELECT CATEGORY ===========
@@ -244,16 +225,6 @@ $content .= '</div>';
 
 $content .= '</div>'; // col
 $content .= '</div>'; // row
-
-
-
-
-// BLOCK STATS
-
-// $todaydate = date('Y-m-d');
-// // Date 7 jours avant
-// $datefromtimestamp = strtotime('-7 days', strtotime($todaydate));
-// $filterfrom = ' WHERE datecreated > ' . $datefromtimestamp . ' ';
 
 
 
