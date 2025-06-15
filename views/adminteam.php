@@ -42,6 +42,10 @@ if ($action == "downloadcsv") {
 //on var chercher l'équipe
 $group = $DB->get_record('groups', ['id' => $teamid]);
 
+// $group = $DB->get_records_sql('SELECT * 
+// FROM mdl_groups WHERE id = ' . $teamid, null);
+
+
 $courseid = $group->courseid;
 
 
