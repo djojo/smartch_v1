@@ -453,9 +453,16 @@ function getResponsablePedagogique($groupid, $courseid)
         WHERE g.id = ' . $groupid . ' 
         AND r.shortname = "smalleditingteacher"';
         // var_dump($queryresponsable);
-        $findresponsable = $DB->get_records_sql($queryresponsable, null);
+        $findresponsables = $DB->get_records_sql($queryresponsable, null);
         // var_dump($findresponsable);
-        $found = reset($findresponsable);
+        foreach($findresponsables as $responsable){
+            //On va chercher le role de l'utilisateur sur le cours
+            $role = getUserRoleFromCourse($responsable->id, $courseid);
+            if($role->shortname == "smalleditingteacher" || $role->shortname == "editingteacher" || $role->shortname == "teacher"){
+                $found = $responsable;
+            }
+        }
+        $found = reset($findresponsables);
         if ($found) {
             $coach = $found->firstname . ' ' . $found->lastname;
         } else {

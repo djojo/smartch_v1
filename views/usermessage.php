@@ -46,9 +46,6 @@ if ($mform->is_cancelled()) {
     
 }
 
-
-
-
 echo '<style>
 
 #page{

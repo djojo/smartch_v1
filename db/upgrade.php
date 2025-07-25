@@ -80,18 +80,8 @@ function xmldb_theme_remui_upgrade($oldversion) {
 
     }
 
+    
 
-    //theme_remui_course_custom_fields();
-    // new_colors_compatibility();
-    // import_user_tour();
-    // footer_migration_compatibility();
-    // theme_remui_handle_orphan_settings();
-    // buttons_compatibility();
-    // login_compatibility($oldversion);
-
-    // if (get_config('theme_remui', 'header-primary-border-bottom-size') != 0) {
-    //     set_config('hds-boxshadow-enable', 'enabled', 'theme_remui');
-    // }
 
     return true;
 }
