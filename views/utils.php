@@ -130,10 +130,18 @@ function hasResponsablePedagogiqueRole(){
 }
 
 function getUserRoleFromCourse($courseid, $userid = null){
-    global $USER;
+    global $USER, $DB;
     if(!$userid){
         $userid = $USER->id;
     }
+    
+    // Vérifier que le cours existe avant d'essayer d'obtenir son contexte
+    $course = $DB->get_record('course', array('id' => $courseid));
+    if (!$course) {
+        // Le cours n'existe pas, retourner false ou un objet vide
+        return false;
+    }
+    
     $context = context_course::instance($courseid);
     // Récupérer le rôle de l'utilisateur dans le contexte du cours
     $roles = get_user_roles($context, $userid, false);
@@ -458,7 +466,7 @@ function getResponsablePedagogique($groupid, $courseid)
         foreach($findresponsables as $responsable){
             //On va chercher le role de l'utilisateur sur le cours
             $role = getUserRoleFromCourse($responsable->id, $courseid);
-            if($role->shortname == "smalleditingteacher" || $role->shortname == "editingteacher" || $role->shortname == "teacher"){
+            if($role && ($role->shortname == "smalleditingteacher" || $role->shortname == "editingteacher" || $role->shortname == "teacher")){
                 $found = $responsable;
             }
         }
