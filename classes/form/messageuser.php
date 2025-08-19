@@ -1,8 +1,8 @@
 <?php
 
-require_once("$CFG->libdir/formslib.php");
+require_once "$CFG->libdir/formslib.php";
 
-class create extends moodleform
+class messageuser extends moodleform
 {
     //Add elements to form
     public function definition()
@@ -12,48 +12,66 @@ class create extends moodleform
 
         $context = $PAGE->context;
 
-        $return = $this->_customdata['variables']['returnurl'];
-        $userid = $this->_customdata['variables']['userid'];
+        // CORRIGÉ : Récupération cohérente des variables
+        $variables = $this->_customdata['variables'];
+        $return = $variables['return'] ?? '';      // Correspond à adminusermessage.php
+        $userid = $variables['userid'] ?? 0;
+        $teamid = $variables['teamid'] ?? 0;       // Ajouté
+        $courseid = $variables['courseid'] ?? 0;   // Ajouté
 
-        // hidden
-        $mform->addElement('hidden', 'returnurl', $return);
-        $mform->setType('returnurl', PARAM_TEXT); // Set the data type to integer
+        // Récupérer tous les templates pour la liste déroulante
+        $templates = get_all_templates();
+        $template_options = ['default' => 'Message simple (sans template)'];
+        foreach ($templates as $template) {
+            $template_options[$template->name] = $template->name . ' (' . $template->type . ')';
+        }
+
+        // CORRIGÉ : Champs cachés avec noms cohérents
+        $mform->addElement('hidden', 'return', $return);
+        $mform->setType('return', PARAM_TEXT);
+        
         $mform->addElement('hidden', 'userid', $userid);
-        $mform->setType('userid', PARAM_INT); // Set the data type to integer
+        $mform->setType('userid', PARAM_INT);
+        
+        $mform->addElement('hidden', 'teamid', $teamid);
+        $mform->setType('teamid', PARAM_INT);
+        
+        $mform->addElement('hidden', 'courseid', $courseid);
+        $mform->setType('courseid', PARAM_INT);
 
+        // Template selector
+        $mform->addElement('select', 'template', 'Template à utiliser', $template_options);
+        $mform->setType('template', PARAM_TEXT);
 
-        $options = array(
-            'size' => '300',
+        // Sujet du message
+        $options = [
+            'size'      => '300',
             'maxlength' => '50',
-            'class' => '',
-            // 'required' => true
-        );
+            'class'     => '',
+        ];
         $mform->addElement('text', 'subject', 'Sujet du message', $options);
         $mform->addRule('subject', null, 'required', null, 'client');
-        $mform->setType('subject', PARAM_TEXT); // Set the data type to integer
+        $mform->setType('subject', PARAM_TEXT);
 
-
+        // Contenu du message
         $mform->addElement(
             'editor',
             'content',
             'Contenu',
             null,
-            array('context' => $context)
-        )->setValue(array('text' => ""));
+            ['context' => $context]
+        )->setValue(['text' => ""]);
         $mform->setType('content', PARAM_RAW);
         $mform->addRule('content', null, 'required', null, 'client');
 
         $this->add_action_buttons(true, "Envoyer");
     }
 
-
-
     //Custom validation should be added here
-    function validation($data, $files)
+    public function validation($data, $files)
     {
-        return array();
+        return [];
     }
-
 
     /**
      * Process the form submission, used if form was submitted via AJAX
