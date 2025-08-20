@@ -3,33 +3,34 @@
 //Liste des templates
 
 // Chemin vers le fichier de configuration Moodle
-require_once(__DIR__ . '/../../../../config.php');
+require_once __DIR__ . '/../../../../config.php'; // config.php = fichier principal Moodle (chemin relatif depuis le dossier actuel)
 // Chemin vers les fichiers utilitaires
-require_once('../utils.php');
+require_once '../utils.php';
 
-// Vérification de l'authentification
+// Vérification de l'authentification, Fonction Moodle : vérifier que l'utilisateur est connecté
 require_login();
-// Vérification des autorisations
+// Vérification des autorisations, Fonction personnalisée : vérifier les droits admin
 isAdminFormation();
 
 // Vérification des autorisations
 global $USER, $DB, $CFG;
 
 // Contrôle d'accès par rôles
-$rolename = getMainRole();
-if (!($rolename == "super-admin" || $rolename == "manager" || $rolename == "smalleditingteacher" || $rolename == "editingteacher")) {
-    redirect($CFG->wwwroot);
+$rolename = getMainRole(); // Fonction personnalisée
+if (! ($rolename == "super-admin" || $rolename == "manager" || $rolename == "smalleditingteacher" || $rolename == "editingteacher")) {
+    redirect($CFG->wwwroot); // Redirection vers l'accueil si pas autorisé
 }
 
 // Gestion des actions (suppression)
-$templateid = optional_param('delete', null, PARAM_INT);
+$templateid = optional_param('delete', null, PARAM_INT); // optional_param() = fonction Moodle pour récupérer paramètres GET/POST de façon sécurisée
 if ($templateid) {
-    $DB->delete_records('smartch_mailtemplates', ['id' => $templateid]);
+    $DB->delete_records('smartch_mailtemplates', ['id' => $templateid]); //delete_records() = fonction Moodle pour supprimer des enregistrements
     redirect($CFG->wwwroot . '/theme/remui/views/mailtemplates/index.php');
 }
 
 // Contexte
 $context = context_system::instance();
+// $PAGE = objet global Moodle pour configurer la page web
 $PAGE->set_url(new moodle_url('/theme/remui/views/mailtemplates/index.php'));
 $PAGE->set_context(\context_system::instance());
 $PAGE->set_title("Gestion des templates d'email");
@@ -44,14 +45,14 @@ echo '<style>
         margin-bottom: 3.5rem;
     }
     div[role=main] { margin-top: 0 !important; }
-    
+
     .template-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: 20px;
         margin-top: 30px;
     }
-    
+
     .template-card {
         background: white;
         border-radius: 15px;
@@ -61,12 +62,12 @@ echo '<style>
         transition: transform 0.3s ease;
         min-height: 200px;
     }
-    
+
     .template-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 5px 15px rgba(0,70,134,0.2);
     }
-    
+
     .template-type-badge {
         position: absolute;
         top: 15px;
@@ -79,7 +80,7 @@ echo '<style>
         font-weight: bold;
         text-transform: uppercase;
     }
-    
+
     .template-actions {
         position: absolute;
         top: 15px;
@@ -87,7 +88,7 @@ echo '<style>
         display: flex;
         gap: 10px;
     }
-    
+
     .btn-action {
         background: none;
         border: none;
@@ -96,11 +97,11 @@ echo '<style>
         border-radius: 50%;
         transition: background 0.3s ease;
     }
-    
+
     .btn-action:hover {
         background: rgba(0,70,134,0.1);
     }
-    
+
     .btn-create {
         background: #004686;
         color: white;
@@ -114,7 +115,7 @@ echo '<style>
         font-weight: bold;
         transition: background 0.3s ease;
     }
-    
+
     .btn-create:hover {
         background: #003366;
         color: white;
@@ -158,13 +159,13 @@ if (empty($templates)) {
     </div>';
 } else {
     $content .= '<div class="template-grid">';
-    
+
     foreach ($templates as $template) {
         $content .= '<div class="template-card">';
-        
+
         // Badge du type
         $content .= '<div class="template-type-badge">' . htmlspecialchars($template->type) . '</div>';
-        
+
         // Actions (éditer/supprimer)
         $content .= '<div class="template-actions">
             <a href="' . new moodle_url('/theme/remui/views/mailtemplates/edit.php?id=' . $template->id) . '" class="btn-action" title="Éditer">
@@ -172,42 +173,44 @@ if (empty($templates)) {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                 </svg>
             </a>
-            <a href="' . new moodle_url('/theme/remui/views/mailtemplates/index.php?delete=' . $template->id) . '" 
-               class="btn-action" title="Supprimer" 
+            <a href="' . new moodle_url('/theme/remui/views/mailtemplates/index.php?delete=' . $template->id) . '"
+               class="btn-action" title="Supprimer"
                onclick="return confirm(\'Êtes-vous sûr de vouloir supprimer ce template ?\')">
                 <svg width="20" height="20" fill="none" stroke="#dc3545" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                 </svg>
             </a>
         </div>';
-        
+
         // Contenu du template
         $content .= '<h3 style="color: #004686; margin-bottom: 15px; padding-right: 60px; margin-top: 35px;">' . htmlspecialchars($template->name) . '</h3>';
-        
-        $content .= '<div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+
+        //enlever l'aperçu du sujet
+        /*  $content .= '<div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
             <strong style="color: #004686;">Sujet:</strong><br>
             <span style="font-size: 14px;">' . htmlspecialchars($template->subject) . '</span>
         </div>';
-        
-        // Aperçu du contenu (tronqué)
-        $preview = strip_tags($template->content);
-        if (strlen($preview) > 100) {
-            $preview = substr($preview, 0, 100) . '...';
-        }
+		*/
+		
+        // Aperçu du contenu (tronqué) ==> enlever l'aperçu
+        // $preview = strip_tags($template->content);
+        // if (strlen($preview) > 100) {
+        // $preview = substr($preview, 0, 100) . '...';
+        // }
         $content .= '<div style="color: #666; font-size: 13px; line-height: 1.4;">
             ' . htmlspecialchars($preview) . '
         </div>';
-        
+
         // Date de modification
-        if (!empty($template->timemodified)) {
+        if (! empty($template->timemodified)) {
             $content .= '<div style="margin-top: 15px; font-size: 12px; color: #999;">
                 Modifié le ' . date('d/m/Y à H:i', $template->timemodified) . '
             </div>';
         }
-        
+
         $content .= '</div>';
     }
-    
+
     $content .= '</div>';
 }
 
@@ -216,5 +219,4 @@ echo $content;
 echo $OUTPUT->footer();
 
 //url: http://portailformation:8888/theme/remui/views/mailtemplates/index.php
-//Base de données: table crée =>  mdl_smartch_email_templates  (Stockage templates)
-
+//Base de données: table créée =>  mdl_smartch_email_templates  (Stockage templates)

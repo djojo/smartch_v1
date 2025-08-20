@@ -15,6 +15,7 @@ if (!($rolename == "super-admin" || $rolename == "manager" || $rolename == "smal
     redirect($CFG->wwwroot);
 }
 
+// Contexte 
 $context = context_system::instance();
 $PAGE->set_url(new moodle_url('/theme/remui/views/sendmail.php'));
 $PAGE->set_context(\context_system::instance());
@@ -27,7 +28,7 @@ $send = optional_param('send', false, PARAM_BOOL);
 
 if ($send && $templateid && $userid) {
     $template = $DB->get_record('smartch_mailtemplates', ['id' => $templateid]);
-    $user = $DB->get_record('user', ['id' => $userid]);
+    $user = $DB->get_record('user', ['id' => $userid]); // Récupère les objets template et utilisateur
     
     if ($template && $user) {
         $variables = [
@@ -37,7 +38,7 @@ if ($send && $templateid && $userid) {
             '{{email}}' => $user->email
         ];
         
-        $result = send_template_email($user, $template->name, $variables);
+        $result = send_template_email($user, $template->name, $variables); // Appelle la fonction du moteur
         
         if ($result) {
             $message = "Email envoyé avec succès à " . $user->firstname . " " . $user->lastname;
@@ -119,7 +120,7 @@ echo '<style>
 
 $content = "";
 
-// Bouton retour
+//Bouton retour
 $content .= '<a href="' . new moodle_url('/theme/remui/views/adminmenu.php') . '" style="font-size:0.8rem;cursor: pointer; display: flex; align-items: center; position: absolute; top: 120px;">
 <svg width="8" height="15" viewBox="0 0 6 10" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path fill-rule="evenodd" clip-rule="evenodd" d="M5.70711 0.292893C6.09763 0.683417 6.09763 1.31658 5.70711 1.70711L2.41421 5L5.70711 8.29289C6.09763 8.68342 6.09763 9.31658 5.70711 9.70711C5.31658 10.0976 4.68342 10.0976 4.29289 9.70711L0.292893 5.70711C-0.0976311 5.31658 -0.0976311 4.68342 0.292893 4.29289L4.29289 0.292893C4.68342 -0.0976311 5.31658 -0.0976311 5.70711 0.292893Z" fill="white"/>
@@ -143,7 +144,8 @@ $content .= '<div class="email-form">
             <label class="form-label">Template à utiliser :</label>
             <select name="template" class="form-control" required>';
 
-// Récupérer tous les templates
+//Récupérer tous les templates 
+
 $templates = get_all_templates();
 $content .= '<option value="">-- Choisir un template --</option>';
 foreach ($templates as $template) {
@@ -159,7 +161,8 @@ $content .= '</select>
             <label class="form-label">Utilisateur destinataire :</label>
             <select name="user" class="form-control" required>';
 
-// Récupérer tous les utilisateurs actifs
+//Récupérer tous les utilisateurs actifs
+
 $users = $DB->get_records_sql('SELECT id, firstname, lastname, email FROM {user} WHERE deleted = 0 AND suspended = 0 ORDER BY firstname ASC LIMIT 50');
 $content .= '<option value="">-- Choisir un utilisateur --</option>';
 foreach ($users as $user) {

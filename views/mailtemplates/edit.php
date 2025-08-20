@@ -1,7 +1,6 @@
 <?php
 //Création/édition
 
-
 require_once(__DIR__ . '/../../../../config.php');
 require_once('../utils.php');
 require_once('./classes/form/templateedit.php');
@@ -18,12 +17,12 @@ if (!($rolename == "super-admin" || $rolename == "manager" || $rolename == "smal
 }
 
 $content = "";
-$templateid = optional_param('id', null, PARAM_INT);
+$templateid = optional_param('id', null, PARAM_INT);// optional_param() = fonction Moodle pour récupérer paramètres GET/POST de façon sécurisée
 
 // Si on édite un template existant
-$template = new stdClass();
+$template = new stdClass(); // Objet PHP standard vide
 if ($templateid) {
-    $template = $DB->get_record('smartch_mailtemplates', ['id' => $templateid]);
+    $template = $DB->get_record('smartch_mailtemplates', ['id' => $templateid]); // get_record() = récupère UN enregistrement de la BDD
     if (!$template) {
         redirect($CFG->wwwroot . '/theme/remui/views/mailtemplates/index.php');
     }
@@ -34,28 +33,29 @@ $PAGE->set_url(new moodle_url('/theme/remui/views/mailtemplates/edit.php'));
 $PAGE->set_context(\context_system::instance());
 $PAGE->set_title($templateid ? "Éditer le template" : "Créer un template");
 
-// Préparation des données pour le formulaire
+// Prépare les données à passer au formulaire
 $to_form = array(
     'id' => $templateid,
     'name' => isset($template->name) ? $template->name : '',
     'subject' => isset($template->subject) ? $template->subject : '',
     'content' => isset($template->content) ? $template->content : '',
     'type' => isset($template->type) ? $template->type : 'general'
+	 
 );
 
-$mform = new templateedit(null, $to_form);
+$mform = new templateedit(null, $to_form);//Instancie le formulaire avec les données
 
 // Traitement du formulaire
 if ($mform->is_cancelled()) {
     redirect($CFG->wwwroot . '/theme/remui/views/mailtemplates/index.php');
 } else if ($fromform = $mform->get_data()) {
-    
+	// Récupération des données du formulaire
     $templatedata = new stdClass();
     $templatedata->name = $fromform->name;
     $templatedata->subject = $fromform->subject;
-    $templatedata->content = $fromform->content['text'];
+    $templatedata->content = $fromform->content['text'];// ['text'] car c'est un éditeur
     $templatedata->type = $fromform->type;
-    $templatedata->timemodified = time();
+    $templatedata->timemodified = time();// Timestamp Unix
     
     if ($templateid) {
         // Mise à jour
@@ -137,7 +137,6 @@ $content .= '<a href="' . new moodle_url('/theme/remui/views/mailtemplates/index
 // Titre
 $content .= '<h1 style="margin-bottom:30px;letter-spacing:1px;" class="smartch_title FFF-Hero-Bold FFF-Blue">' . 
     ($templateid ? 'Éditer le template' : 'Créer un template') . '</h1>';
-
 // Aide sur les variables
 $content .= '<div class="variables-help">
     <h3 style="color: #004686; margin-bottom: 15px;">
@@ -146,8 +145,8 @@ $content .= '<div class="variables-help">
         </svg>
         Variables disponibles
     </h3>
-    <p style="margin-bottom: 15px;">Utilisez ces variables dans vos templates. Elles seront automatiquement remplacées :</p>
-	// Variables disponibles
+    <p style="margin-bottom: 15px;">Utilisez ces variables dans vos templates. Elles seront automatiquement remplacées par les valeurs appropriées:</p>
+	<!-- Variables disponibles -->
     <div class="variable-list">
         <div class="variable-item">{{username}} - Nom d\'utilisateur</div>
         <div class="variable-item">{{firstname}} - Prénom</div>

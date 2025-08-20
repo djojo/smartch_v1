@@ -2,27 +2,28 @@
 // Formulaire Moodle
 
 // Chemin vers le fichier de configuration Moodle
-require_once($CFG->libdir . '/formslib.php');
+require_once($CFG->libdir . '/formslib.php'); //formslib.php = bibliothèque Moodle pour créer des formulaires
 
 class templateedit extends moodleform {
+	 // Hérite de moodleform = classe de base Moodle pour tous les formulaires
     // Formulaire de création/édition de template
     public function definition() {
         global $CFG;
 
-        $mform = $this->_form;
-        $data = $this->_customdata;
+        $mform = $this->_form; // Objet formulaire Moodle
+        $data = $this->_customdata; // Données passées au formulaire
 
-        // ID du template (pour l'édition)
+        // ID du template (pour l'édition) , Champ caché pour l'ID (édition)
         if (isset($data['id']) && $data['id']) {
             $mform->addElement('hidden', 'id', $data['id']);
-            $mform->setType('id', PARAM_INT);
+            $mform->setType('id', PARAM_INT); // Validation : entier seulement
         }
 
-        // Nom du template
+        // Nom du template, Champ texte pour le nom
         $mform->addElement('text', 'name', 'Nom du template', 'maxlength="100" size="50" class="form-control"');
-        $mform->setType('name', PARAM_TEXT);
+        $mform->setType('name', PARAM_TEXT);// Validation : texte
         $mform->addRule('name', 'Le nom est requis', 'required', null, 'client');
-        $mform->addRule('name', 'Le nom ne peut pas dépasser 100 caractères', 'maxlength', 100, 'client');
+        $mform->addRule('name', 'Le nom ne peut pas dépasser 100 caractères', 'maxlength', 100, 'client');// addRule() = validation côté client (JavaScript)
         if (isset($data['name'])) {
             $mform->setDefault('name', $data['name']);
         }
@@ -57,10 +58,10 @@ class templateedit extends moodleform {
 
         // Corps de l'email (éditeur riche)
         $editoroptions = array(
-            'maxfiles' => 0,
-            'maxbytes' => 0,
-            'trusttext' => false,
-            'forcehttps' => false,
+            'maxfiles' => 0, // Pas de fichiers uploadés
+            'maxbytes' => 0, // Pas de limite de taille
+		   //'trusttext' => false,   // Pas de confiance aveugle (sécurité)
+            'forcehttps' => false, // Pas de forçage HTTPS
             'subdirs' => false,
             'return_types' => FILE_INTERNAL,
             'enable_filemanagement' => false
