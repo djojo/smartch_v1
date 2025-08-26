@@ -3674,8 +3674,8 @@ function smartchModalRole()
  * @return object|false Le template ou false si non trouvé
  */
 function get_mail_template($templatename) {
-    global $DB; // Accès à la base de données Moodle
-    return $DB->get_record('smartch_mailtemplates', ['name' => $templatename]);// Récupère UN template par son nom depuis la table
+    global $DB;
+    return $DB->get_record('smartch_mailtemplates', ['name' => $templatename]);
 }
 
 /**
@@ -3685,22 +3685,26 @@ function get_mail_template($templatename) {
  * @return array|false Array avec 'subject', 'content' et 'type' ou false si erreur
  */
 function process_mail_template($templatename, $variables = []) {
-    global $DB, $SITE; // $SITE = objet site Moodle global
+    global $DB, $SITE;
     
     $template = get_mail_template($templatename);
     if (!$template) {
-        return false; // Template inexistant
+        return false;
     }
-    // Variables par défaut toujours disponibles,  // Variables automatiques toujours disponibles
+    
+    // Variables par défaut ÉTENDUES
     $defaultvars = [
-        '{{sitename}}' => $SITE->fullname,// Nom du site Moodle
-        '{{date}}' => date('d/m/Y'), // Date actuelle
+        '{{sitename}}' => $SITE->fullname,
+        '{{date}}' => date('d/m/Y'),
         '{{time}}' => date('H:i'),
-        '{{datetime}}' => date('d/m/Y à H:i')
+        '{{datetime}}' => date('d/m/Y à H:i'),
+        '{{message}}' => '', // Variable pour message personnalisé
+        '{{senderfirstname}}' => get_admin()->firstname, // Prénom expéditeur
+        '{{senderlastname}}' => get_admin()->lastname, // Nom expéditeur
     ];
-     // Fusion des variables par défaut + variables personnalisées
+    
     $allvars = array_merge($defaultvars, $variables);
-      // str_replace() remplace toutes les {{variables}} par leurs valeurs
+    
     $subject = str_replace(array_keys($allvars), array_values($allvars), $template->subject);
     $content = str_replace(array_keys($allvars), array_values($allvars), $template->content);
     
@@ -3710,7 +3714,6 @@ function process_mail_template($templatename, $variables = []) {
         'type' => $template->type
     ];
 }
-
 /**
  *  - Envoie un email basé sur un template
  * @param object $user Utilisateur destinataire (objet user Moodle)
@@ -3725,15 +3728,14 @@ function send_template_email($user, $templatename, $variables = [], $from = null
     // Traiter le template
     $emaildata = process_mail_template($templatename, $variables);
     if (!$emaildata) {
-        return false;// Échec du traitement
+        return false;
     }
     
     // Email par défaut si pas spécifié
     if (!$from) {
-        $from = get_admin(); // Fonction Moodle pour récupérer l'admin principal
+        $from = get_admin();
     }
     
-    // email_to_user() = fonction native Moodle pour envoyer des emails
     return email_to_user($user, $from, $emaildata['subject'], $emaildata['content']);
 }
 
@@ -3896,6 +3898,36 @@ function create_default_email_templates() {
     }
 }
 
+function send_template_email_by_id($user, $templateid, $variables = [], $from = null) {
+    global $DB, $SITE;
+    
+    $template = $DB->get_record('smartch_mailtemplates', ['id' => $templateid]);
+    if (!$template) {
+        return false;
+    }
+    
+    // Variables par défaut MISES À JOUR
+    $defaultvars = [
+        '{{sitename}}' => $SITE->fullname,
+        '{{date}}' => date('d/m/Y'),
+        '{{time}}' => date('H:i'),
+        '{{datetime}}' => date('d/m/Y à H:i'),
+        '{{message}}' => '', // Sera remplacé par la variable personnalisée si fournie
+        '{{senderfirstname}}' => $from ? $from->firstname : get_admin()->firstname,
+        '{{senderlastname}}' => $from ? $from->lastname : get_admin()->lastname,
+    ];
+    
+    $allvars = array_merge($defaultvars, $variables);
+    
+    $subject = str_replace(array_keys($allvars), array_values($allvars), $template->subject);
+    $content = str_replace(array_keys($allvars), array_values($allvars), $template->content);
+    
+    if (!$from) {
+        $from = get_admin();
+    }
+    
+    return email_to_user($user, $from, $subject, $content);
+}
 // =====================================================
 // FIN DES NOUVELLES FONCTIONS TEMPLATES
 // =========================================

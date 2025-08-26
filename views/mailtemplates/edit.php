@@ -1,5 +1,4 @@
 <?php
-//Création/édition
 
 require_once(__DIR__ . '/../../../../config.php');
 require_once('../utils.php');
@@ -137,7 +136,8 @@ $content .= '<a href="' . new moodle_url('/theme/remui/views/mailtemplates/index
 // Titre
 $content .= '<h1 style="margin-bottom:30px;letter-spacing:1px;" class="smartch_title FFF-Hero-Bold FFF-Blue">' . 
     ($templateid ? 'Éditer le template' : 'Créer un template') . '</h1>';
-// Aide sur les variables
+
+// Aide sur les variables disponibles
 $content .= '<div class="variables-help">
     <h3 style="color: #004686; margin-bottom: 15px;">
         <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="vertical-align: middle; margin-right: 8px;">
@@ -146,7 +146,7 @@ $content .= '<div class="variables-help">
         Variables disponibles
     </h3>
     <p style="margin-bottom: 15px;">Utilisez ces variables dans vos templates. Elles seront automatiquement remplacées par les valeurs appropriées:</p>
-	<!-- Variables disponibles -->
+    
     <div class="variable-list">
         <div class="variable-item">{{username}} - Nom d\'utilisateur</div>
         <div class="variable-item">{{firstname}} - Prénom</div>
@@ -156,6 +156,11 @@ $content .= '<div class="variables-help">
         <div class="variable-item">{{courselink}} - Lien du cours</div>
         <div class="variable-item">{{coursename}} - Nom du cours</div>
         <div class="variable-item">{{date}} - Date actuelle</div>
+        <div class="variable-item">{{time}} - Heure actuelle</div>
+        <div class="variable-item">{{datetime}} - Date et heure</div>
+        <div class="variable-item">{{message}} - Message personnalisé</div>
+        <div class="variable-item">{{senderfirstname}} - Prénom expéditeur</div>
+        <div class="variable-item">{{senderlastname}} - Nom expéditeur</div>
     </div>
 </div>';
 

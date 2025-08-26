@@ -21,6 +21,22 @@ if (! ($rolename == "super-admin" || $rolename == "manager" || $rolename == "sma
     redirect($CFG->wwwroot); // Redirection vers l'accueil si pas autorisé
 }
 
+// Fonction pour traduire les types de templates
+function get_template_type_label($type)
+{
+    $types = [
+        'general'      => 'Général',
+        'inscription'  => 'Inscription',
+        'validation'   => 'Validation',
+        'rappel'       => 'Rappel',
+        'completion'   => 'Fin de formation',
+        'welcome'      => 'Bienvenue',
+        'notification' => 'Notification',
+    ];
+
+    return isset($types[$type]) ? $types[$type] : ucfirst($type);
+}
+
 // Gestion des actions (suppression)
 $templateid = optional_param('delete', null, PARAM_INT); // optional_param() = fonction Moodle pour récupérer paramètres GET/POST de façon sécurisée
 if ($templateid) {
@@ -163,8 +179,16 @@ if (empty($templates)) {
     foreach ($templates as $template) {
         $content .= '<div class="template-card">';
 
-        // Badge du type
-        $content .= '<div class="template-type-badge">' . htmlspecialchars($template->type) . '</div>';
+        // Badge du type, qu'on peut décommenter
+        // $content .= '<div class="template-type-badge">' . htmlspecialchars($template->type) . '</div>';
+        // $content .= '<div class="template-type-badge">' . htmlspecialchars(get_template_type_label($template->type)) . '</div>';
+        // Contenu du template avec nom français
+        // $content .= '<h3 style="color: #004686; margin-bottom: 15px; padding-right: 60px; margin-top: 35px;">' . htmlspecialchars(get_template_type_label($template->type)) . '</h3>';
+
+        // affiche le nom du template
+        $content .= '<h3 style="color: #004686; margin-bottom: 15px; padding-right: 60px; margin-top: 35px;">' . htmlspecialchars($template->name) . '</h3>';
+        // Ajoute le type en petit sous-titre
+        $content .= '<div style="color: #666; font-size: 12px; margin-bottom: 15px; text-transform: uppercase;">' . htmlspecialchars(get_template_type_label($template->type)) . '</div>';
 
         // Actions (éditer/supprimer)
         $content .= '<div class="template-actions">
@@ -183,7 +207,7 @@ if (empty($templates)) {
         </div>';
 
         // Contenu du template
-        $content .= '<h3 style="color: #004686; margin-bottom: 15px; padding-right: 60px; margin-top: 35px;">' . htmlspecialchars($template->name) . '</h3>';
+        // $content .= '<h3 style="color: #004686; margin-bottom: 15px; padding-right: 60px; margin-top: 35px;">' . htmlspecialchars($template->name) . '</h3>';
 
         //enlever l'aperçu du sujet
         /*  $content .= '<div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
@@ -191,7 +215,7 @@ if (empty($templates)) {
             <span style="font-size: 14px;">' . htmlspecialchars($template->subject) . '</span>
         </div>';
 		*/
-		
+
         // Aperçu du contenu (tronqué) ==> enlever l'aperçu
         // $preview = strip_tags($template->content);
         // if (strlen($preview) > 100) {
@@ -220,3 +244,18 @@ echo $OUTPUT->footer();
 
 //url: http://portailformation:8888/theme/remui/views/mailtemplates/index.php
 //Base de données: table créée =>  mdl_smartch_email_templates  (Stockage templates)
+
+/**
+// Ces variables fonctionnent dans TOUS les contextes
+'{{username}}'         // Toujours disponible
+'{{firstname}}'         // Toujours disponible
+'{{lastname}}'          // Toujours disponible
+'{{email}}'            // Toujours disponible
+'{{sitename}}'         // Toujours disponible
+'{{date}}'             // Toujours disponible
+'{{time}}'             // Toujours disponible
+'{{datetime}}'         // Toujours disponible
+'{{senderfirstname}}'  // Toujours disponible (toi qui envoies)
+'{{senderlastname}}'   // Toujours disponible (toi qui envoies)
+
+ */

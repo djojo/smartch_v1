@@ -1,123 +1,246 @@
 <?php
 
-require_once(__DIR__ . '/../../../config.php');
-require_once('./utils.php');
-require_once($CFG->dirroot . '/theme/remui/classes/form/messagegroup.php');
+require_once __DIR__ . '/../../../config.php';
+require_once './utils.php';
 
 require_login();
-if(!hasResponsablePedagogiqueRole()){
-    redirect('/');
-};
 
 global $USER, $DB, $CFG;
 
-$teamid = required_param('teamid', PARAM_INT);
-$group = $DB->get_record('groups', ['id' => $teamid]);
+$teamid     = optional_param('teamid', null, PARAM_INT);
+$returnurl  = optional_param('returnurl', $CFG->wwwroot . '/theme/remui/views/adminteams.php', PARAM_URL);
+$templateid = optional_param('template', null, PARAM_INT);
+$send       = optional_param('send', false, PARAM_BOOL);
 
-$returnurl = required_param('returnurl', PARAM_TEXT);
+/**
+ * Récupère les utilisateurs d'un groupe
+ */
+function get_group_users($groupid)
+{
+    global $DB;
 
+    $sql = 'SELECT DISTINCT u.id, u.firstname, u.lastname, u.email, u.username
+            FROM mdl_groups_members gm
+            JOIN mdl_user u ON u.id = gm.userid
+            WHERE gm.groupid = :groupid
+            AND u.deleted = 0 AND u.suspended = 0';
+
+    return $DB->get_records_sql($sql, ['groupid' => $groupid]);
+}
+
+// Traitement de l'envoi
+if ($send && $templateid && $teamid) {
+    $template = $DB->get_record('smartch_mailtemplates', ['id' => $templateid]);
+    $group    = $DB->get_record('groups', ['id' => $teamid]);
+    $course   = $DB->get_record('course', ['id' => $group->courseid]);
+    $session  = $DB->get_record('smartch_session', ['groupid' => $teamid]);
+
+    if ($template && $group) {
+        $users         = get_group_users($teamid);
+        $success_count = 0;
+        $total_users   = count($users);
+
+        foreach ($users as $user) {
+            // Variables pour chaque utilisateur du groupe
+            $variables = [
+                '{{username}}'        => $user->username,
+                '{{firstname}}'       => $user->firstname,
+                '{{lastname}}'        => $user->lastname,
+                '{{email}}'           => $user->email,
+                '{{sitename}}'        => $SITE->fullname,
+                '{{date}}'            => date('d/m/Y'),
+                '{{time}}'            => date('H:i'),
+                '{{datetime}}'        => date('d/m/Y à H:i'),
+                '{{message}}'         => '', // Pour contenu libre
+                '{{senderfirstname}}' => $USER->firstname,
+                '{{senderlastname}}'  => $USER->lastname,
+                '{{groupname}}'       => $group->name,
+                '{{coursename}}'      => $course->fullname ?? '',                                                  // NOM DU COURS
+                '{{courselink}}'      => $course ? new moodle_url('/course/view.php', ['id' => $course->id]) : '', // LIEN VERS LE COURS
+            ];
+            // Variables session si disponible
+            if ($session) {
+                $variables['{{sessionstart}}'] = date('d/m/Y', $session->startdate);
+                $variables['{{sessionend}}']   = date('d/m/Y', $session->enddate);
+                $variables['{{sessiondates}}'] = date('d/m/Y', $session->startdate) . ' au ' . date('d/m/Y', $session->enddate);
+            }
+
+            // Envoyer l'email
+            $result = send_template_email_by_id($user, $template->id, $variables);
+
+            if ($result) {
+                $success_count++;
+            }
+        }
+
+        // Message de résultat
+        if ($success_count == $total_users) {
+            $message      = "Message envoyé avec succès à $success_count utilisateur(s)";
+            $message_type = 'success';
+        } else {
+            $message      = "Message envoyé à $success_count/$total_users utilisateur(s)";
+            $message_type = 'warning';
+        }
+    } else {
+        $message      = "Erreur : template ou groupe non trouvé";
+        $message_type = 'error';
+    }
+}
 
 $context = context_system::instance();
 $PAGE->set_url(new moodle_url('/theme/remui/views/groupmessage.php'));
 $PAGE->set_context(\context_system::instance());
-$PAGE->set_title("Nouveau message pour " . $group->name);
-
-echo '<style>
-
-#page{
-    background:transparent !important;
-}
-
-#topofscroll {
-    background: transparent !important;
-    margin-top: 0px !important;
-}
-
-@media screen and (max-width: 830px) {
-    #topofscroll{
-        margin-top:40px !important;
-    }
-}
-
-</style>';
+$PAGE->set_title("Nouveau message pour groupe");
 
 echo $OUTPUT->header();
 
-//le header avec bouton de retour au panneau admin
-$templatecontextheader = (object)[
-    'url' => $returnurl,
-    'textcontent' => 'Retour au groupe'
-];
-$content .= $OUTPUT->render_from_template('theme_remui/smartch_header_back', $templatecontextheader);
+echo '<style>
+    .message-form {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        border: 1px solid #004686;
+        max-width: 800px;
+        margin: 30px auto;
+    }
 
-$content .= '<div class="row" style="margin:50px 0;"></div>';
+    .form-group {
+        margin-bottom: 20px;
+    }
 
+    .form-label {
+        color: #004686;
+        font-weight: bold;
+        margin-bottom: 5px;
+        display: block;
+    }
 
-$content .= '<div class="row mb-5 mt-4">
-<div class="col-md-12">
-<h4 style="letter-spacing:1px;max-width:70%;cursor:pointer;" class="FFF-Equipe-Bold FFF-Blue">Nouveau message pour '.$group->name.'</h4>
-</div>
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+
+    .btn-send {
+        background: #004686;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    .success-message {
+        background: #d4edda;
+        color: #155724;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+
+    .warning-message {
+        background: #fff3cd;
+        color: #856404;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+
+    .error-message {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+
+    .recipient-info {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        border-left: 4px solid #004686;
+    }
+</style>';
+
+$content = "";
+
+// Bouton retour
+$content .= '<a href="' . $returnurl . '" style="font-size:0.8rem;cursor: pointer; display: flex; align-items: center; margin-bottom: 20px;">
+    ← Retour au groupe
+</a>';
+
+// Titre
+if ($teamid) {
+    $group = $DB->get_record('groups', ['id' => $teamid]);
+    $content .= '<h1 style="color: #004686; margin-bottom: 30px;">Nouveau message pour ' . htmlspecialchars($group->name) . '</h1>';
+} else {
+    $content .= '<h1 style="color: #004686; margin-bottom: 30px;">Nouveau message pour groupe</h1>';
+}
+
+// Message de résultat
+if (isset($message)) {
+    $class = $message_type . '-message';
+    $content .= '<div class="' . $class . '">' . $message . '</div>';
+}
+
+// Affichage des informations du groupe
+if ($teamid) {
+    $group  = $DB->get_record('groups', ['id' => $teamid]);
+    $users  = get_group_users($teamid);
+    $course = $DB->get_record('course', ['id' => $group->courseid]);
+
+    if ($group) {
+        $content .= '<div class="recipient-info">';
+        $content .= '<h4>Destinataires : Groupe</h4>';
+        $content .= '<p><strong>Groupe :</strong> ' . htmlspecialchars($group->name) . '</p>';
+        if ($course) {
+            $content .= '<p><strong>Cours :</strong> ' . htmlspecialchars($course->fullname) . '</p>';
+        }
+        $content .= '<p><strong>Nombre d\'utilisateurs :</strong> ' . count($users) . '</p>';
+        $content .= '</div>';
+    }
+}
+
+// Formulaire
+$content .= '<div class="message-form">
+    <form method="post">
+        <div class="form-group">
+            <label class="form-label">Template à utiliser :</label>
+            <select name="template" class="form-control" required>';
+
+// Récupérer tous les templates
+$templates = get_all_templates();
+$content .= '<option value="">-- Choisir un template --</option>';
+foreach ($templates as $template) {
+    $selected = ($templateid == $template->id) ? 'selected' : '';
+    $content .= '<option value="' . $template->id . '" ' . $selected . '>' .
+    htmlspecialchars($template->name) . ' (' . $template->type . ')</option>';
+}
+
+$content .= '</select>
+        </div>
+
+        <input type="hidden" name="teamid" value="' . $teamid . '">
+        <input type="hidden" name="returnurl" value="' . htmlspecialchars($returnurl) . '">
+        <input type="hidden" name="send" value="1">
+
+        <div class="form-group">
+            <button type="submit" class="btn-send" onclick="return confirm(\'Êtes-vous sûr de vouloir envoyer ce message à tous les membres du groupe ?\')">
+                Envoyer le message au groupe
+            </button>
+        </div>
+    </form>
+</div>';
+
+// Lien vers les templates
+$content .= '<div style="text-align: center; margin-top: 30px;">
+    <a href="' . new moodle_url('/theme/remui/views/mailtemplates/index.php') . '" style="color: #004686;">
+        → Gérer les templates d\'email
+    </a>
 </div>';
 
 echo $content;
-
-
-require_once('./utils.php');
-require_once($CFG->dirroot . '/theme/remui/classes/form/messagegroup.php');
-require_once($CFG->libdir . '/messagelib.php');
-
-// if ($teamid) {
-$to_form = array('variables' => array('teamid' => $group->id, 'teamname' => $group->name, 'returnurl' => $returnurl));
-$mform = new messagegroup(null, $to_form);
-
-if ($mform->is_cancelled()) {
-    //require_once('./redirections.php');
-} else if ($fromform = $mform->get_data()) {
-
-    //on va chercher les membres de l'équipe
-    $teamates = $DB->get_records('groups_members', ['groupid' => $fromform->teamid]);
-
-    foreach ($teamates as $teamate) {
-        $userfor = $DB->get_record('user', ['id' => $teamate->id]);
-        $userbase = $DB->get_record('user', ['id' => $USER->id]);
-
-        if ($userfor) {
-
-            // $message = new \core\message\message();
-            // $message->courseid          = 1;
-            // $message->component         = 'moodle';
-            // $message->name              = 'instantmessage';
-            // $message->userfrom          = $userbase;
-            // $message->userto            = $userfor;
-            // $message->subject           = $fromform->subject;
-            // $message->fullmessage       = reset($fromform->content);
-            // $message->fullmessageformat = FORMAT_MARKDOWN;
-            // $message->fullmessagehtml   = reset($fromform->content);
-            // $message->smallmessage      = reset($fromform->content); //rajouter substring
-            // $message->notification      = '0';
-            // $content = array('*' => array('header' => ' test ', 'footer' => ' test '));
-            // $message->set_additional_content('email', $content);
-
-            // $sink = $this->redirectEmails();
-            // $messageid = message_send($message);
-
-            $from = 'Portail Formation FFF';
-
-            $subject = 'Nouveau message de ' . $userbase->firstname . ' ' . $userbase->lastname . ' : ' . $fromform->subject;
-            $body = reset($fromform->content);
-
-
-            //on envoi un mail à l'utilisateur
-            email_to_user($userfor, $from, $subject, $body, $body);
-        }
-    }
-
-    // redirect('/');
-
-    redirect($CFG->wwwroot . '/theme/remui/views/adminteam.php?teamid=' . $fromform->teamid . '&sent=true');
-}
-
-$mform->display();
-
-
 echo $OUTPUT->footer();
