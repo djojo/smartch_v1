@@ -1,5 +1,7 @@
 <?php
 
+// Fonctions métier
+
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
@@ -79,7 +81,7 @@ function getConfigPortail(){
     // WHERE TABLE_NAME = "mdl_smartch_config"
     // AND COLUMN_NAME = "value"', null);
     
-    // //si on doit mettre les nouveaux noms de colonne
+    // //si on doit mettre les x noms de colonne
     // // key renvoyait des bugs
     // if($test){
     //     //on change la keyvalue
@@ -1467,7 +1469,7 @@ WHERE sa.course = ' . $course->id . ' AND gm.groupid =  ' . $groupid, null);
     // $writer->save('php://output');
     // exit();
 
-    // Créer un nouveau document
+    // Créer un  document
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
 
@@ -1695,7 +1697,7 @@ function downloadXLSTeamGrade($groupid)
     //on va chercher la data en tableau
     $data = getDataTeamGrades($course, $groupid);
 
-    // Créer un nouveau document
+    // Créer un  document
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
 
@@ -2873,7 +2875,7 @@ function exportCSV($title, $data)
 
 function exportXLS($title, $data)
 {
-    // Créer un nouveau document
+    // Créer un  document
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
 
@@ -3676,3 +3678,271 @@ function smartchModalRole()
     echo '</div>'; // smartch_modal_container
     echo '</div>'; // smartch_modal
 }
+
+// =====================================================
+// NOUVELLES FONCTIONS POUR LES TEMPLATES D'EMAIL
+// =====================================================
+
+/**
+ *  - Récupère un template d'email par son nom
+ * @param string $templatename Nom du template
+ * @return object|false Le template ou false si non trouvé
+ */
+function get_mail_template($templatename) {
+    global $DB;
+    return $DB->get_record('smartch_mailtemplates', ['name' => $templatename]);
+}
+
+/**
+ *  - Traite un template d'email avec les variables
+ * @param string $templatename Nom du template
+ * @param array $variables Variables à remplacer (ex: ['{{firstname}}' => 'Jean'])
+ * @return array|false Array avec 'subject', 'content' et 'type' ou false si erreur
+ */
+function process_mail_template($templatename, $variables = []) {
+    global $DB, $SITE;
+    
+    $template = get_mail_template($templatename);
+    if (!$template) {
+        return false;
+    }
+    
+    // Variables par défaut ÉTENDUES
+    $defaultvars = [
+        '{{sitename}}' => $SITE->fullname,
+        '{{date}}' => date('d/m/Y'),
+        '{{time}}' => date('H:i'),
+        '{{datetime}}' => date('d/m/Y à H:i'),
+        '{{message}}' => '', // Variable pour message personnalisé
+        '{{senderfirstname}}' => get_admin()->firstname, // Prénom expéditeur
+        '{{senderlastname}}' => get_admin()->lastname, // Nom expéditeur
+    ];
+    
+    $allvars = array_merge($defaultvars, $variables);
+    
+    $subject = str_replace(array_keys($allvars), array_values($allvars), $template->subject);
+    $content = str_replace(array_keys($allvars), array_values($allvars), $template->content);
+    
+    return [
+        'subject' => $subject,
+        'content' => $content,
+        'type' => $template->type
+    ];
+}
+/**
+ *  - Envoie un email basé sur un template
+ * @param object $user Utilisateur destinataire (objet user Moodle)
+ * @param string $templatename Nom du template à utiliser
+ * @param array $variables Variables personnalisées (optionnel)
+ * @param object $from Expéditeur (optionnel, utilise admin par défaut)
+ * @return bool True si envoi réussi, false sinon
+ */
+function send_template_email($user, $templatename, $variables = [], $from = null) {
+    global $SITE;
+    
+    // Traiter le template
+    $emaildata = process_mail_template($templatename, $variables);
+    if (!$emaildata) {
+        return false;
+    }
+    
+    // Email par défaut si pas spécifié
+    if (!$from) {
+        $from = get_admin();
+    }
+    
+    return email_to_user($user, $from, $emaildata['subject'], $emaildata['content']);
+}
+
+/**
+ *  - Obtient tous les templates d'un type spécifique
+ * @param string $type Type de template (ex: 'welcome', 'inscription', etc.)
+ * @return array Array des templates du type demandé
+ */
+function get_templates_by_type($type) {
+    global $DB;
+    return $DB->get_records('smartch_mailtemplates', ['type' => $type], 'name ASC');
+}
+
+/**
+ *  - Liste tous les templates disponibles
+ * @return array Array de tous les templates, triés par type puis par nom
+ */
+function get_all_templates() {
+    global $DB;
+    return $DB->get_records('smartch_mailtemplates', null, 'type ASC, name ASC');
+}
+
+/**
+ *  - Envoie un email de bienvenue à un utilisateur
+ * @param object $user Utilisateur destinataire
+ * @return bool True si envoi réussi
+ */
+function send_welcome_email($user) {
+    $variables = [
+        '{{username}}' => $user->username,
+        '{{firstname}}' => $user->firstname,
+        '{{lastname}}' => $user->lastname,
+        '{{email}}' => $user->email
+    ];
+    
+    return send_template_email($user, 'welcome', $variables);
+}
+
+/**
+ *  - Envoie un email de fin de formation
+ * @param object $user Utilisateur destinataire
+ * @param object $course Cours terminé
+ * @return bool True si envoi réussi
+ */
+function send_course_completion_email($user, $course) {
+    $variables = [
+        '{{username}}' => $user->username,
+        '{{firstname}}' => $user->firstname,
+        '{{lastname}}' => $user->lastname,
+        '{{coursename}}' => $course->fullname,
+        '{{courselink}}' => new moodle_url('/course/view.php', ['id' => $course->id])
+    ];
+    
+    return send_template_email($user, 'completion', $variables);
+}
+
+/**
+ *  - Envoie un email d'inscription à un cours
+ * @param object $user Utilisateur destinataire
+ * @param object $course Cours d'inscription
+ * @return bool True si envoi réussi
+ */
+function send_course_enrollment_email($user, $course) {
+    $variables = [
+        '{{username}}' => $user->username,
+        '{{firstname}}' => $user->firstname,
+        '{{lastname}}' => $user->lastname,
+        '{{coursename}}' => $course->fullname,
+        '{{courselink}}' => new moodle_url('/course/view.php', ['id' => $course->id])
+    ];
+    
+    return send_template_email($user, 'inscription', $variables);
+}
+
+/**
+ *  - Envoie une notification générale à un utilisateur
+ * @param object $user Utilisateur destinataire
+ * @param string $message Message personnalisé
+ * @param string $subject Sujet personnalisé (optionnel)
+ * @return bool True si envoi réussi
+ */
+function send_notification_email($user, $message, $subject = null) {
+    $variables = [
+        '{{username}}' => $user->username,
+        '{{firstname}}' => $user->firstname,
+        '{{lastname}}' => $user->lastname,
+        '{{message}}' => $message
+    ];
+    
+    // Si on a un sujet personnalisé, on peut créer un template temporaire
+    if ($subject) {
+        $variables['{{customsubject}}'] = $subject;
+    }
+    
+    return send_template_email($user, 'notification', $variables);
+}
+
+/**
+ *  - Crée les templates par défaut si ils n'existent pas
+ * Utile pour initialiser le système de templates
+ */
+function create_default_email_templates() {
+    global $DB;
+    
+    $templates = [
+        [
+            'name' => 'welcome',
+            'subject' => 'Bienvenue {{firstname}} sur {{sitename}} !',
+            'content' => '<h2>Bienvenue {{firstname}} {{lastname}} !</h2>
+                         <p>Nous sommes ravis de vous accueillir sur <strong>{{sitename}}</strong>.</p>
+                         <p>Votre nom d\'utilisateur est : <strong>{{username}}</strong></p>
+                         <p>Vous pouvez maintenant accéder à vos formations.</p>
+                         <p>Bonne navigation !</p>
+                         <br>
+                         <p>L\'équipe {{sitename}}</p>',
+            'type' => 'welcome'
+        ],
+        [
+            'name' => 'completion',
+            'subject' => 'Félicitations ! Formation {{coursename}} terminée',
+            'content' => '<h2>Félicitations {{firstname}} !</h2>
+                         <p>Vous avez terminé avec succès la formation : <strong>{{coursename}}</strong></p>
+                         <p>Vous pouvez revoir le contenu à tout moment en cliquant ici : <a href="{{courselink}}">{{coursename}}</a></p>
+                         <p>Bravo pour votre engagement et votre réussite !</p>
+                         <br>
+                         <p>L\'équipe formation</p>',
+            'type' => 'completion'
+        ],
+        [
+            'name' => 'inscription',
+            'subject' => 'Inscription confirmée - {{coursename}}',
+            'content' => '<h2>Inscription confirmée</h2>
+                         <p>Bonjour {{firstname}},</p>
+                         <p>Votre inscription à la formation <strong>{{coursename}}</strong> a été confirmée avec succès.</p>
+                         <p>Accédez à votre formation : <a href="{{courselink}}">Cliquez ici</a></p>
+                         <p>La formation démarre dès maintenant. Bonne formation !</p>
+                         <br>
+                         <p>L\'équipe {{sitename}}</p>',
+            'type' => 'inscription'
+        ],
+        [
+            'name' => 'notification',
+            'subject' => 'Notification - {{sitename}}',
+            'content' => '<h2>Notification</h2>
+                         <p>Bonjour {{firstname}},</p>
+                         <p>{{message}}</p>
+                         <br>
+                         <p>L\'équipe {{sitename}}</p>',
+            'type' => 'notification'
+        ]
+    ];
+    
+    foreach ($templates as $template) {
+        // Vérifier si le template n'existe pas déjà
+        if (!$DB->record_exists('smartch_mailtemplates', ['name' => $template['name']])) {
+            $template['timecreated'] = time();
+            $template['timemodified'] = time();
+            $DB->insert_record('smartch_mailtemplates', (object)$template);
+        }
+    }
+}
+
+function send_template_email_by_id($user, $templateid, $variables = [], $from = null) {
+    global $DB, $SITE;
+    
+    $template = $DB->get_record('smartch_mailtemplates', ['id' => $templateid]);
+    if (!$template) {
+        return false;
+    }
+    
+    // Variables par défaut MISES À JOUR
+    $defaultvars = [
+        '{{sitename}}' => $SITE->fullname,
+        '{{date}}' => date('d/m/Y'),
+        '{{time}}' => date('H:i'),
+        '{{datetime}}' => date('d/m/Y à H:i'),
+        '{{message}}' => '', // Sera remplacé par la variable personnalisée si fournie
+        '{{senderfirstname}}' => $from ? $from->firstname : get_admin()->firstname,
+        '{{senderlastname}}' => $from ? $from->lastname : get_admin()->lastname,
+    ];
+    
+    $allvars = array_merge($defaultvars, $variables);
+    
+    $subject = str_replace(array_keys($allvars), array_values($allvars), $template->subject);
+    $content = str_replace(array_keys($allvars), array_values($allvars), $template->content);
+    
+    if (!$from) {
+        $from = get_admin();
+    }
+    
+    return email_to_user($user, $from, $subject, $content);
+}
+// =====================================================
+// FIN DES NOUVELLES FONCTIONS TEMPLATES
+// =========================================
