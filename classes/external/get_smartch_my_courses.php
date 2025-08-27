@@ -84,24 +84,20 @@ trait get_smartch_my_courses
                 if ($rolename != "super-admin") {
                     $rolename = "manager";
                 }
-            } else if ($role->shortname == "smalleditingteacher") {
-                if ($rolename != "super-admin" && $rolename != "manager") {
-                    $rolename = "smalleditingteacher";
-                }
             } else if ($role->shortname == "editingteacher") {
-                if ($rolename != "super-admin" && $rolename != "manager" && $rolename != "smalleditingteacher") {
+                if ($rolename != "super-admin" && $rolename != "manager") {
                     $rolename = "editingteacher";
                 }
             } else if ($role->shortname == "teacher") {
-                if ($rolename != "super-admin" && $rolename != "manager" && $rolename != "smalleditingteacher" && $rolename != "editingteacher") {
+                if ($rolename != "super-admin" && $rolename != "manager" && $rolename != "editingteacher") {
                     $rolename = "teacher";
                 }
             } else if ($role->shortname == "noneditingteacher") {
-                if ($rolename != "super-admin" && $rolename != "manager" && $rolename != "teacher" && $rolename != "smalleditingteacher" && $rolename != "editingteacher") {
+                if ($rolename != "super-admin" && $rolename != "manager" && $rolename != "teacher" && $rolename != "editingteacher") {
                     $rolename = "noneditingteacher";
                 }
             } else if ($role->shortname == "student") {
-                if ($rolename != "super-admin" && $rolename != "manager" && $rolename != "teacher" && $rolename != "noneditingteacher" && $rolename != "smalleditingteacher" && $rolename != "editingteacher") {
+                if ($rolename != "super-admin" && $rolename != "manager" && $rolename != "teacher" && $rolename != "noneditingteacher" && $rolename != "editingteacher") {
                     $rolename = "student";
                 }
             }

@@ -24,24 +24,20 @@ function getMainRole($userid = null)
             if ($rolename != "super-admin") {
                 $rolename = "manager";
             }
-        } else if ($role->shortname == "smalleditingteacher") {
-            if ($rolename != "super-admin" && $rolename != "manager") {
-                $rolename = "smalleditingteacher";
-            }
         } else if ($role->shortname == "editingteacher") {
-            if ($rolename != "super-admin" && $rolename != "manager" && $rolename != "smalleditingteacher") {
+            if ($rolename != "super-admin" && $rolename != "manager") {
                 $rolename = "editingteacher";
             }
         } else if ($role->shortname == "teacher") {
-            if ($rolename != "super-admin" && $rolename != "manager" && $rolename != "smalleditingteacher" && $rolename != "editingteacher") {
+            if ($rolename != "super-admin" && $rolename != "manager" && $rolename != "editingteacher") {
                 $rolename = "teacher";
             }
         } else if ($role->shortname == "noneditingteacher") {
-            if ($rolename != "super-admin" && $rolename != "manager" && $rolename != "teacher" && $rolename != "smalleditingteacher" && $rolename != "editingteacher") {
+            if ($rolename != "super-admin" && $rolename != "manager" && $rolename != "teacher" && $rolename != "editingteacher") {
                 $rolename = "noneditingteacher";
             }
         } else if ($role->shortname == "student") {
-            if ($rolename != "super-admin" && $rolename != "manager" && $rolename != "teacher" && $rolename != "noneditingteacher" && $rolename != "smalleditingteacher" && $rolename != "editingteacher") {
+            if ($rolename != "super-admin" && $rolename != "manager" && $rolename != "teacher" && $rolename != "noneditingteacher" && $rolename != "editingteacher") {
                 $rolename = "student";
             }
         }
@@ -124,10 +120,21 @@ function isAdminFormation()
 }
 
 function hasResponsablePedagogiqueRole(){
+    global $DB, $USER;
+    
     $rolename = getMainRole();
-    if ($rolename == "super-admin" || $rolename == "manager" || $rolename == "smalleditingteacher") {
+    
+    // Super-admin et manager gardent leurs privilèges
+    if ($rolename == "super-admin" || $rolename == "manager") {
         return true;
     }
+    
+    // Vérifier si l'utilisateur est responsable pédagogique d'au moins une formation
+    $respoLinks = $DB->get_records('smartch_respo_link', ['userid' => $USER->id]);
+    if (!empty($respoLinks)) {
+        return true;
+    }
+    
     return false;
 }
 
@@ -452,26 +459,37 @@ function getResponsablePedagogique($groupid, $courseid)
     global $DB;
 
     if (isFreeCourse($courseid)) {
-        array('Formation Gratuite', null);
+        return array('Formation Gratuite', null);
     } else {
+        // Chercher les responsables pédagogiques via la table smartch_respo_link
         $queryresponsable = 'SELECT DISTINCT u.id, u.firstname, u.lastname 
-        FROM mdl_groups g
-        JOIN mdl_groups_members gm ON gm.groupid = g.id
-        JOIN mdl_user u ON u.id = gm.userid
-        JOIN mdl_role_assignments ra ON ra.userid = u.id
-        JOIN mdl_role r ON r.id = ra.roleid
-        WHERE g.id = ' . $groupid . ' 
-        AND r.shortname = "smalleditingteacher"';
-        // var_dump($queryresponsable);
+        FROM mdl_user u
+        JOIN mdl_smartch_respo_link srl ON srl.userid = u.id
+        WHERE srl.courseid = ' . $courseid;
+        
         $findresponsables = $DB->get_records_sql($queryresponsable, null);
-        // var_dump($findresponsable);
-        foreach($findresponsables as $responsable){
-            //On va chercher le role de l'utilisateur sur le cours
-            $role = getUserRoleFromCourse($responsable->id, $courseid);
-            if($role && ($role->shortname == "smalleditingteacher" || $role->shortname == "editingteacher" || $role->shortname == "teacher")){
-                $found = $responsable;
+        
+        // Si aucun responsable trouvé via smartch_respo_link, chercher les formateurs du groupe
+        if (empty($findresponsables)) {
+            $queryresponsable = 'SELECT DISTINCT u.id, u.firstname, u.lastname 
+            FROM mdl_groups g
+            JOIN mdl_groups_members gm ON gm.groupid = g.id
+            JOIN mdl_user u ON u.id = gm.userid
+            WHERE g.id = ' . $groupid;
+            
+            $findresponsables = $DB->get_records_sql($queryresponsable, null);
+            
+            // Filtrer pour ne garder que ceux qui ont un rôle de formateur sur le cours
+            $validResponsables = [];
+            foreach($findresponsables as $responsable){
+                $role = getUserRoleFromCourse($courseid, $responsable->id);
+                if($role && ($role->shortname == "editingteacher" || $role->shortname == "teacher")){
+                    $validResponsables[] = $responsable;
+                }
             }
+            $findresponsables = $validResponsables;
         }
+        
         $found = reset($findresponsables);
         if ($found) {
             $coach = $found->firstname . ' ' . $found->lastname;
