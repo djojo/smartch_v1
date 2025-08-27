@@ -21,6 +21,8 @@ $content = '';
 $paginationtitle = '';
 $prevurl = '';
 $nexturl = '';
+$filterCourseJOIN = '';
+$filterCourseWHERE = '';
 
 
 //On va chercher le rôle le plus haut de l'utilisateur

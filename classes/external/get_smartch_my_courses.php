@@ -114,12 +114,14 @@ trait get_smartch_my_courses
             $querycourses = 'SELECT c.id, c.fullname, c.category FROM mdl_course c
             WHERE c.format != "site" AND c.visible = 1';
         } else {
-            //on va chercher les cours de l'utilisateur
-            $querycourses = 'SELECT c.id, c.fullname, c.category FROM mdl_course c
-            JOIN mdl_role_assignments ra ON ra.userid = ' . $USER->id . '
-            JOIN mdl_context ct ON ct.id = ra.contextid AND c.id = ct.instanceid
-            JOIN mdl_role r ON r.id = ra.roleid
-            WHERE c.format != "site" AND c.visible = 1
+            //on va chercher les cours de l'utilisateur (rôles directs + responsabilités pédagogiques)
+            $querycourses = 'SELECT DISTINCT c.id, c.fullname, c.category FROM mdl_course c
+            LEFT JOIN mdl_role_assignments ra ON ra.userid = ' . $USER->id . '
+            LEFT JOIN mdl_context ct ON ct.id = ra.contextid AND c.id = ct.instanceid
+            LEFT JOIN mdl_role r ON r.id = ra.roleid
+            LEFT JOIN mdl_smartch_respo_link srl ON srl.courseid = c.id AND srl.userid = ' . $USER->id . '
+            WHERE c.format != "site" AND c.visible = 1 
+            AND (ct.instanceid IS NOT NULL OR srl.id IS NOT NULL)
             ORDER BY
             CASE 
                 WHEN c.fullname LIKE "%Aide%" THEN 0
@@ -141,7 +143,20 @@ trait get_smartch_my_courses
             } else {
                 //On va chercher le role de l'utilisateur dans le cours
                 $rolecourseobject = getUserRoleFromCourse($course->id, $USER->id);
-                $rolecourse = $rolecourseobject->shortname;
+                
+                // Vérifier si l'utilisateur est responsable pédagogique de cette formation
+                $respoLink = $DB->get_record('smartch_respo_link', ['courseid' => $course->id, 'userid' => $USER->id]);
+                
+                if ($respoLink) {
+                    // L'utilisateur est responsable pédagogique de cette formation
+                    $rolecourse = "smalleditingteacher";
+                } else if ($rolecourseobject) {
+                    // Utiliser le rôle normal sur le cours
+                    $rolecourse = $rolecourseobject->shortname;
+                } else {
+                    // Pas de rôle trouvé - ne devrait pas arriver avec la nouvelle requête
+                    $rolecourse = "student"; // Rôle par défaut
+                }
             }
 
             $el['rolecourse'] = $rolecourse;

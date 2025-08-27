@@ -9,11 +9,14 @@ require_once '../utils.php';
 
 // Vérification de l'authentification, Fonction Moodle : vérifier que l'utilisateur est connecté
 require_login();
+
 // Vérification des autorisations, Fonction personnalisée : vérifier les droits admin
 isAdminFormation();
 
 // Vérification des autorisations
 global $USER, $DB, $CFG;
+
+$preview = "";
 
 // Contrôle d'accès par rôles
 $rolename = getMainRole(); // Fonction personnalisée
