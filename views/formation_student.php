@@ -83,7 +83,7 @@ if (count($groups) > 0) {
         $sessiondate = 'Du ' . userdate($session->startdate, '%d/%m/%Y') . ' au ' . userdate($session->enddate, '%d/%m/%Y');
 
         //On va chercher le responsable pédagogique
-        $coach = getResponsablePedagogique($groupid, $courseid);
+        $coach = getResponsablePedagogique($groupid, $courseid, $session->id);
 
         // var_dump($coach);
 

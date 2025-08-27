@@ -330,16 +330,18 @@ foreach ($allcourses as $onecourse) {
         //on parcours les groupes
         foreach ($groups as $group) {
             $teamid = $group->id;
-            //On va chercher le responsable pédagogique
-            $coach = getResponsablePedagogique($group->id, $onecourse->id);
-
             //on va chercher la session 
             $sessions = $DB->get_records_sql('SELECT * FROM mdl_smartch_session WHERE groupid = ' . $group->id . ' LIMIT 1', null);
+            $sessionid = null;
             if ($sessions) {
                 $session = reset($sessions);
+                $sessionid = $session->id;
             } else {
                 $session = null;
             }
+            
+            //On va chercher le responsable pédagogique
+            $coach = getResponsablePedagogique($group->id, $onecourse->id, $sessionid);
             
 
             if ($session && $session->startdate && $session->enddate) {

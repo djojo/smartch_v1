@@ -302,11 +302,11 @@ foreach ($allcourses as $onecourse) {
         //on prend le premier
         $group = reset($groups);
 
-        //On va chercher le responsable pédagogique
-        $coach = getResponsablePedagogique($group->id, $onecourse->id);
-
         //on va chercher la session 
         $session = $DB->get_record('smartch_session', ['groupid' => $group->id]);
+        
+        //On va chercher le responsable pédagogique
+        $coach = getResponsablePedagogique($group->id, $onecourse->id, $session ? $session->id : null);
 
         if ($session->startdate && $session->enddate) {
             $sessiondate = 'Du ' . userdate($session->startdate, '%d/%m/%Y') . ' au ' . userdate($session->enddate, '%d/%m/%Y');

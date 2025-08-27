@@ -269,7 +269,7 @@ if ($session) {
     }
 
     //On va chercher le responsable pédagogique
-    $coach = getResponsablePedagogique($group->id, $courseid);
+    $coach = getResponsablePedagogique($group->id, $courseid, $session->id);
 
     $urlmessageresponsable = "";
     if ($coach[1]) {

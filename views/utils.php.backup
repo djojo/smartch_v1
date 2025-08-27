@@ -454,7 +454,7 @@ function isFreeCourse($courseid)
     }
 }
 
-function getResponsablePedagogique($groupid, $courseid, $sessionid = null)
+function getResponsablePedagogique($groupid, $courseid)
 {
     global $DB;
 
@@ -462,21 +462,10 @@ function getResponsablePedagogique($groupid, $courseid, $sessionid = null)
         return array('Formation Gratuite', null);
     } else {
         // Chercher les responsables pédagogiques via la table smartch_respo_link
-        // Prendre en compte session et groupe spécifiques si disponibles
         $queryresponsable = 'SELECT DISTINCT u.id, u.firstname, u.lastname 
         FROM mdl_user u
         JOIN mdl_smartch_respo_link srl ON srl.userid = u.id
         WHERE srl.courseid = ' . $courseid;
-        
-        // Ajouter le filtre par groupid si disponible
-        if ($groupid) {
-            $queryresponsable .= ' AND srl.groupid = ' . $groupid;
-        }
-        
-        // Ajouter le filtre par sessionid si disponible
-        if ($sessionid) {
-            $queryresponsable .= ' AND srl.sessionid = ' . $sessionid;
-        }
         
         $findresponsables = $DB->get_records_sql($queryresponsable, null);
         

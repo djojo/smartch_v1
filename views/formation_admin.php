@@ -79,7 +79,7 @@ if ($group) {
     $sessiondate = 'Du ' . userdate($session->startdate, '%d/%m/%Y') . ' au ' . userdate($session->enddate, '%d/%m/%Y');
 
     //On va chercher le responsable pédagogique
-    $coach = getResponsablePedagogique($groupid, $courseid);
+    $coach = getResponsablePedagogique($groupid, $courseid, $session->id);
 
     if ($coach[1]) {
         // $backurl = urlencode($_SERVER['REQUEST_URI']);
