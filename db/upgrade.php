@@ -80,8 +80,31 @@ function xmldb_theme_remui_upgrade($oldversion) {
 
     }
 
-    
+    if ($oldversion < 2024042505) {
+        // Création de la table smartch_mailtemplates.
 
+        // Define the table smartch_mailtemplates to be created.
+        $table = new xmldb_table('smartch_mailtemplates');
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('name', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL, null, null, 'Nom du template');
+        $table->add_field('subject', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null, 'Sujet de l\'email');
+        $table->add_field('content', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null, 'Corps de l\'email en HTML');
+        $table->add_field('type', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL, null, 'general', 'Type de template');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'Timestamp de création');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'Timestamp de dernière modification');
+
+        // Adding keys to table smartch_mailtemplates.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('uk_name', XMLDB_KEY_UNIQUE, ['name']);
+
+        // Adding indexes to table smartch_mailtemplates.
+        $table->add_index('idx_type', XMLDB_INDEX_NOTUNIQUE, ['type']);
+
+        // Conditionally launch create table for smartch_mailtemplates.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+    }
 
     return true;
 }
