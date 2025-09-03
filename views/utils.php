@@ -481,25 +481,25 @@ function getResponsablePedagogique($groupid, $courseid, $sessionid = null)
         $findresponsables = $DB->get_records_sql($queryresponsable, null);
         
         // Si aucun responsable trouvé via smartch_respo_link, chercher les formateurs du groupe
-        if (empty($findresponsables)) {
-            $queryresponsable = 'SELECT DISTINCT u.id, u.firstname, u.lastname 
-            FROM mdl_groups g
-            JOIN mdl_groups_members gm ON gm.groupid = g.id
-            JOIN mdl_user u ON u.id = gm.userid
-            WHERE g.id = ' . $groupid;
+        // if (empty($findresponsables)) {
+        //     $queryresponsable = 'SELECT DISTINCT u.id, u.firstname, u.lastname 
+        //     FROM mdl_groups g
+        //     JOIN mdl_groups_members gm ON gm.groupid = g.id
+        //     JOIN mdl_user u ON u.id = gm.userid
+        //     WHERE g.id = ' . $groupid;
             
-            $findresponsables = $DB->get_records_sql($queryresponsable, null);
+        //     $findresponsables = $DB->get_records_sql($queryresponsable, null);
             
-            // Filtrer pour ne garder que ceux qui ont un rôle de formateur sur le cours
-            $validResponsables = [];
-            foreach($findresponsables as $responsable){
-                $role = getUserRoleFromCourse($courseid, $responsable->id);
-                if($role && ($role->shortname == "editingteacher" || $role->shortname == "teacher")){
-                    $validResponsables[] = $responsable;
-                }
-            }
-            $findresponsables = $validResponsables;
-        }
+        //     // Filtrer pour ne garder que ceux qui ont un rôle de formateur sur le cours
+        //     $validResponsables = [];
+        //     foreach($findresponsables as $responsable){
+        //         $role = getUserRoleFromCourse($courseid, $responsable->id);
+        //         if($role && ($role->shortname == "editingteacher" || $role->shortname == "teacher")){
+        //             $validResponsables[] = $responsable;
+        //         }
+        //     }
+        //     $findresponsables = $validResponsables;
+        // }
         
         $found = reset($findresponsables);
         if ($found) {
