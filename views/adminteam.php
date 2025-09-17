@@ -20,8 +20,10 @@ $rolename = getMainRole();
 
 //on regarde si la personne est reponsable pédgagogique
 $isResponsablePedagogique = hasResponsablePedagogiqueRole();
-if(!$isResponsablePedagogique || ($rolename != "super-admin" && $rolename != "manager" && $rolename != "teacher" && $rolename != "editingteacher" && $rolename != "smalleditingteacher" && $rolename != "noneditingteacher")){
-    isStudent();
+if(!$isResponsablePedagogique){
+    if($rolename != "super-admin" && $rolename != "manager" && $rolename != "teacher" && $rolename != "editingteacher" && $rolename != "smalleditingteacher" && $rolename != "noneditingteacher"){
+        isStudent();
+    }
 }
 
 
