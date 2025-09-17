@@ -18,7 +18,12 @@ $paginationtitle = '';
 //On va chercher le rôle le plus haut de l'utilisateur
 $rolename = getMainRole();
 
-// isStudent();
+//on regarde si la personne est reponsable pédgagogique
+$isResponsablePedagogique = hasResponsablePedagogiqueRole();
+if(!$isResponsablePedagogique || ($rolename != "super-admin" && $rolename != "manager" && $rolename != "teacher" && $rolename != "editingteacher" && $rolename != "smalleditingteacher" && $rolename != "noneditingteacher")){
+    isStudent();
+}
+
 
 $action = optional_param('action', '', PARAM_TEXT);
 $sent = optional_param('sent', false, PARAM_BOOL);
