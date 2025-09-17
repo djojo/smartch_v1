@@ -18,7 +18,7 @@ $paginationtitle = '';
 //On va chercher le rôle le plus haut de l'utilisateur
 $rolename = getMainRole();
 
-isStudent();
+// isStudent();
 
 $action = optional_param('action', '', PARAM_TEXT);
 $sent = optional_param('sent', false, PARAM_BOOL);
@@ -169,12 +169,12 @@ $course = $DB->get_record('course', ['id' => $courseid]);
 //on regarde si on est en formation gratuite
 $freecat = $DB->get_record_sql('SELECT * from mdl_course_categories WHERE name = "Formation gratuite"', null);
 //si on est sur une formation gratuite
-// if ($course->category == $freecat->id) {
-//     //on ne montre pas cette page pour les admins
-//     if($rolename == 'teacher' || $rolename == 'smalleditingteacher' || $rolename == "editingteacher" || $rolename == "student" || $rolename == "noneditingteacher") {
-//         redirect(new moodle_url('/theme/remui/views/formation.php?id='.$courseid));
-//     }
-// }
+if ($course->category == $freecat->id) {
+    //on ne montre pas cette page pour les admins
+    if($rolename == 'teacher' || $rolename == 'smalleditingteacher' || $rolename == "editingteacher" || $rolename == "student" || $rolename == "noneditingteacher") {
+        redirect(new moodle_url('/theme/remui/views/formation.php?id='.$courseid));
+    }
+}
 
 
 //On créer l'url pour le retour
