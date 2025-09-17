@@ -119,10 +119,14 @@ function isAdminFormation()
     }
 }
 
-function hasResponsablePedagogiqueRole(){
+function hasResponsablePedagogiqueRole($userid = null){
     global $DB, $USER;
     
-    $rolename = getMainRole();
+    
+    if(!$userid){
+        $userid = $USER->id;
+    }
+    $rolename = getMainRole($userid);
     
     // Super-admin et manager gardent leurs privilèges
     if ($rolename == "super-admin" || $rolename == "manager") {

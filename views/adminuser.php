@@ -114,8 +114,8 @@ img.FFF_background_header {
 
 $role = "";
 //on affiche le rolename correctement
-if ($rolename == "student") {
-    $role = "Apprenant";
+if(hasResponsablePedagogiqueRole($userid)){
+    $role = "Responsable pédagogique";
 } else if ($rolename == "manager") {
     $role = "Administrateur Formation";
 } else if ($rolename == "smalleditingteacher") {
@@ -124,6 +124,8 @@ if ($rolename == "student") {
     $role = "Formateur";
 } else if ($rolename == "super-admin") {
     $role = "Super Admin";
+} else if ($rolename == "student") {
+    $role = "Apprenant";
 }
 
 

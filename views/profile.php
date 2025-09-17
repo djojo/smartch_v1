@@ -22,8 +22,8 @@ $rolename = getMainRole();
 
 $role = "";
 //on affiche le rolename correctement
-if ($rolename == "student") {
-    $role = "Apprenant";
+if(hasResponsablePedagogiqueRole()){
+    $role = "Responsable pédagogique";
 } else if ($rolename == "manager") {
     $role = "Administrateur Formation";
 } else if ($rolename == "smalleditingteacher") {
@@ -32,6 +32,8 @@ if ($rolename == "student") {
     $role = "Formateur";
 } else if ($rolename == "super-admin") {
     $role = "Super Admin";
+} else if ($rolename == "student") {
+    $role = "Apprenant";
 }
 
 $context = context_system::instance();
