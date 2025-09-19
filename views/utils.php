@@ -3746,7 +3746,7 @@ function process_mail_template($templatename, $variables = []) {
         '{{date}}' => date('d/m/Y'),
         '{{time}}' => date('H:i'),
         '{{datetime}}' => date('d/m/Y à H:i'),
-        '{{message}}' => '', // Variable pour message personnalisé
+       // '{{message}}' => '', // Variable pour message personnalisé
         '{{senderfirstname}}' => get_admin()->firstname, // Prénom expéditeur
         '{{senderlastname}}' => get_admin()->lastname, // Nom expéditeur
     ];
@@ -3762,6 +3762,39 @@ function process_mail_template($templatename, $variables = []) {
         'type' => $template->type
     ];
 }
+
+/**
+ * NOUVELLE FONCTION - Traite du texte libre avec les variables
+ * @param string $subject Sujet du message
+ * @param string $content Contenu du message  
+ * @param array $variables Variables à remplacer
+ * @param object $sender Utilisateur qui envoie (optionnel)
+ * @return array Array avec 'subject' et 'content' traités
+ */
+function process_free_text_variables($subject, $content, $variables = [], $sender = null) {
+    global $SITE;
+    
+    // Variables par défaut pour texte libre
+    $defaultvars = [
+        '{{sitename}}' => $SITE->fullname,
+        '{{date}}' => date('d/m/Y'),
+        '{{time}}' => date('H:i'),
+        '{{datetime}}' => date('d/m/Y à H:i'),
+        '{{senderfirstname}}' => $sender ? $sender->firstname : get_admin()->firstname,
+        '{{senderlastname}}' => $sender ? $sender->lastname : get_admin()->lastname,
+    ];
+    
+    $allvars = array_merge($defaultvars, $variables);
+    
+    $processed_subject = str_replace(array_keys($allvars), array_values($allvars), $subject);
+    $processed_content = str_replace(array_keys($allvars), array_values($allvars), $content);
+    
+    return [
+        'subject' => $processed_subject,
+        'content' => $processed_content
+    ];
+}
+
 /**
  *  - Envoie un email basé sur un template
  * @param object $user Utilisateur destinataire (objet user Moodle)
@@ -3870,7 +3903,7 @@ function send_notification_email($user, $message, $subject = null) {
         '{{username}}' => $user->username,
         '{{firstname}}' => $user->firstname,
         '{{lastname}}' => $user->lastname,
-        '{{message}}' => $message
+       // '{{message}}' => $message - plus utilisé
     ];
     
     // Si on a un sujet personnalisé, on peut créer un template temporaire
@@ -3960,7 +3993,7 @@ function send_template_email_by_id($user, $templateid, $variables = [], $from = 
         '{{date}}' => date('d/m/Y'),
         '{{time}}' => date('H:i'),
         '{{datetime}}' => date('d/m/Y à H:i'),
-        '{{message}}' => '', // Sera remplacé par la variable personnalisée si fournie
+       // '{{message}}' => '', // Sera remplacé par la variable personnalisée si fournie
         '{{senderfirstname}}' => $from ? $from->firstname : get_admin()->firstname,
         '{{senderlastname}}' => $from ? $from->lastname : get_admin()->lastname,
     ];

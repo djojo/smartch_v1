@@ -55,6 +55,7 @@ if ($mform->is_cancelled()) {
     // $userfor = $DB->get_record('user', ['id' => 32601]);
     $userbase = $DB->get_record('user', ['id' => $USER->id]);
 
+    // SYSTÈME DE MESSAGING MOODLE
     $message                    = new \core\message\message();
     $message->courseid          = 1;
     $message->component         = 'moodle';
@@ -82,15 +83,28 @@ if ($mform->is_cancelled()) {
 
     //======= Utiliser le système de templates
     // Utiliser le système de templates
-    // NOUVEAU CODE AVEC TEMPLATES :
+   // SYSTÈME EMAIL AVEC TEMPLATES 
     $template_choice = $fromform->template ?? 'default';
 
     if ($template_choice === 'default') {
         // Ancien système (fallback)
         $subject = 'Nouveau message de ' . $userbase->firstname . ' ' . $userbase->lastname . ' : ' . $fromform->subject;
-        $body    = reset($fromform->content);
-        $from    = 'Portail Formation FFF';
-        email_to_user($userfor, $from, $subject, $body, $body);
+
+        // Appliquer les variables même en mode fallback
+         $variables = [
+            '{{username}}'        => $userfor->username,
+            '{{firstname}}'       => $userfor->firstname,
+            '{{lastname}}'        => $userfor->lastname,
+            '{{senderfirstname}}' => $userbase->firstname,
+            '{{senderlastname}}'  => $userbase->lastname,
+            '{{subject}}'         => $fromform->subject,
+];
+       // $body    = reset($fromform->content);
+         $processed = process_free_text_variables($subject_base, $body_base, $variables, $userbase);
+        
+        $from = 'Portail Formation FFF';
+        email_to_user($userfor, $from, $processed['subject'], $processed['content'], $processed['content']);
+        
     } else {
         // Nouveau système avec templates
         $variables = [
@@ -99,22 +113,27 @@ if ($mform->is_cancelled()) {
             '{{lastname}}'        => $userfor->lastname,
             '{{senderfirstname}}' => $userbase->firstname,
             '{{senderlastname}}'  => $userbase->lastname,
-            '{{message}}'         => reset($fromform->content),
+            // '{{message}}'         => reset($fromform->content), // COMMENTÉ - plus utilisé
             '{{subject}}'         => $fromform->subject,
         ];
 
         $result = send_template_email($userfor, $template_choice, $variables);
 
         // Si le template échoue, utiliser l'ancien système
-        if (! $result) {
-            $subject = 'Nouveau message de ' . $userbase->firstname . ' ' . $userbase->lastname . ' : ' . $fromform->subject;
-            $body    = reset($fromform->content);
-            $from    = 'Portail Formation FFF';
-            email_to_user($userfor, $from, $subject, $body, $body);
+        if (!$result) {
+            $subject_fallback = 'Nouveau message de ' . $userbase->firstname . ' ' . $userbase->lastname . ' : ' . $fromform->subject;
+            $body_fallback = reset($fromform->content);
+            
+            // Appliquer les variables même en fallback
+            $processed = process_free_text_variables($subject_fallback, $body_fallback, $variables, $userbase);
+            
+            $from = 'Portail Formation FFF';
+            email_to_user($userfor, $from, $processed['subject'], $processed['content'], $processed['content']);
         }
     }
-    // var_dump($fromform->return . ' - ' . $fromform->courseid . ' - ' . $fromform->teamid);
 
+    // var_dump($fromform->return . ' - ' . $fromform->courseid . ' - ' . $fromform->teamid);
+ // REDIRECTIONS
     if ($fromform->courseid) {
         redirect($CFG->wwwroot . '/theme/remui/views/formation.php?id=' . $fromform->courseid . '&sent=true');
     } else if ($fromform->teamid) {

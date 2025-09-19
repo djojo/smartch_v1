@@ -46,13 +46,35 @@ if ($send && $userid) {
             $success = email_to_user($user, $from, $final_subject, $final_content, $final_content);
         }
     } elseif ($mode === 'libre') {
-        // MODE LIBRE
+         // MODE LIBRE - MAINTENANT AVEC VARIABLES
         $subject = optional_param('subject', '', PARAM_TEXT);
         $content = optional_param('content', '', PARAM_RAW);
         
         if ($user && !empty($subject) && !empty($content)) {
+             // Préparer les variables pour le mode libre
+            $variables = [
+                '{{username}}'        => $user->username,
+                '{{firstname}}'       => $user->firstname,
+                '{{lastname}}'        => $user->lastname,
+                '{{email}}'           => $user->email,
+                '{{sitename}}'        => $SITE->fullname,
+                '{{date}}'            => date('d/m/Y'),
+                '{{time}}'            => date('H:i'),
+                '{{datetime}}'        => date('d/m/Y à H:i'),
+                '{{senderfirstname}}' => $USER->firstname,
+                '{{senderlastname}}'  => $USER->lastname,
+                '{{coursename}}'      => '',
+                '{{courselink}}'      => '',
+            ];
+
+        // Utiliser la nouvelle fonction pour traiter les variables
+
+           // $processed = process_free_text_variables($subject, $content, $variables);
+            $processed = process_free_text_variables($subject, $content, $variables, $USER);
             $from = $DB->get_record('user', ['id' => $USER->id]);
-            $success = email_to_user($user, $from, $subject, $content, $content);
+            //$success = email_to_user($user, $from, $subject, $content, $content);
+            $success = email_to_user($user, $from, $processed['subject'], $processed['content'], $processed['content']);
+
         }
     }
 
