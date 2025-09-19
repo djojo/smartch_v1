@@ -67,14 +67,34 @@ if ($send && $teamid) {
             }
         }
     } elseif ($mode === 'libre') {
-        // MODE LIBRE
+        // MODE LIBRE - MAINTENANT AVEC VARIABLES
         $subject = optional_param('subject', '', PARAM_TEXT);
         $content = optional_param('content', '', PARAM_RAW);
         
         if (!empty($subject) && !empty($content)) {
             foreach ($users as $user) {
+                // Préparer les variables pour chaque utilisateur
+                $variables = [
+                    '{{username}}'        => $user->username,
+                    '{{firstname}}'       => $user->firstname,
+                    '{{lastname}}'        => $user->lastname,
+                    '{{email}}'           => $user->email,
+                    '{{sitename}}'        => $SITE->fullname,
+                    '{{date}}'            => date('d/m/Y'),
+                    '{{time}}'            => date('H:i'),
+                    '{{datetime}}'        => date('d/m/Y à H:i'),
+                    '{{senderfirstname}}' => $USER->firstname,
+                    '{{senderlastname}}'  => $USER->lastname,
+                    '{{groupname}}'       => $group ? $group->name : '',
+                    '{{coursename}}'      => $course ? $course->fullname : '',
+                    '{{courselink}}'      => $course ? new moodle_url('/course/view.php', ['id' => $course->id]) : '',
+                ];
+
+                 // Utiliser la nouvelle fonction pour traiter les variables
+                $processed = process_free_text_variables($subject, $content, $variables, $USER);
+
                 $from = $DB->get_record('user', ['id' => $USER->id]);
-                $result = email_to_user($user, $from, $subject, $content, $content);
+                $result = email_to_user($user, $from, $processed['subject'], $processed['content'], $processed['content']);
                 if ($result) {
                     $success_count++;
                 }
