@@ -308,96 +308,83 @@ setTimeout(function() {
                 try {
                     echo '<div>📋 Traitement planning ID: ' . $planning->planningid . '</div>';
                     
-                    // Récupérer la section
-                    $section = $DB->get_record('course_sections', 
-                        array('id' => $planning->sectionid), 'sequence');
-                    
-                    if (!$section) {
-                        echo '<div>⚠️ Section non trouvée (ID: ' . $planning->sectionid . ') pour planning ' . $planning->planningid . '</div>';
+                    // NOUVELLE LOGIQUE: Chercher les activités face2face dans TOUT le cours
+                    $course_id = $DB->get_field('course_sections', 'course', array('id' => $planning->sectionid));
+                    if (!$course_id) {
+                        echo '<div>⚠️ Cours non trouvé pour la section ID: ' . $planning->sectionid . '</div>';
                         continue;
                     }
                     
-                    if (empty($section->sequence)) {
-                        echo '<div>⚠️ Section vide (ID: ' . $planning->sectionid . ') pour planning ' . $planning->planningid . '</div>';
+                    echo '<div>  🔍 Recherche des activités face2face dans le cours ID: ' . $course_id . '</div>';
+                    
+                    // Récupérer TOUTES les activités face2face du cours
+                    $face2face_activities = $DB->get_records_sql('
+                        SELECT cm.id, cm.section, cs.name as section_name, f.name as activity_name
+                        FROM {course_modules} cm
+                        JOIN {modules} m ON m.id = cm.module
+                        JOIN {face2face} f ON f.id = cm.instance
+                        JOIN {course_sections} cs ON cs.id = cm.section
+                        WHERE m.name = "face2face" AND cs.course = ?
+                        ORDER BY cm.section, cm.id', array($course_id));
+                    
+                    if (empty($face2face_activities)) {
+                        echo '<div>  ⚠️ Aucune activité face2face trouvée dans le cours</div>';
                         continue;
                     }
                     
-                    echo '<div>  📁 Section trouvée (ID: ' . $planning->sectionid . '), sequence: ' . $section->sequence . '</div>';
-                    
-                    $moduleids = explode(',', $section->sequence);
-                    $moduleids = array_filter(array_map('trim', $moduleids)); // Nettoyer les espaces et valeurs vides
+                    echo '<div>  🎯 Trouvé ' . count($face2face_activities) . ' activités face2face dans le cours</div>';
                     $activities_processed = 0;
                     
-                    echo '<div>  🔍 Modules à vérifier: ' . count($moduleids) . ' (' . implode(', ', $moduleids) . ')</div>';
-                    
-                    foreach ($moduleids as $moduleid) {
-                        if (empty($moduleid)) continue;
+                    // Traiter chaque activité face2face du cours
+                    foreach ($face2face_activities as $activity) {
+                        echo '<div>    🎯 Traitement activité: ' . $activity->activity_name . ' (Section: ' . $activity->section_name . ')</div>';
                         
-                        // D'abord vérifier si le module existe
-                        $module_check = $DB->get_record_sql('
-                            SELECT cm.id, cm.instance, m.name as modname
-                            FROM {course_modules} cm
-                            JOIN {modules} m ON m.id = cm.module
-                            WHERE cm.id = ?', 
-                            array($moduleid));
+                        $coursemodule = (object)array('id' => $activity->id, 'modname' => 'face2face');
                         
-                        if (!$module_check) {
-                            echo '<div>    ❌ Module ID ' . $moduleid . ' non trouvé</div>';
-                            continue;
-                        }
+                        // Récupérer les utilisateurs
+                        $users = $DB->get_records_sql('
+                            SELECT DISTINCT u.id, u.email
+                            FROM {groups_members} gm
+                            JOIN {user} u ON u.id = gm.userid
+                            WHERE gm.groupid = ? AND u.deleted = 0', 
+                            array($planning->groupid));
                         
-                        echo '<div>    🔍 Module ID ' . $moduleid . ' trouvé, type: ' . $module_check->modname . '</div>';
-                        
-                        // Vérifier si c'est une activité face2face
-                        if ($module_check->modname === 'face2face') {
-                            $coursemodule = $module_check;
-                            echo '<div>  🎯 Activité face2face trouvée: ' . $coursemodule->id . '</div>';
+                        if (!empty($users)) {
+                            echo '<div>      👥 ' . count($users) . ' utilisateurs à traiter</div>';
                             
-                            // Récupérer les utilisateurs
-                            $users = $DB->get_records_sql('
-                                SELECT DISTINCT u.id, u.email
-                                FROM {groups_members} gm
-                                JOIN {user} u ON u.id = gm.userid
-                                WHERE gm.groupid = ? AND u.deleted = 0', 
-                                array($planning->groupid));
+                            $user_batches = array_chunk($users, $user_batch_size, true);
+                            $users_processed = 0;
                             
-                            if (!empty($users)) {
-                                echo '<div>  👥 ' . count($users) . ' utilisateurs à traiter</div>';
-                                
-                                $user_batches = array_chunk($users, $user_batch_size, true);
-                                $users_processed = 0;
-                                
-                                foreach ($user_batches as $user_batch) {
-                                    foreach ($user_batch as $user) {
-                                        // Vérifier/créer la complétion
-                                        $existing = $DB->get_record('course_modules_completion', 
-                                            array('coursemoduleid' => $coursemodule->id, 'userid' => $user->id));
-                                        
-                                        $completion_record = new stdClass();
-                                        $completion_record->coursemoduleid = $coursemodule->id;
-                                        $completion_record->userid = $user->id;
-                                        $completion_record->completionstate = COMPLETION_COMPLETE;
-                                        $completion_record->timemodified = $planning->enddate;
-                                        $completion_record->viewed = 1;
-                                        
-                                        if ($existing) {
-                                            if ($existing->completionstate != COMPLETION_COMPLETE) {
-                                                $completion_record->id = $existing->id;
-                                                $DB->update_record('course_modules_completion', $completion_record);
-                                                $users_processed++;
-                                            }
-                                        } else {
-                                            $DB->insert_record('course_modules_completion', $completion_record);
+                            foreach ($user_batches as $user_batch) {
+                                foreach ($user_batch as $user) {
+                                    // Vérifier/créer la complétion
+                                    $existing = $DB->get_record('course_modules_completion', 
+                                        array('coursemoduleid' => $coursemodule->id, 'userid' => $user->id));
+                                    
+                                    $completion_record = new stdClass();
+                                    $completion_record->coursemoduleid = $coursemodule->id;
+                                    $completion_record->userid = $user->id;
+                                    $completion_record->completionstate = COMPLETION_COMPLETE;
+                                    $completion_record->timemodified = $planning->enddate;
+                                    $completion_record->viewed = 1;
+                                    
+                                    if ($existing) {
+                                        if ($existing->completionstate != COMPLETION_COMPLETE) {
+                                            $completion_record->id = $existing->id;
+                                            $DB->update_record('course_modules_completion', $completion_record);
                                             $users_processed++;
                                         }
+                                    } else {
+                                        $DB->insert_record('course_modules_completion', $completion_record);
+                                        $users_processed++;
                                     }
                                 }
-                                
-                                echo '<div>  ✅ ' . $users_processed . ' complétions mises à jour</div>';
                             }
                             
-                            $activities_processed++;
+                            echo '<div>      ✅ ' . $users_processed . ' complétions mises à jour pour cette activité</div>';
                         }
+                        
+                        $activities_processed++;
                     }
                     
                     echo '<div>  📊 ' . $activities_processed . ' activités traitées pour ce planning</div>';
