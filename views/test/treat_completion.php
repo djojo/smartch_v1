@@ -211,6 +211,7 @@ setTimeout(function() {
         
         <div class="btn-group">
             <a href="?action=show_stats" class="btn btn-info">📊 Actualiser les stats</a>
+            <a href="?action=diagnostic" class="btn btn-warning">🔍 Diagnostic</a>
             <a href="?action=process&batch_size=<?php echo $batch_size; ?>&user_batch_size=<?php echo $user_batch_size; ?>&delay=<?php echo $delay_ms; ?>" 
                class="btn btn-success">▶️ Traiter un lot</a>
             <a href="?action=process_auto&batch_size=<?php echo $batch_size; ?>&user_batch_size=<?php echo $user_batch_size; ?>&delay=<?php echo $delay_ms; ?>&auto_refresh=1" 
@@ -230,6 +231,51 @@ setTimeout(function() {
     </div>
     
     <?php
+    
+    // Diagnostic : chercher toutes les activités face2face du système
+    if ($action === 'diagnostic') {
+        echo '<div class="log-container">';
+        echo '<div>🔍 Diagnostic : Recherche de toutes les activités face2face...</div>';
+        
+        $face2face_activities = $DB->get_records_sql('
+            SELECT cm.id, cm.course, cm.section, cs.name as section_name, cs.section as section_number, 
+                   f.name as activity_name, c.fullname as course_name
+            FROM {course_modules} cm
+            JOIN {modules} m ON m.id = cm.module
+            JOIN {face2face} f ON f.id = cm.instance
+            JOIN {course_sections} cs ON cs.id = cm.section
+            JOIN {course} c ON c.id = cm.course
+            WHERE m.name = "face2face"
+            ORDER BY cm.course, cs.section');
+        
+        echo '<div>📊 Nombre total d\'activités face2face trouvées: ' . count($face2face_activities) . '</div>';
+        
+        if (!empty($face2face_activities)) {
+            echo '<div><strong>Liste des activités face2face :</strong></div>';
+            foreach ($face2face_activities as $activity) {
+                echo '<div>  🎯 ID: ' . $activity->id . ' | Cours: ' . $activity->course_name . ' | Section: ' . $activity->section_name . ' (n°' . $activity->section_number . ') | Activité: ' . $activity->activity_name . '</div>';
+            }
+        }
+        
+        // Vérifier les sections utilisées par les plannings
+        echo '<div><br>🔍 Sections utilisées par les plannings passés :</div>';
+        $planning_sections = $DB->get_records_sql('
+            SELECT DISTINCT sp.sectionid, cs.name as section_name, cs.course, c.fullname as course_name,
+                   COUNT(sp.id) as nb_plannings
+            FROM {smartch_planning} sp
+            JOIN {smartch_session} ss ON ss.id = sp.sessionid
+            JOIN {course_sections} cs ON cs.id = sp.sectionid
+            JOIN {course} c ON c.id = cs.course
+            WHERE sp.enddate < ?
+            GROUP BY sp.sectionid, cs.name, cs.course, c.fullname
+            ORDER BY c.fullname, cs.section', array(time()));
+        
+        foreach ($planning_sections as $section) {
+            echo '<div>  📁 Section ID: ' . $section->sectionid . ' | Cours: ' . $section->course_name . ' | Section: ' . $section->section_name . ' | Plannings: ' . $section->nb_plannings . '</div>';
+        }
+        
+        echo '</div>';
+    }
     
     // Traitement selon l'action
     if ($action === 'process' || $action === 'process_auto') {
