@@ -336,43 +336,89 @@ setTimeout(function() {
                         if ($original_course) {
                             echo '<div>    🔍 Cours original: ' . $original_course->fullname . '</div>';
                             
-                            // Chercher des cours avec des noms similaires qui ont des activités face2face
-                            $similar_courses = $DB->get_records_sql('
-                                SELECT DISTINCT c.id, c.fullname, COUNT(cm.id) as activity_count
-                                FROM {course} c
-                                JOIN {course_sections} cs ON cs.course = c.id
-                                JOIN {course_modules} cm ON cm.section = cs.id
-                                JOIN {modules} m ON m.id = cm.module
-                                WHERE m.name = "face2face" 
-                                AND (c.fullname LIKE ? OR c.fullname LIKE ? OR c.fullname LIKE ?)
-                                GROUP BY c.id, c.fullname
-                                ORDER BY activity_count DESC
-                                LIMIT 3', 
-                                array(
-                                    '%' . substr($original_course->fullname, 0, 20) . '%',
-                                    '%' . substr($original_course->fullname, 0, 15) . '%',
-                                    '%' . substr($original_course->fullname, 0, 10) . '%'
-                                ));
+                            // MAPPING INTELLIGENT par catégories de formation
+                            $course_mappings = array(
+                                // Modules U6-U9
+                                'U6' => 'CFI - U6-U9',
+                                'U7' => 'CFI - U6-U9',
+                                'U9' => 'CFI - U6-U9',
+                                
+                                // Modules U10-U13
+                                'U10' => 'CFI - U10-U13',
+                                'U11' => 'CFI - U10-U13',
+                                'U13' => 'CFI - U10-U13',
+                                
+                                // Modules U14-U19
+                                'U14' => 'CFI - U14-U19',
+                                'U15' => 'CFI - U14-U19',
+                                'U17' => 'CFI - U14-U19',
+                                'U19' => 'CFI - U14-U19',
+                                
+                                // Seniors
+                                'U20' => 'CFI - Seniors',
+                                'Seniors' => 'CFI - Seniors',
+                                
+                                // Formations spécialisées
+                                'Gardien' => 'CFI - U10-U13', // Par défaut
+                                'Arbitre' => 'Formation Initiale Arbitre',
+                                'Moniteur' => 'Brevet de Moniteur de Football',
+                                'Entraineur' => 'Diplome Fédéral',
+                                'BEF' => 'BEF',
+                                'BMF' => 'Brevet de Moniteur de Football',
+                                'Certificat' => 'CFI'
+                            );
                             
-                            if (!empty($similar_courses)) {
-                                echo '<div>    🎯 Cours similaires trouvés:</div>';
-                                foreach ($similar_courses as $similar_course) {
-                                    echo '<div>      - ' . $similar_course->fullname . ' (' . $similar_course->activity_count . ' activités)</div>';
+                            $target_course_pattern = null;
+                            $original_name = $original_course->fullname;
+                            
+                            // Chercher la correspondance
+                            foreach ($course_mappings as $keyword => $target_pattern) {
+                                if (stripos($original_name, $keyword) !== false) {
+                                    $target_course_pattern = $target_pattern;
+                                    echo '<div>    🎯 Correspondance trouvée: ' . $keyword . ' → ' . $target_pattern . '</div>';
+                                    break;
                                 }
-                                
-                                // Prendre le premier cours similaire avec le plus d'activités
-                                $best_match = reset($similar_courses);
-                                echo '<div>    ✅ Utilisation du cours: ' . $best_match->fullname . '</div>';
-                                
-                                // Récupérer les activités face2face du cours similaire
-                                $face2face_activities = $DB->get_records_sql('
-                                    SELECT cm.id, cm.section, cs.name as section_name, f.name as activity_name
-                                    FROM {course_modules} cm
+                            }
+                            
+                            if ($target_course_pattern) {
+                                // Chercher des cours qui correspondent au pattern
+                                $similar_courses = $DB->get_records_sql('
+                                    SELECT DISTINCT c.id, c.fullname, COUNT(cm.id) as activity_count
+                                    FROM {course} c
+                                    JOIN {course_sections} cs ON cs.course = c.id
+                                    JOIN {course_modules} cm ON cm.section = cs.id
                                     JOIN {modules} m ON m.id = cm.module
-                                    JOIN {face2face} f ON f.id = cm.instance
-                                    JOIN {course_sections} cs ON cs.id = cm.section
-                                    WHERE m.name = "face2face" AND cs.course = ?
-                                    ORDER BY cm.section, cm.id', array($best_match->id));
+                                    WHERE m.name = "face2face" 
+                                    AND c.fullname LIKE ?
+                                    GROUP BY c.id, c.fullname
+                                    ORDER BY activity_count DESC
+                                    LIMIT 3', 
+                                    array('%' . $target_course_pattern . '%'));
+                                
+                                if (!empty($similar_courses)) {
+                                    echo '<div>    🎯 Cours correspondants trouvés:</div>';
+                                    foreach ($similar_courses as $similar_course) {
+                                        echo '<div>      - ' . $similar_course->fullname . ' (' . $similar_course->activity_count . ' activités)</div>';
+                                    }
+                                    
+                                    // Prendre le premier cours similaire avec le plus d'activités
+                                    $best_match = reset($similar_courses);
+                                    echo '<div>    ✅ Utilisation du cours: ' . $best_match->fullname . '</div>';
+                                    
+                                    // Récupérer les activités face2face du cours similaire
+                                    $face2face_activities = $DB->get_records_sql('
+                                        SELECT cm.id, cm.section, cs.name as section_name, f.name as activity_name
+                                        FROM {course_modules} cm
+                                        JOIN {modules} m ON m.id = cm.module
+                                        JOIN {face2face} f ON f.id = cm.instance
+                                        JOIN {course_sections} cs ON cs.id = cm.section
+                                        WHERE m.name = "face2face" AND cs.course = ?
+                                        ORDER BY cm.section, cm.id', array($best_match->id));
+                                } else {
+                                    echo '<div>    ⚠️ Aucun cours trouvé pour le pattern: ' . $target_course_pattern . '</div>';
+                                }
+                            } else {
+                                echo '<div>    ⚠️ Aucune correspondance trouvée pour: ' . $original_name . '</div>';
                             }
                         }
                         
