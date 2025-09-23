@@ -266,26 +266,45 @@ setTimeout(function() {
                     $section = $DB->get_record('course_sections', 
                         array('id' => $planning->sectionid), 'sequence');
                     
-                    if (!$section || empty($section->sequence)) {
-                        echo '<div>⚠️ Section vide pour planning ' . $planning->planningid . '</div>';
+                    if (!$section) {
+                        echo '<div>⚠️ Section non trouvée (ID: ' . $planning->sectionid . ') pour planning ' . $planning->planningid . '</div>';
                         continue;
                     }
                     
+                    if (empty($section->sequence)) {
+                        echo '<div>⚠️ Section vide (ID: ' . $planning->sectionid . ') pour planning ' . $planning->planningid . '</div>';
+                        continue;
+                    }
+                    
+                    echo '<div>  📁 Section trouvée (ID: ' . $planning->sectionid . '), sequence: ' . $section->sequence . '</div>';
+                    
                     $moduleids = explode(',', $section->sequence);
+                    $moduleids = array_filter(array_map('trim', $moduleids)); // Nettoyer les espaces et valeurs vides
                     $activities_processed = 0;
+                    
+                    echo '<div>  🔍 Modules à vérifier: ' . count($moduleids) . ' (' . implode(', ', $moduleids) . ')</div>';
                     
                     foreach ($moduleids as $moduleid) {
                         if (empty($moduleid)) continue;
                         
-                        // Vérifier si c'est une activité face2face
-                        $coursemodule = $DB->get_record_sql('
+                        // D'abord vérifier si le module existe
+                        $module_check = $DB->get_record_sql('
                             SELECT cm.id, cm.instance, m.name as modname
                             FROM {course_modules} cm
                             JOIN {modules} m ON m.id = cm.module
-                            WHERE cm.id = ? AND m.name = ?', 
-                            array($moduleid, 'face2face'));
+                            WHERE cm.id = ?', 
+                            array($moduleid));
                         
-                        if ($coursemodule) {
+                        if (!$module_check) {
+                            echo '<div>    ❌ Module ID ' . $moduleid . ' non trouvé</div>';
+                            continue;
+                        }
+                        
+                        echo '<div>    🔍 Module ID ' . $moduleid . ' trouvé, type: ' . $module_check->modname . '</div>';
+                        
+                        // Vérifier si c'est une activité face2face
+                        if ($module_check->modname === 'face2face') {
+                            $coursemodule = $module_check;
                             echo '<div>  🎯 Activité face2face trouvée: ' . $coursemodule->id . '</div>';
                             
                             // Récupérer les utilisateurs
