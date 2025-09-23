@@ -308,7 +308,7 @@ setTimeout(function() {
                 try {
                     echo '<div>📋 Traitement planning ID: ' . $planning->planningid . '</div>';
                     
-                    // NOUVELLE LOGIQUE: Chercher les activités face2face dans TOUT le cours
+                    // LOGIQUE HYBRIDE: Chercher les activités face2face
                     $course_id = $DB->get_field('course_sections', 'course', array('id' => $planning->sectionid));
                     if (!$course_id) {
                         echo '<div>⚠️ Cours non trouvé pour la section ID: ' . $planning->sectionid . '</div>';
@@ -327,9 +327,59 @@ setTimeout(function() {
                         WHERE m.name = "face2face" AND cs.course = ?
                         ORDER BY cm.section, cm.id', array($course_id));
                     
+                    // Si aucune activité face2face dans le cours, chercher par correspondance de nom
                     if (empty($face2face_activities)) {
-                        echo '<div>  ⚠️ Aucune activité face2face trouvée dans le cours</div>';
-                        continue;
+                        echo '<div>  ⚠️ Aucune activité face2face dans ce cours, recherche par correspondance...</div>';
+                        
+                        // Récupérer le nom du cours original
+                        $original_course = $DB->get_record('course', array('id' => $course_id), 'fullname');
+                        if ($original_course) {
+                            echo '<div>    🔍 Cours original: ' . $original_course->fullname . '</div>';
+                            
+                            // Chercher des cours avec des noms similaires qui ont des activités face2face
+                            $similar_courses = $DB->get_records_sql('
+                                SELECT DISTINCT c.id, c.fullname, COUNT(cm.id) as activity_count
+                                FROM {course} c
+                                JOIN {course_sections} cs ON cs.course = c.id
+                                JOIN {course_modules} cm ON cm.section = cs.id
+                                JOIN {modules} m ON m.id = cm.module
+                                WHERE m.name = "face2face" 
+                                AND (c.fullname LIKE ? OR c.fullname LIKE ? OR c.fullname LIKE ?)
+                                GROUP BY c.id, c.fullname
+                                ORDER BY activity_count DESC
+                                LIMIT 3', 
+                                array(
+                                    '%' . substr($original_course->fullname, 0, 20) . '%',
+                                    '%' . substr($original_course->fullname, 0, 15) . '%',
+                                    '%' . substr($original_course->fullname, 0, 10) . '%'
+                                ));
+                            
+                            if (!empty($similar_courses)) {
+                                echo '<div>    🎯 Cours similaires trouvés:</div>';
+                                foreach ($similar_courses as $similar_course) {
+                                    echo '<div>      - ' . $similar_course->fullname . ' (' . $similar_course->activity_count . ' activités)</div>';
+                                }
+                                
+                                // Prendre le premier cours similaire avec le plus d'activités
+                                $best_match = reset($similar_courses);
+                                echo '<div>    ✅ Utilisation du cours: ' . $best_match->fullname . '</div>';
+                                
+                                // Récupérer les activités face2face du cours similaire
+                                $face2face_activities = $DB->get_records_sql('
+                                    SELECT cm.id, cm.section, cs.name as section_name, f.name as activity_name
+                                    FROM {course_modules} cm
+                                    JOIN {modules} m ON m.id = cm.module
+                                    JOIN {face2face} f ON f.id = cm.instance
+                                    JOIN {course_sections} cs ON cs.id = cm.section
+                                    WHERE m.name = "face2face" AND cs.course = ?
+                                    ORDER BY cm.section, cm.id', array($best_match->id));
+                            }
+                        }
+                        
+                        if (empty($face2face_activities)) {
+                            echo '<div>  ❌ Aucune activité face2face trouvée même par correspondance</div>';
+                            continue;
+                        }
                     }
                     
                     echo '<div>  🎯 Trouvé ' . count($face2face_activities) . ' activités face2face dans le cours</div>';
