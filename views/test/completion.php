@@ -22,7 +22,7 @@ WHERE sp.startdate >= ? AND sp.enddate <= ?', array($startofday, $endofday));
 //pour chaque planning
 foreach($plannings as $planning){
 
-    $activities = getCourseActivitiesFace2Face($planning->courseid);
+    // $activities = getCourseActivitiesFace2Face($planning->courseid);
 
     // on va chercher les sessions du planning
     $sessions = $DB->get_records_sql('SELECT *
@@ -40,8 +40,6 @@ foreach($plannings as $planning){
 
     foreach ($tableact as $val) {
 
-        // var_dump($val);
-
         //On va chercher l'activité si elle est de type face2face
         $activity = $DB->get_record_sql('SELECT *
         FROM mdl_course_modules cm
@@ -52,9 +50,6 @@ foreach($plannings as $planning){
         ) activity ON activity.id = cm.instance AND activity.activitytype = m.name
         WHERE cm.id = ?
         AND activity.activitytype = "face2face"', array($val));
-
-        // var_dump($activity);
-        // die();
 
         if($activity){
             // echo '<h3>activity trouvée: ' . $activity->id . ' ' . $activity->name . '</h3>';
