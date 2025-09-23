@@ -280,7 +280,8 @@ setTimeout(function() {
     // Traitement selon l'action
     if ($action === 'process' || $action === 'process_auto') {
         echo '<div class="log-container" id="log-container">';
-        echo '<div>🚀 Début du traitement...</div>';
+        echo '<div>🚀 Début du traitement (' . ($action === 'process_auto' ? 'AUTOMATIQUE' : 'MANUEL') . ')...</div>';
+        echo '<div>⚙️ Paramètres: batch_size=' . $batch_size . ', user_batch_size=' . $user_batch_size . ', delay=' . $delay_ms . 'ms</div>';
         
         $start_time = time();
         $processed_count = 0;
@@ -288,6 +289,11 @@ setTimeout(function() {
         
         // Récupérer le point de reprise
         $last_processed_id = get_config('theme_remui', 'completion_last_planning_id') ?: 0;
+        echo '<div>🔄 Reprise depuis le planning ID: ' . $last_processed_id . '</div>';
+        
+        // Afficher les statistiques avant traitement
+        $stats_before = get_completion_stats();
+        echo '<div>📊 Avant traitement: ' . $stats_before['remaining_plannings'] . ' plannings restants (' . $stats_before['progress_percent'] . '% terminé)</div>';
         
         // Traitement d'un lot
         $now = time();
@@ -485,14 +491,17 @@ setTimeout(function() {
                     
                     echo '<div>  📊 ' . $activities_processed . ' activités traitées pour ce planning</div>';
                     
-                    // Sauvegarder la progression
+                    // Sauvegarder la progression IMMÉDIATEMENT après chaque planning
                     $last_processed_id = $planning->planningid;
+                    set_config('completion_last_planning_id', $last_processed_id, 'theme_remui');
                     $processed_count++;
+                    echo '<div>💾 Progression sauvegardée: planning ID ' . $last_processed_id . '</div>';
                     
                 } catch (Exception $e) {
                     echo '<div>❌ Erreur planning ' . $planning->planningid . ': ' . $e->getMessage() . '</div>';
                     $error_count++;
                     $last_processed_id = $planning->planningid;
+                    set_config('completion_last_planning_id', $last_processed_id, 'theme_remui');
                 }
                 
                 // Délai entre les plannings
@@ -523,12 +532,36 @@ setTimeout(function() {
         
         // Redirection automatique si traitement automatique et qu'il reste des plannings
         if ($action === 'process_auto' && $new_stats['remaining_plannings'] > 0) {
+            $next_url = "?action=process_auto&batch_size=" . $batch_size . "&user_batch_size=" . $user_batch_size . "&delay=" . $delay_ms . "&auto_refresh=1";
+            echo '<div class="alert alert-info">🔄 Redirection automatique dans 3 secondes vers: ' . htmlspecialchars($next_url) . '</div>';
+            echo '<div id="countdown">3</div>';
             echo '<script>
+                console.log("Démarrage du countdown pour redirection automatique");
+                var countdown = 3;
+                var countdownElement = document.getElementById("countdown");
+                
+                var timer = setInterval(function() {
+                    countdown--;
+                    if (countdownElement) {
+                        countdownElement.textContent = countdown;
+                    }
+                    console.log("Countdown: " + countdown);
+                    
+                    if (countdown <= 0) {
+                        clearInterval(timer);
+                        console.log("Redirection vers: " + "' . $next_url . '");
+                        window.location.href = "' . $next_url . '";
+                    }
+                }, 1000);
+                
+                // Fallback au cas où le timer ne fonctionne pas
                 setTimeout(function() {
-                    window.location.href = "?action=process_auto&batch_size=' . $batch_size . '&user_batch_size=' . $user_batch_size . '&delay=' . $delay_ms . '&auto_refresh=1";
-                }, 3000);
+                    console.log("Fallback redirection");
+                    window.location.href = "' . $next_url . '";
+                }, 4000);
             </script>';
-            echo '<div class="alert alert-info">🔄 Redirection automatique dans 3 secondes...</div>';
+        } else if ($action === 'process_auto') {
+            echo '<div class="alert alert-success">✅ Traitement automatique terminé ! Tous les plannings ont été traités.</div>';
         }
     }
     
