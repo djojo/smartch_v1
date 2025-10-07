@@ -317,7 +317,11 @@ setTimeout(function() {
                     // LOGIQUE HYBRIDE: Chercher les activités face2face
                     $course_id = $DB->get_field('course_sections', 'course', array('id' => $planning->sectionid));
                     if (!$course_id) {
-                        echo '<div>⚠️ Cours non trouvé pour la section ID: ' . $planning->sectionid . '</div>';
+                        echo '<div>⚠️ Cours non trouvé pour la section ID: ' . $planning->sectionid . ' - SKIP</div>';
+                        // Marquer quand même comme traité pour ne pas boucler
+                        $last_processed_id = $planning->planningid;
+                        set_config('completion_last_planning_id', $last_processed_id, 'theme_remui');
+                        $error_count++;
                         continue;
                     }
                     
@@ -429,7 +433,11 @@ setTimeout(function() {
                         }
                         
                         if (empty($face2face_activities)) {
-                            echo '<div>  ❌ Aucune activité face2face trouvée même par correspondance</div>';
+                            echo '<div>  ❌ Aucune activité face2face trouvée même par correspondance - SKIP</div>';
+                            // Marquer quand même comme traité pour ne pas boucler
+                            $last_processed_id = $planning->planningid;
+                            set_config('completion_last_planning_id', $last_processed_id, 'theme_remui');
+                            $error_count++;
                             continue;
                         }
                     }
