@@ -10,9 +10,9 @@ if (!$group) {
 $userselected = $DB->get_record('user', ['id' => $userid]);
 
 if ($userid) {
-    $titlecontenu = "CONTENUS PÉDAGOGIQUE POUR " . $userselected->firstname . ' ' . $userselected->lastname;
+    $titlecontenu = "CONTENUS PÉDAGOGIQUES POUR " . $userselected->firstname . ' ' . $userselected->lastname;
 } else {
-    $titlecontenu = "CONTENUS PÉDAGOGIQUE";
+    $titlecontenu = "CONTENUS PÉDAGOGIQUES";
 }
 
 
@@ -62,7 +62,7 @@ $content .= '
         <path fill-rule="evenodd" clip-rule="evenodd" d="M15.2929 26.7071C14.9024 26.3166 14.9024 25.6834 15.2929 25.2929L21.5858 19L15.2929 12.7071C14.9024 12.3166 14.9024 11.6834 15.2929 11.2929C15.6834 10.9024 16.3166 10.9024 16.7071 11.2929L23.7071 18.2929C24.0976 18.6834 24.0976 19.3166 23.7071 19.7071L16.7071 26.7071C16.3166 27.0976 15.6834 27.0976 15.2929 26.7071Z" fill="#004687"/>
         <rect x="1" y="1" width="36" height="36" rx="18" stroke="#004687" stroke-width="2"/>
     </svg>
-    <span class="FFF-Hero-Black FFF-Blue" style="margin-right:10px;letter-spacing:1px;">Détails du </span><span class="FFF-Hero-Black FFF-Gold" style="letter-spacing:1px;">Parcours</span> 
+    <span class="FFF-Hero-Black FFF-Blue" style="margin-right:10px;letter-spacing:1px;">Détails du </span><span class="FFF-Hero-Black FFF-Gold" style="letter-spacing:1px;">Parcours</span>
 </h3>';
 
 if (countCourseActivities($courseid) == 0) {
@@ -504,9 +504,9 @@ if (countCourseActivities($courseid) == 0) {
                                     //on regarde le nombre de tentative de l'apprenant
                                     $userattempts = getUserQuizAttempts($activity->id, $USER->id);
                                     // var_dump(count($userattempts));
-                                    
-                                    
-                                    
+
+
+
                                     $attemptshtml .= '<div style="display:flex;margin:5px 0;color:white;">';
                                     $attemptshtml .= '<div style="border:1px solid;padding:5px 10px;width:250px; text-align:center;background:#004687;border-radius:5px;">Date de passage</div>';
                                     $attemptshtml .= '<div style="border:1px solid;padding:5px 10px;margin-left:10px;width:130px;text-align:center;background:#004687;border-radius:5px;">Score</div>';
@@ -529,7 +529,7 @@ if (countCourseActivities($courseid) == 0) {
                                         $attemptshtml .= '<div style="padding:5px 10px;margin-left:10px;width:130px;text-align:center;border-radius:5px;">'.$score.'</div>';
                                         $attemptshtml .= '</div>';
 
-                                    
+
 
                                     //on va chercher la session en cours
                                     $useractualsessions = getActualUserSessions($courseid, $USER->id);
@@ -555,16 +555,16 @@ if (countCourseActivities($courseid) == 0) {
                                     //     $urlactivity = "";
                                     // }
                                     // // $urlactivity = new moodle_url('/mod/' . $activity->activitytype . '/view.php?id=' . $activity->id);
-                                        
+
                                 }
-                                    
+
                                 }
                             }
-                            
+
                         }
 
-                        
-                        
+
+
 
                         $content .= '<div style="display: flex;">';
                         if ($activity->activitytype != "face2face") {
@@ -575,15 +575,15 @@ if (countCourseActivities($courseid) == 0) {
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     <path stroke-linecap="round" fill="white" stroke-linejoin="round" d="M15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z" />
                                                 </svg>
-        
+
                                             </div>';
-                                            
+
                                 $content .= '<div>';
                                                 if ($activity->activitytype != "face2face") {
                                                     $content .= '<a href="' . $urlactivity . '">';
                                                 }
                                                 $content .= '<div class="FFF-Equipe-Bold fff-name-activity">' . $activity->activityname . '</div>';
-                                                
+
                                                 if ($activity->activitytype != "face2face") {
                                                     $content .= '</a>'; //flex
                                                 }
@@ -594,7 +594,7 @@ if (countCourseActivities($courseid) == 0) {
                                                 if(!empty($activity->summary)){
                                                     $content .= '<div class="FFF-Equipe-Regular" style="padding: 20px 0;">' . $activity->summary . '</div>';
                                                 }
-                                                
+
                                                 //on affiche les tentatives
                                                 if($activity->activitytype == "quiz"){
                                                     $content .= $attemptshtml;
@@ -606,13 +606,13 @@ if (countCourseActivities($courseid) == 0) {
                                                 } else {
                                                     $content .= '<div>' . $completion . '</div>';
                                                 }
-                                                
-                                                
+
+
                         $content .= '
                                             </div>';
                         $content .= '</div>'; //flex
                         $content .= '<hr/>';
-                        
+
 
 
                         // $content .= '<a href="' . new moodle_url('/mod/' . $activity->activitytype . '/view.php?id=' . $activity->id) . '">
@@ -777,7 +777,7 @@ if (countCourseActivities($courseid) == 0) {
 
             <div class="sub-box-module" id="result" style="display:none;">
                 <div>
-                    
+
                 </div>
             </div>
 
@@ -812,7 +812,7 @@ function fading(element){
 //change le module
 function changeModuleInfo(moduleid, first){
     // alert(moduleid);
-    //on change la couleur des blocks 
+    //on change la couleur des blocks
     let oldblock = document.getElementsByClassName(\'fff-module-thumbnail-box-selected\')[0]
     if(oldblock) {
         oldblock.classList.remove(\'fff-module-thumbnail-box-selected\')
@@ -824,14 +824,14 @@ function changeModuleInfo(moduleid, first){
     allactivities.forEach(el=>el.style.display = \'none\')
     let activities = document.getElementsByClassName(\'module-\'+moduleid)
     activities.forEach(el=>el.style.display = \'block\')
-    
+
 
     // if(!first){
     //     //on se deplace sur la page sur la section modules du cours
     //     //const element_to_scroll_to = document.getElementById(\'modulesformation\');
     //     //element_to_scroll_to.scrollIntoView({ behavior: "smooth" });
     // }
-    
+
 }
 
 //met a jour les onglets presentiel/a delivrer/resultats
@@ -853,7 +853,7 @@ function changeinfomodule(me, boxid) {
 </script>';
 
 
-//on check si il y a l'id de la section 
+//on check si il y a l'id de la section
 
 $sectionid = optional_param('sectionid', null, PARAM_INT);
 if ($sectionid) {
@@ -863,7 +863,7 @@ if ($sectionid) {
         changeModuleInfo(' . $sectionid . ', false)
     });
 
-    
+
  </script>';
 } else {
     //on clique sur la première section
@@ -872,7 +872,7 @@ if ($sectionid) {
         const firstel = document.getElementById(\'fff-my-courses\').childNodes[0]
         firstel.click();
     });
-    
+
  </script>';
 }
 
@@ -903,7 +903,7 @@ function moveIconCourse(move){
     //on calcule le nombre delement max
     maxelements = nbencarts;
     rest--
-    
+
     if(maxelements < 0){
         //console.log(positionNextIcon +" ok "+rest);
 
@@ -916,23 +916,23 @@ function moveIconCourse(move){
             document.getElementById(\'fff-my-courses\').scrollBy({top: 0, left: -30, behavior: \'smooth\'});
             positionNextIcon--;
         }
-        
+
         //si on est à la position 0
         if(positionNextIcon == 0){
-            document.getElementById(\'leftcourseicon\').style.opacity=0.3; 
+            document.getElementById(\'leftcourseicon\').style.opacity=0.3;
         } else {
-            document.getElementById(\'leftcourseicon\').style.opacity=1; 
+            document.getElementById(\'leftcourseicon\').style.opacity=1;
         }
 
         //si on est à la position max
         if(positionNextIcon == rest){
-            document.getElementById(\'rightcourseicon\').style.opacity=0.3; 
+            document.getElementById(\'rightcourseicon\').style.opacity=0.3;
         } else {
-            document.getElementById(\'rightcourseicon\').style.opacity=1; 
+            document.getElementById(\'rightcourseicon\').style.opacity=1;
         }
     }
     else {
-        document.getElementById(\'rightcourseicon\').style.opacity=0.3; 
+        document.getElementById(\'rightcourseicon\').style.opacity=0.3;
     }
 }
 
@@ -950,7 +950,7 @@ window.onload = function(){
     //on désactive la fleche de droite
     //console.log(rest)
     if(rest == 0){
-        document.getElementById(\'rightcourseicon\').style.opacity=0.3; 
+        document.getElementById(\'rightcourseicon\').style.opacity=0.3;
     }
 ';
 
@@ -958,8 +958,8 @@ if ($group) {
 
     //on affiche seulement le dossier de la région
     echo '
-    
-    
+
+
     var inputString = "' . $group->name . '";
 
     //console.log("' . $group->name . '");
@@ -988,26 +988,26 @@ if ($group) {
 }
 
 echo '
-    
 
 
 
-    
+
+
 
     //On cache tout les dossiers
     var elements = document.querySelectorAll(".fff-name-activity");
     // Expression régulière pour repérer du texte entre crochets
     var regex = /\[([^\]]+)\]/g;
-    
+
     // Parcourir tous les éléments
     elements.forEach(function(element) {
-        
+
         // Vérifier si l\'élément contient du texte
         if (element.textContent) {
             //console.log(element.textContent)
             var matches = element.textContent.match(regex);
             if (matches) {
-                // Si des correspondances sont trouvées, on check 
+                // Si des correspondances sont trouvées, on check
                 matches.forEach(function(match) {
 
                     //dossier de ligue new
@@ -1024,7 +1024,7 @@ echo '
                         //on supprime pas
                         //element.parentNode.parentNode.parentNode.parentNode.remove();
                     }
-                    
+
                 });
             }
         }
@@ -1036,15 +1036,15 @@ echo '
 echo '
 
   };
-    
+
     </script>';
 
 if ($group) {
     //on affiche seulement le dossier de la région
     echo '<script>
-    
+
 // window.onload = function(){
-    
+
 
 // };
 </script>';

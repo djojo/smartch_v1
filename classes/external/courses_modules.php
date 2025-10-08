@@ -43,7 +43,7 @@ $content .= '
         <path fill-rule="evenodd" clip-rule="evenodd" d="M15.2929 26.7071C14.9024 26.3166 14.9024 25.6834 15.2929 25.2929L21.5858 19L15.2929 12.7071C14.9024 12.3166 14.9024 11.6834 15.2929 11.2929C15.6834 10.9024 16.3166 10.9024 16.7071 11.2929L23.7071 18.2929C24.0976 18.6834 24.0976 19.3166 23.7071 19.7071L16.7071 26.7071C16.3166 27.0976 15.6834 27.0976 15.2929 26.7071Z" fill="#004687"/>
         <rect x="1" y="1" width="36" height="36" rx="18" stroke="#004687" stroke-width="2"/>
     </svg>
-    <span class="FFF-Hero-Black FFF-Blue" style="margin-right:10px;letter-spacing:1px;">Détails du </span><span class="FFF-Hero-Black FFF-Gold" style="letter-spacing:1px;">Parcours</span> 
+    <span class="FFF-Hero-Black FFF-Blue" style="margin-right:10px;letter-spacing:1px;">Détails du </span><span class="FFF-Hero-Black FFF-Gold" style="letter-spacing:1px;">Parcours</span>
 </h3>';
 
 // var_dump(countCourseActivities($courseid));
@@ -163,7 +163,7 @@ if (countCourseActivities($courseid) == 0) {
     <div class="col-sm-12 col-md-12 col-lg-12" style="background: transparent; padding: 30px 40px; border-radius: 20px;">
         <div id="activitiesall" >
             <div style="justify-content: center;display: flex;margin-bottom:50px;" id="course_module_info_titles">
-                <span class="course_module_info_title_highlight" onclick="changeinfomodule(this, \'presentiel\')" >CONTENUS PÉDAGOGIQUE</span>
+                <span class="course_module_info_title_highlight" onclick="changeinfomodule(this, \'presentiel\')" >CONTENUS PÉDAGOGIQUES</span>
                 <span style="display:none; onclick="changeinfomodule(this, \'deliver\')" class="course_module_info_title">Plannings</span>
                 ';
     $content .= '<span style="display:none; onclick="changeinfomodule(this, \'result\')" class="course_module_info_title">Notes</span>';
@@ -573,7 +573,7 @@ if (countCourseActivities($courseid) == 0) {
 
             <div class="sub-box-module" id="result" style="display:none;">
                 <div>
-                    
+
                 </div>
             </div>
 
@@ -608,7 +608,7 @@ function fading(element){
 //change le module
 function changeModuleInfo(moduleid, first){
     // alert(moduleid);
-    //on change la couleur des blocks 
+    //on change la couleur des blocks
     let oldblock = document.getElementsByClassName(\'fff-module-thumbnail-box-selected\')[0]
     if(oldblock) {
         oldblock.classList.remove(\'fff-module-thumbnail-box-selected\')
@@ -620,14 +620,14 @@ function changeModuleInfo(moduleid, first){
     allactivities.forEach(el=>el.style.display = \'none\')
     let activities = document.getElementsByClassName(\'module-\'+moduleid)
     activities.forEach(el=>el.style.display = \'block\')
-    
+
 
     // if(!first){
     //     //on se deplace sur la page sur la section modules du cours
     //     //const element_to_scroll_to = document.getElementById(\'modulesformation\');
     //     //element_to_scroll_to.scrollIntoView({ behavior: "smooth" });
     // }
-    
+
 }
 
 //met a jour les onglets presentiel/a delivrer/resultats
@@ -649,7 +649,7 @@ function changeinfomodule(me, boxid) {
 </script>';
 
 
-//on check si il y a l'id de la section 
+//on check si il y a l'id de la section
 
 $sectionid = optional_param('sectionid', null, PARAM_INT);
 if ($sectionid) {
@@ -659,7 +659,7 @@ if ($sectionid) {
         changeModuleInfo(' . $sectionid . ', false)
     });
 
-    
+
  </script>';
 } else {
     //on clique sur la première section
@@ -668,7 +668,7 @@ if ($sectionid) {
         const firstel = document.getElementById(\'fff-my-courses\').childNodes[0]
         firstel.click();
     });
-    
+
  </script>';
 }
 
@@ -697,12 +697,12 @@ function moveIconCourse(move){
         positionNextIcon--;
     }
     if(positionNextIcon == 0){
-        document.getElementById(\'leftcourseicon\').style.opacity=0.3; 
+        document.getElementById(\'leftcourseicon\').style.opacity=0.3;
     } else {
-        document.getElementById(\'leftcourseicon\').style.opacity=1; 
+        document.getElementById(\'leftcourseicon\').style.opacity=1;
     }
-    
-    
+
+
 }
 
 </script>';
@@ -717,7 +717,7 @@ if ($group) {
 
     echo '
 
-    
+
     var inputString = "' . $group->name . '";
 
     //console.log("' . $group->name . '");
@@ -746,26 +746,26 @@ if ($group) {
 }
 
 echo '
-    
 
 
 
-    
+
+
 
     //On cache tout les dossiers
     var elements = document.querySelectorAll(".fff-name-activity");
     // Expression régulière pour repérer du texte entre crochets
     var regex = /\[([^\]]+)\]/g;
-    
+
     // Parcourir tous les éléments
     elements.forEach(function(element) {
-        
+
         // Vérifier si l\'élément contient du texte
         if (element.textContent) {
             //console.log(element.textContent)
             var matches = element.textContent.match(regex);
             if (matches) {
-                // Si des correspondances sont trouvées, on check 
+                // Si des correspondances sont trouvées, on check
                 matches.forEach(function(match) {
                     if(firstDigit){
                         if (!element.textContent.includes(firstDigit)){
@@ -778,7 +778,7 @@ echo '
                         //on supprime pas
                         //element.parentNode.parentNode.parentNode.parentNode.remove();
                     }
-                    
+
                 });
             }
         }
@@ -790,15 +790,15 @@ echo '
 echo '
 
   };
-    
+
     </script>';
 
 if ($group) {
     //on affiche seulement le dossier de la région
     echo '<script>
-    
+
 // window.onload = function(){
-    
+
 
 // };
 </script>';
