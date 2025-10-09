@@ -813,6 +813,47 @@ if (countCourseActivities($courseid) == 0) {
 }
 
 
+function face2face_mark_completed($cm, $userid) {
+    global $DB, $CFG;
+    
+    // Récupérer les objets nécessaires
+    $course = get_course($cm->course);
+    $face2face = $DB->get_record('face2face', array('id' => $cm->instance), '*', MUST_EXIST);
+
+    // Vérifier si la complétion est activée
+    $completion = new completion_info($course);
+    
+    if ($completion->is_enabled($cm) && $face2face->completionpassed) {
+        echo "on update la completion";
+
+        // Avant l'appel à update_state
+        echo "Tentative de mise à jour directe dans la base de données<br>";
+        $now = time();
+        $record = new stdClass();
+        $record->coursemoduleid = $cm->id;
+        $record->userid = $userid;
+        $record->completionstate = COMPLETION_COMPLETE;
+        $record->timemodified = $now;
+        $record->viewed = 1;
+
+        // Vérifier si l'enregistrement existe déjà
+        $existing = $DB->get_record('course_modules_completion', 
+            array('coursemoduleid' => $cm->id, 'userid' => $userid));
+
+        if ($existing) {
+            $record->id = $existing->id;
+            $result = $DB->update_record('course_modules_completion', $record);
+            echo "Mise à jour de l'enregistrement existant: " . ($result ? "Réussi" : "Échec") . "<br>";
+        } else {
+            $result = $DB->insert_record('course_modules_completion', $record);
+            echo "Insertion d'un nouvel enregistrement: " . ($result ? "Réussi (ID: $result)" : "Échec") . "<br>";
+        }
+
+        return true;
+    }
+    
+    return false;
+}
 
 
 
