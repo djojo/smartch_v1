@@ -292,8 +292,20 @@ if (countCourseActivities($courseid) == 0) {
                             $completionValue = getActivityCompletion($USER->id, $activity->id);
 
                             if ($completionValue = 'COMPLETION_COMPLETE_FAIL') {
-                                $completion = '<div style="background:#009ce0;" class="smartch_pastille">Planifiée</div>';
-                            } else if ($completionValue = 'COMPLETION_COMPLETE') {
+
+                                //on va vérifier si la date du planning est passée
+                                if ($planningTrouve->startdate < time()) {
+                                    //on update la completion pour l'utilisateur
+                                    face2face_mark_completed($activity, $USER->id);
+
+                                    //on va chercher la completion de nouveau 
+                                    $completionValue = getActivityCompletion($USER->id, $activity->id);
+                                } else {
+                                    $completion = '<div style="background:#009ce0;" class="smartch_pastille">Planifiée</div>';
+                                }
+                            }
+                            
+                            if ($completionValue = 'COMPLETION_COMPLETE') {
                                 $completion = '<div style="background:#BE965A;" class="smartch_pastille">Passée</div>';
                             }
 
