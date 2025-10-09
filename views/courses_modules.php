@@ -279,11 +279,19 @@ if (countCourseActivities($courseid) == 0) {
                             // $content .= '->' . $countplanning . '->' . $allsmartchplanning;
                             $countplanning++;
 
-                            if ($planningTrouve->startdate > time()) {
+                            // if ($planningTrouve->startdate > time()) {
+                            //     $completion = '<div style="background:#009ce0;" class="smartch_pastille">Planifiée</div>';
+                            // } else if ($planningTrouve->startdate < time() && $planningTrouve->enddate > time()) {
+                            //     $completion = '<div style="background:#E50127;" class="smartch_pastille">En cours</div>';
+                            // } else {
+                            //     $completion = '<div style="background:#BE965A;" class="smartch_pastille">Passée</div>';
+                            // }
+
+                            $completionValue = getActivityCompletion($USER->id, $activity->id);
+
+                            if ($completionValue = 'COMPLETION_COMPLETE') {
                                 $completion = '<div style="background:#009ce0;" class="smartch_pastille">Planifiée</div>';
-                            } else if ($planningTrouve->startdate < time() && $planningTrouve->enddate > time()) {
-                                $completion = '<div style="background:#E50127;" class="smartch_pastille">En cours</div>';
-                            } else {
+                            } else if ($completionValue = 'COMPLETION_COMPLETE_FAIL') {
                                 $completion = '<div style="background:#BE965A;" class="smartch_pastille">Passée</div>';
                             }
 

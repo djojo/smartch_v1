@@ -2886,6 +2886,44 @@ function getPlanningCompletion($courseid, $sessionid, $sectionid)
     }
 }
 
+function getActivityCompletion($userid, $moduleid)
+{
+    global $DB;
+
+    $querycompletion = "SELECT u.id AS userid, u.firstname, u.lastname,
+        c.id AS courseid, c.fullname AS coursename,
+        cmc.coursemoduleid, m.name AS moduletype,
+        CASE
+            WHEN cm.completion = 0 THEN 'COMPLETION_TRACKING_NONE' /* COMPLETION_TRACKING_NONE */
+            WHEN cm.completion = 1 THEN 'COMPLETION_TRACKING_MANUAL' /* COMPLETION_TRACKING_MANUAL */
+            WHEN cm.completion = 2 THEN 'COMPLETION_TRACKING_AUTOMATIC' /* COMPLETION_TRACKING_AUTOMATIC */
+        END AS completiontype,
+        CASE
+        WHEN cmc.completionstate = 0 THEN 'COMPLETION_INCOMPLETE' /* COMPLETION_INCOMPLETE */
+        WHEN cmc.completionstate = 1 THEN 'COMPLETION_COMPLETE' /* COMPLETION_COMPLETE */
+        WHEN cmc.completionstate = 2 THEN 'COMPLETION_COMPLETE_PASS' /* COMPLETION_COMPLETE_PASS */
+        WHEN cmc.completionstate = 3 THEN 'COMPLETION_COMPLETE_FAIL' /* COMPLETION_COMPLETE_FAIL */
+        --    WHEN cmc.completionstate = 4 THEN 'Completed with Record of Prior Learning' /* COMPLETION_COMPLETE_RPL */
+        ELSE 'Unknown'
+        END AS completionstate,
+        cmc.timemodified
+    FROM mdl_course_modules_completion cmc
+    JOIN mdl_user u ON u.id = cmc.userid
+    JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
+    JOIN mdl_course c ON c.id = cm.course
+    JOIN mdl_modules m ON m.id = cm.module
+
+    WHERE cmc.userid = " . $userid . " AND cmc.coursemoduleid = " . $moduleid;
+
+    $completion = $DB->get_record_sql($querycompletion, null);
+
+    if($completion){
+        return $completion->completionstate;
+    } else {
+        return "-";
+    }
+}
+
 function exportCSV($title, $data)
 {
     // Définir les en-têtes pour le téléchargement
