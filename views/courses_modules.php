@@ -295,8 +295,11 @@ if (countCourseActivities($courseid) == 0) {
 
                                 //on va vérifier si la date du planning est passée
                                 if ($planningTrouve->startdate < time()) {
+
+                                    //on va chercher le course module 
+                                    $cm = get_coursemodule_from_id('face2face', $activity->id, 0, false, MUST_EXIST);
                                     //on update la completion pour l'utilisateur
-                                    face2face_mark_completed($activity, $USER->id);
+                                    face2face_mark_completed($cm, $USER->id);
 
                                     //on va chercher la completion de nouveau 
                                     $completionValue = getActivityCompletion($USER->id, $activity->id);
