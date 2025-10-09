@@ -287,11 +287,13 @@ if (countCourseActivities($courseid) == 0) {
                             //     $completion = '<div style="background:#BE965A;" class="smartch_pastille">Passée</div>';
                             // }
 
+
+
                             $completionValue = getActivityCompletion($USER->id, $activity->id);
 
-                            if ($completionValue = 'COMPLETION_COMPLETE') {
+                            if ($completionValue = 'COMPLETION_COMPLETE_FAIL') {
                                 $completion = '<div style="background:#009ce0;" class="smartch_pastille">Planifiée</div>';
-                            } else if ($completionValue = 'COMPLETION_COMPLETE_FAIL') {
+                            } else if ($completionValue = 'COMPLETION_COMPLETE') {
                                 $completion = '<div style="background:#BE965A;" class="smartch_pastille">Passée</div>';
                             }
 
