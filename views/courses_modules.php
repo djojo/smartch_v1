@@ -304,6 +304,13 @@ if (countCourseActivities($courseid) == 0) {
                                     //on va chercher la completion de nouveau 
                                     $completionValue = getActivityCompletion($USER->id, $activity->id);
                                 } else {
+                                    //on va chercher le course module 
+                                    $cm = get_coursemodule_from_id('face2face', $activity->id, 0, false, MUST_EXIST);
+                                    //on update la completion pour l'utilisateur
+                                    face2face_unmark_completed($cm, $USER->id);
+
+                                    //on va chercher la completion de nouveau 
+                                    $completionValue = getActivityCompletion($USER->id, $activity->id);
                                     $completion = '<div style="background:#009ce0;" class="smartch_pastille">Planifiée</div>';
                                 }
                             }
