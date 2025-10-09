@@ -300,6 +300,7 @@ if (countCourseActivities($courseid) == 0) {
                                     $cm = get_coursemodule_from_id('face2face', $activity->id, 0, false, MUST_EXIST);
                                     //on update la completion pour l'utilisateur
                                     face2face_mark_completed($cm, $userid);
+                                    echo "<script>console.log('on ajoute la completion pour l\'utilisateur');</script>";
 
                                     //on va chercher la completion de nouveau 
                                     $completionValue = getActivityCompletion($userid, $activity->id);
@@ -308,6 +309,8 @@ if (countCourseActivities($courseid) == 0) {
                                     $cm = get_coursemodule_from_id('face2face', $activity->id, 0, false, MUST_EXIST);
                                     //on update la completion pour l'utilisateur
                                     face2face_unmark_completed($cm, $userid);
+                                    echo "<script>console.log('on enleve la completion pour l\'utilisateur');</script>";
+
 
                                     //on va chercher la completion de nouveau 
                                     $completionValue = getActivityCompletion($userid, $activity->id);
