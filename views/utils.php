@@ -2916,10 +2916,10 @@ function face2face_mark_completed($cm, $userid) {
         if ($existing) {
             $record->id = $existing->id;
             $result = $DB->update_record('course_modules_completion', $record);
-            // echo "Mise à jour de l'enregistrement existant: " . ($result ? "Réussi" : "Échec") . "<br>";
+            echo "<script>console.log('Mise à jour de l\'enregistrement existant: " . ($result ? "Réussi" : "Échec") . "');</script>";
         } else {
             $result = $DB->insert_record('course_modules_completion', $record);
-            // echo "Insertion d'un nouvel enregistrement: " . ($result ? "Réussi (ID: $result)" : "Échec") . "<br>";
+            echo "<script>console.log('Insertion d\'un nouvel enregistrement: " . ($result ? "Réussi (ID: $result)" : "Échec") . "');</script>";
         }
 
         return true;
@@ -2958,10 +2958,10 @@ function face2face_unmark_completed($cm, $userid) {
         if ($existing) {
             $record->id = $existing->id;
             $result = $DB->update_record('course_modules_completion', $record);
-            // echo "Mise à jour de l'enregistrement existant: " . ($result ? "Réussi" : "Échec") . "<br>";
+            echo "<script>console.log('Mise à jour de l\'enregistrement existant: " . ($result ? "Réussi" : "Échec") . "');</script>";
         } else {
             $result = $DB->insert_record('course_modules_completion', $record);
-            // echo "Insertion d'un nouvel enregistrement: " . ($result ? "Réussi (ID: $result)" : "Échec") . "<br>";
+            echo "<script>console.log('Insertion d\'un nouvel enregistrement: " . ($result ? "Réussi (ID: $result)" : "Échec") . "');</script>";
         }
 
         return true;

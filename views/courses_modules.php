@@ -289,7 +289,7 @@ if (countCourseActivities($courseid) == 0) {
 
 
 
-                            $completionValue = getActivityCompletion($USER->id, $activity->id);
+                            $completionValue = getActivityCompletion($userid, $activity->id);
 
                             if ($completionValue = 'COMPLETION_COMPLETE_FAIL') {
 
@@ -301,24 +301,21 @@ if (countCourseActivities($courseid) == 0) {
                                     //on update la completion pour l'utilisateur
                                     face2face_mark_completed($cm, $userid);
                                     echo "<script>console.log('on ajoute la completion pour l\'utilisateur');</script>";
-
-                                    //on va chercher la completion de nouveau 
-                                    $completionValue = getActivityCompletion($userid, $activity->id);
+                                    
                                 } else {
                                     //on va chercher le course module 
                                     $cm = get_coursemodule_from_id('face2face', $activity->id, 0, false, MUST_EXIST);
                                     //on update la completion pour l'utilisateur
                                     face2face_unmark_completed($cm, $userid);
                                     echo "<script>console.log('on enleve la completion pour l\'utilisateur');</script>";
-
-
-                                    //on va chercher la completion de nouveau 
-                                    $completionValue = getActivityCompletion($userid, $activity->id);
                                     
                                 }
                             }
+
+                            //on va chercher la completion de nouveau 
+                            $completionValue = getActivityCompletion($userid, $activity->id);
                             
-                            if ($completionValue = 'COMPLETION_COMPLETE') {
+                            if ($completionValue == 'COMPLETION_COMPLETE') {
                                 $completion = '<div style="background:#BE965A;" class="smartch_pastille">Passée</div>';
                             } else {
                                 $completion = '<div style="background:#009ce0;" class="smartch_pastille">Planifiée</div>';
