@@ -299,24 +299,26 @@ if (countCourseActivities($courseid) == 0) {
                                     //on va chercher le course module 
                                     $cm = get_coursemodule_from_id('face2face', $activity->id, 0, false, MUST_EXIST);
                                     //on update la completion pour l'utilisateur
-                                    face2face_mark_completed($cm, $USER->id);
+                                    face2face_mark_completed($cm, $userid);
 
                                     //on va chercher la completion de nouveau 
-                                    $completionValue = getActivityCompletion($USER->id, $activity->id);
+                                    $completionValue = getActivityCompletion($userid, $activity->id);
                                 } else {
                                     //on va chercher le course module 
                                     $cm = get_coursemodule_from_id('face2face', $activity->id, 0, false, MUST_EXIST);
                                     //on update la completion pour l'utilisateur
-                                    face2face_unmark_completed($cm, $USER->id);
+                                    face2face_unmark_completed($cm, $userid);
 
                                     //on va chercher la completion de nouveau 
-                                    $completionValue = getActivityCompletion($USER->id, $activity->id);
-                                    $completion = '<div style="background:#009ce0;" class="smartch_pastille">Planifiée</div>';
+                                    $completionValue = getActivityCompletion($userid, $activity->id);
+                                    
                                 }
                             }
                             
                             if ($completionValue = 'COMPLETION_COMPLETE') {
                                 $completion = '<div style="background:#BE965A;" class="smartch_pastille">Passée</div>';
+                            } else {
+                                $completion = '<div style="background:#009ce0;" class="smartch_pastille">Planifiée</div>';
                             }
 
                             $planningdate = 'Session du ' . userdate($planningTrouve->startdate, '%d/%m/%Y') . ' ' . userdate($planningTrouve->startdate, '%H:%M') . ' - ' . userdate($planningTrouve->enddate, '%H:%M') . '';
