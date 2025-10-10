@@ -52,6 +52,11 @@ if ($groupid) {
     $groupid = $group->id; //pour le responsable pedagogique
 }
 
+// Si $userid n'est toujours pas défini, on utilise l'utilisateur connecté
+if (!$userid) {
+    $userid = $USER->id;
+}
+
 //si on a au moins un groupe
 if ($group) {
 

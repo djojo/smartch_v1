@@ -29,7 +29,6 @@ if(!$isResponsablePedagogique){
 
 $action = optional_param('action', '', PARAM_TEXT);
 $sent = optional_param('sent', false, PARAM_BOOL);
-$userid = optional_param('userid', '', PARAM_INT);
 $teamid = optional_param('teamid', '', PARAM_INT);
 $messageteam = optional_param('message', 0, PARAM_INT);
 $search = optional_param('search', '', PARAM_TEXT);
@@ -61,6 +60,9 @@ $courseid = $group->courseid;
 $activities = getCourseActivitiesStats($courseid);
 
 $userid = optional_param('userid', null, PARAM_INT);
+
+// Si $userid n'est pas défini, on ne l'utilise pas (mode vue équipe globale)
+// Il sera géré par courses_modules.php si nécessaire
 
 $no_of_records_per_page = 24;
 $offset = ($pageno - 1) * $no_of_records_per_page;

@@ -7,11 +7,12 @@ if (!$group) {
     $group = false;
 }
 
-$userselected = $DB->get_record('user', ['id' => $userid]);
-
-if ($userid) {
+// Vérifier que $userid est défini avant de récupérer l'utilisateur
+if (!empty($userid)) {
+    $userselected = $DB->get_record('user', ['id' => $userid]);
     $titlecontenu = "CONTENUS PÉDAGOGIQUES POUR " . $userselected->firstname . ' ' . $userselected->lastname;
 } else {
+    $userselected = null;
     $titlecontenu = "CONTENUS PÉDAGOGIQUES";
 }
 
@@ -31,7 +32,8 @@ $activities = getCourseActivities($courseid);
 //la session
 if ($group) {
     // var_dump($group->id);
-    $session = $DB->get_record('smartch_session', ['groupid' => $group->id]);
+    $sessions = $DB->get_records('smartch_session', ['groupid' => $group->id]);
+    $session = reset($sessions); // Prend la première session si plusieurs existent
     $sessionadress = "";
     if ($session) {
         $sessionsite = $session->site;
@@ -291,7 +293,8 @@ if (countCourseActivities($courseid) == 0) {
 
                             $completionValue = getActivityCompletion($userid, $activity->id);
 
-                            if ($completionValue = 'COMPLETION_COMPLETE_FAIL') {
+                            // Vérifier que $userid est défini avant de modifier la complétion
+                            if (!empty($userid) && $completionValue = 'COMPLETION_COMPLETE_FAIL') {
 
                                 //on va vérifier si la date du planning est passée
                                 if ($planningTrouve->startdate < time()) {

@@ -2974,6 +2974,11 @@ function getActivityCompletion($userid, $moduleid)
 {
     global $DB;
 
+    // Validation des paramètres
+    if (empty($userid) || empty($moduleid)) {
+        return "-";
+    }
+
     $querycompletion = "SELECT u.id AS userid, u.firstname, u.lastname,
         c.id AS courseid, c.fullname AS coursename,
         cmc.coursemoduleid, m.name AS moduletype,
