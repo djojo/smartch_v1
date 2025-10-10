@@ -214,7 +214,8 @@ $content .= $OUTPUT->render_from_template('theme_remui/smartch_course_header', $
 
 
 //on va chercher les informations de session 
-$session = $DB->get_record('smartch_session', ['groupid' => $group->id]);
+$sessions = $DB->get_records('smartch_session', ['groupid' => $group->id]);
+$session = reset($sessions); // Prend la première session si plusieurs existent
 
 if ($session) {
     $sessiondate = 'Session du ' . userdate($session->startdate, get_string('strftimedate')) . ' au ' . userdate($session->enddate, get_string('strftimedate'));

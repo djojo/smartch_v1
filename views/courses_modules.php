@@ -29,12 +29,14 @@ $activities = getCourseActivities($courseid);
 
 // var_dump($activities);
 
+// Initialiser $sessionadress
+$sessionadress = "";
+
 //la session
 if ($group) {
     // var_dump($group->id);
     $sessions = $DB->get_records('smartch_session', ['groupid' => $group->id]);
     $session = reset($sessions); // Prend la première session si plusieurs existent
-    $sessionadress = "";
     if ($session) {
         $sessionsite = $session->site;
         if ($session->adress1 != "") {
