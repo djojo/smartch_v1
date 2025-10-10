@@ -16,6 +16,13 @@ $iscategoryfree = false;
 //On va chercher le rôle le plus haut de l'utilisateur
 $rolename = getMainRole();
 
+if($rolename == "manager" || $rolename == "super-admin"){
+    //on garde son role
+} else {
+    //on va chercher le role du cours
+    $rolename = getCourseRole($courseid);
+}
+
 $sent = optional_param('sent', false, PARAM_BOOL);
 $courseid = required_param('id', PARAM_INT);
 $userid = optional_param('userid', '', PARAM_INT);

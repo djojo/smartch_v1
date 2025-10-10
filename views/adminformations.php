@@ -16,13 +16,6 @@ $nexturl = '';
 //On va chercher le rôle le plus haut de l'utilisateur
 $rolename = getMainRole();
 
-if($rolename == "manager" || $rolename == "super-admin"){
-    //on garde son role
-} else {
-    //on va chercher le role du cours
-    $rolename = getCourseRole($courseid);
-}
-
 isStudent();
 
 //on va chercher la config
