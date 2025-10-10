@@ -60,6 +60,17 @@ function getMainRole($userid = null)
     return $rolename;
 }
 
+function getCourseRole($courseid){
+    global $DB, $USER;
+    $rolename = "";
+    $assignments = $DB->get_records('role_assignments', ['userid' => $USER->id, 'contextid' => $courseid]);
+    foreach ($assignments as $assignment) {
+        $role = $DB->get_record('role', ['id' => $assignment->roleid]);
+        $rolename = $role->shortname;
+    }
+    return $rolename;
+}
+
 function isPortailRH(){
     $portail = getConfigPortail();
     
