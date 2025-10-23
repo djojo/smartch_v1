@@ -55,10 +55,10 @@ if ($action === 'deletebatch' && confirm_sesskey()) {
     ];
     
     if (!empty($datebefore)) {
-        $timestamp = strtotime($datebefore . ' 23:59:59');
+        $timestamp = strtotime($datebefore . ' 00:00:00');
         if ($timestamp !== false) {
-            $datecondition = 'AND u.timecreated < :datebefore';
-            $params['datebefore'] = $timestamp;
+            $datecondition = 'AND u.timecreated >= :dateafter';
+            $params['dateafter'] = $timestamp;
         }
     }
     
@@ -132,10 +132,10 @@ if ($action === 'getcount' && confirm_sesskey()) {
     ];
     
     if (!empty($datebefore)) {
-        $timestamp = strtotime($datebefore . ' 23:59:59');
+        $timestamp = strtotime($datebefore . ' 00:00:00');
         if ($timestamp !== false) {
-            $datecondition = 'AND u.timecreated < :datebefore';
-            $params['datebefore'] = $timestamp;
+            $datecondition = 'AND u.timecreated >= :dateafter';
+            $params['dateafter'] = $timestamp;
         }
     }
     
@@ -501,7 +501,7 @@ $displaycount = count($unusedusers);
         <h3>🔍 Filtrer les comptes</h3>
         <form method="get" class="filter-form" id="filterForm">
             <div class="form-group">
-                <label for="filterdate">Supprimer uniquement les comptes créés avant :</label>
+                <label for="filterdate">Supprimer uniquement les comptes créés après :</label>
                 <input type="date" 
                        id="filterdate" 
                        name="filterdate" 
@@ -515,7 +515,7 @@ $displaycount = count($unusedusers);
         </form>
         <?php if (!empty($filterdate)): ?>
             <p style="margin-top: 10px; margin-bottom: 0;">
-                <span class="filter-active">✓ Filtre actif : Avant le <?php echo date('d/m/Y', $datetimestamp); ?></span>
+                <span class="filter-active">✓ Filtre actif : Depuis le <?php echo date('d/m/Y', $datetimestamp); ?></span>
             </p>
         <?php endif; ?>
     </div>
@@ -523,7 +523,7 @@ $displaycount = count($unusedusers);
     <div class="summary-box">
         <h3>📊 Résumé</h3>
         <p><strong>Total des comptes jamais connectés<?php echo !empty($filterdate) ? ' (avec filtre)' : ''; ?> :</strong> <?php echo $totalcount; ?> compte(s)</p>
-        <p>Ces utilisateurs ont été créés<?php echo !empty($filterdate) ? ' <strong>avant le ' . date('d/m/Y', $datetimestamp) . '</strong>' : ''; ?> mais ne se sont <strong>JAMAIS</strong> connectés à la plateforme.</p>
+        <p>Ces utilisateurs ont été créés<?php echo !empty($filterdate) ? ' <strong>à partir du ' . date('d/m/Y', $datetimestamp) . '</strong>' : ''; ?> mais ne se sont <strong>JAMAIS</strong> connectés à la plateforme.</p>
         <?php if ($totalcount > $displayLimit): ?>
         <p style="margin-top: 10px; font-size: 14px; color: #17a2b8;">
             ⚡ <em>Le tableau ci-dessous affiche les <?php echo $displayLimit; ?> premiers comptes pour optimiser le temps de chargement. 
@@ -539,7 +539,7 @@ $displaycount = count($unusedusers);
                 <li>La suppression est <strong>IRRÉVERSIBLE</strong></li>
                 <li>Les comptes administrateur et invité sont automatiquement protégés</li>
                 <?php if (!empty($filterdate)): ?>
-                <li><strong>Filtre actif :</strong> Seuls les comptes créés <strong>avant le <?php echo date('d/m/Y', $datetimestamp); ?></strong> seront supprimés</li>
+                <li><strong>Filtre actif :</strong> Seuls les comptes créés <strong>à partir du <?php echo date('d/m/Y', $datetimestamp); ?></strong> seront supprimés</li>
                 <?php endif; ?>
                 <li>Il est <strong>FORTEMENT RECOMMANDÉ</strong> de faire une sauvegarde de la base de données avant cette opération</li>
                 <li>Cette action utilise la fonction officielle <code>delete_user()</code> de Moodle</li>
@@ -644,7 +644,7 @@ $displaycount = count($unusedusers);
         <div class="summary-box" style="border-left-color: #28a745;">
             <h3 style="color: #28a745;">✅ Aucun compte à supprimer</h3>
             <?php if (!empty($filterdate)): ?>
-                <p>Aucun compte trouvé avec les critères de filtre actuels (créés avant le <?php echo date('d/m/Y', $datetimestamp); ?>).</p>
+                <p>Aucun compte trouvé avec les critères de filtre actuels (créés à partir du <?php echo date('d/m/Y', $datetimestamp); ?>).</p>
                 <p>💡 <strong>Suggestion :</strong> Essayez de modifier la date du filtre ou de le réinitialiser pour voir tous les comptes non utilisés.</p>
                 <p><a href="<?php echo $PAGE->url; ?>" class="btn-reset" style="display: inline-block; text-decoration: none;">🔄 Réinitialiser le filtre</a></p>
             <?php else: ?>
@@ -664,11 +664,11 @@ $displaycount = count($unusedusers);
                     <li>confirmed = 1 (compte confirmé)</li>
                     <li>Exclusion des comptes guest et admin</li>
                     <?php if (!empty($filterdate)): ?>
-                    <li><strong>timecreated &lt; <?php echo date('d/m/Y', $datetimestamp); ?></strong> (filtre de date actif)</li>
+                    <li><strong>timecreated >= <?php echo date('d/m/Y', $datetimestamp); ?></strong> (filtre de date actif)</li>
                     <?php endif; ?>
                 </ul>
             </li>
-            <li><strong>Filtre par date :</strong> Permet de ne supprimer que les comptes créés avant une date spécifique (utilise le champ timecreated)</li>
+            <li><strong>Filtre par date :</strong> Permet de ne supprimer que les comptes créés après une date spécifique (utilise le champ timecreated)</li>
             <li><strong>Affichage optimisé :</strong> Limite l'affichage du tableau à <?php echo $displayLimit; ?> résultats maximum pour améliorer les performances de chargement de la page</li>
             <li><strong>Méthode de suppression :</strong> Utilise la fonction <code>delete_user()</code> de Moodle</li>
             <li><strong>Traitement par lots :</strong> Suppression par lots de <?php echo $batchsize; ?> utilisateurs (optimisé pour les gros volumes)</li>
@@ -704,7 +704,7 @@ function startBatchDeletion() {
     
     let dateMsg = '';
     if (filterDate) {
-        dateMsg = `\n\nFiltre actif : Comptes créés avant le <?php echo !empty($filterdate) ? date('d/m/Y', $datetimestamp) : ''; ?>\n`;
+        dateMsg = `\n\nFiltre actif : Comptes créés à partir du <?php echo !empty($filterdate) ? date('d/m/Y', $datetimestamp) : ''; ?>\n`;
     }
     
     const message = `⚠️ CONFIRMATION REQUISE ⚠️\n\n` +
