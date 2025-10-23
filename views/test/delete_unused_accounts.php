@@ -300,6 +300,7 @@ $displaycount = count($unusedusers);
         display: flex;
         gap: 10px;
         align-items: center;
+        flex-wrap: wrap;
     }
     
     .badge {
@@ -550,8 +551,17 @@ $displaycount = count($unusedusers);
         
         <div class="action-buttons">
             <button id="btnDeleteAll" class="btn-delete-all" onclick="startBatchDeletion();">
-                🗑️ Supprimer TOUS les comptes non utilisés (<?php echo $totalcount; ?>)
+                <?php if (!empty($filterdate)): ?>
+                    🗑️ Supprimer les comptes filtrés (<?php echo $totalcount; ?>)
+                <?php else: ?>
+                    🗑️ Supprimer TOUS les comptes non utilisés (<?php echo $totalcount; ?>)
+                <?php endif; ?>
             </button>
+            <?php if (!empty($filterdate)): ?>
+            <div style="font-size: 13px; color: #007bff; margin-left: 10px;">
+                📌 Seuls les <strong><?php echo $totalcount; ?> comptes</strong> créés à partir du <strong><?php echo date('d/m/Y', $datetimestamp); ?></strong> seront supprimés
+            </div>
+            <?php endif; ?>
         </div>
         
         <!-- Barre de progression -->
@@ -636,8 +646,17 @@ $displaycount = count($unusedusers);
         
         <div class="action-buttons">
             <button class="btn-delete-all" onclick="startBatchDeletion();">
-                🗑️ Supprimer TOUS les comptes non utilisés (<?php echo $totalcount; ?>)
+                <?php if (!empty($filterdate)): ?>
+                    🗑️ Supprimer les comptes filtrés (<?php echo $totalcount; ?>)
+                <?php else: ?>
+                    🗑️ Supprimer TOUS les comptes non utilisés (<?php echo $totalcount; ?>)
+                <?php endif; ?>
             </button>
+            <?php if (!empty($filterdate)): ?>
+            <div style="font-size: 13px; color: #007bff; margin-left: 10px;">
+                📌 Seuls les <strong><?php echo $totalcount; ?> comptes</strong> créés à partir du <strong><?php echo date('d/m/Y', $datetimestamp); ?></strong> seront supprimés
+            </div>
+            <?php endif; ?>
         </div>
         
     <?php else: ?>
