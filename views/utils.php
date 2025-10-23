@@ -473,56 +473,29 @@ function getResponsablePedagogique($groupid, $courseid, $sessionid = null)
 {
     global $DB;
 
-    // if (isFreeCourse($courseid)) {
-    //     return array('Formation Gratuite', null);
-    // } else {
-    //     // Chercher les responsables pédagogiques via la table smartch_respo_link
-    //     // Prendre en compte session et groupe spécifiques si disponibles
-    //     $queryresponsable = 'SELECT DISTINCT u.id, u.firstname, u.lastname 
-    //     FROM mdl_user u
-    //     JOIN mdl_smartch_respo_link srl ON srl.userid = u.id
-    //     WHERE srl.courseid = ' . $courseid;
-        
-    //     // Ajouter le filtre par groupid si disponible
-    //     if ($groupid) {
-    //         $queryresponsable .= ' AND srl.groupid = ' . $groupid;
-    //     }
-        
-    //     // Ajouter le filtre par sessionid si disponible
-    //     if ($sessionid) {
-    //         $queryresponsable .= ' AND srl.sessionid = ' . $sessionid;
-    //     }
-        
-    //     $findresponsables = $DB->get_records_sql($queryresponsable, null);
-        
-    //     $found = reset($findresponsables);
-    //     if ($found) {
-    //         $coach = $found->firstname . ' ' . $found->lastname;
-    //     } else {
-    //         $coach = "Aucun responsable pédagogique";
-    //     }
-
-    //     return array($coach, $found);
-    // }
-
-
-    // SAVE OLD SYSTEM
-
     if (isFreeCourse($courseid)) {
-        array('Formation Gratuite', null);
+        return array('Formation Gratuite', null);
     } else {
+        // Chercher les responsables pédagogiques via la table smartch_respo_link
+        // Prendre en compte session et groupe spécifiques si disponibles
         $queryresponsable = 'SELECT DISTINCT u.id, u.firstname, u.lastname 
-        FROM mdl_groups g
-        JOIN mdl_groups_members gm ON gm.groupid = g.id
-        JOIN mdl_user u ON u.id = gm.userid
-        JOIN mdl_role_assignments ra ON ra.userid = u.id
-        JOIN mdl_role r ON r.id = ra.roleid
-        WHERE g.id = ' . $groupid . ' 
-        AND r.shortname = "smalleditingteacher"';
-        // var_dump($queryresponsable);
-        $findresponsable = $DB->get_records_sql($queryresponsable, null);
-        // var_dump($findresponsable);
-        $found = reset($findresponsable);
+        FROM mdl_user u
+        JOIN mdl_smartch_respo_link srl ON srl.userid = u.id
+        WHERE srl.courseid = ' . $courseid;
+        
+        // Ajouter le filtre par groupid si disponible
+        if ($groupid) {
+            $queryresponsable .= ' AND srl.groupid = ' . $groupid;
+        }
+        
+        // Ajouter le filtre par sessionid si disponible
+        if ($sessionid) {
+            $queryresponsable .= ' AND srl.sessionid = ' . $sessionid;
+        }
+        
+        $findresponsables = $DB->get_records_sql($queryresponsable, null);
+        
+        $found = reset($findresponsables);
         if ($found) {
             $coach = $found->firstname . ' ' . $found->lastname;
         } else {
@@ -531,6 +504,33 @@ function getResponsablePedagogique($groupid, $courseid, $sessionid = null)
 
         return array($coach, $found);
     }
+
+
+    // SAVE OLD SYSTEM
+
+    // if (isFreeCourse($courseid)) {
+    //     array('Formation Gratuite', null);
+    // } else {
+    //     $queryresponsable = 'SELECT DISTINCT u.id, u.firstname, u.lastname 
+    //     FROM mdl_groups g
+    //     JOIN mdl_groups_members gm ON gm.groupid = g.id
+    //     JOIN mdl_user u ON u.id = gm.userid
+    //     JOIN mdl_role_assignments ra ON ra.userid = u.id
+    //     JOIN mdl_role r ON r.id = ra.roleid
+    //     WHERE g.id = ' . $groupid . ' 
+    //     AND r.shortname = "smalleditingteacher"';
+    //     // var_dump($queryresponsable);
+    //     $findresponsable = $DB->get_records_sql($queryresponsable, null);
+    //     // var_dump($findresponsable);
+    //     $found = reset($findresponsable);
+    //     if ($found) {
+    //         $coach = $found->firstname . ' ' . $found->lastname;
+    //     } else {
+    //         $coach = "Aucun responsable pédagogique";
+    //     }
+
+    //     return array($coach, $found);
+    // }
 }
 
 function getManagerPortailRH()
