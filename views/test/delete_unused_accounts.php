@@ -36,7 +36,6 @@ $PAGE->set_heading('Gestion des comptes non utilisés');
 // Traitement de la suppression
 $action = optional_param('action', '', PARAM_ALPHA);
 $confirm = optional_param('confirm', 0, PARAM_INT);
-$datebefore = optional_param('datebefore', '', PARAM_TEXT); // Date limite (avant cette date)
 $batchsize = 50; // Nombre d'utilisateurs à traiter par lot
 
 // Traitement AJAX pour suppression par lots
@@ -46,6 +45,7 @@ if ($action === 'deletebatch' && confirm_sesskey()) {
     
     $offset = optional_param('offset', 0, PARAM_INT);
     $limit = optional_param('limit', $batchsize, PARAM_INT);
+    $datefilter = optional_param('filterdate', '', PARAM_TEXT); // Récupérer le filtre de date pour l'AJAX
     
     // Construire la condition de date
     $datecondition = '';
@@ -54,8 +54,8 @@ if ($action === 'deletebatch' && confirm_sesskey()) {
         'adminid' => get_admin()->id
     ];
     
-    if (!empty($datebefore)) {
-        $timestamp = strtotime($datebefore . ' 00:00:00');
+    if (!empty($datefilter)) {
+        $timestamp = strtotime($datefilter . ' 00:00:00');
         if ($timestamp !== false) {
             $datecondition = 'AND u.timecreated >= :dateafter';
             $params['dateafter'] = $timestamp;
@@ -124,6 +124,8 @@ if ($action === 'deletebatch' && confirm_sesskey()) {
 
 // Compte total pour l'affichage (action AJAX)
 if ($action === 'getcount' && confirm_sesskey()) {
+    $datefilter = optional_param('filterdate', '', PARAM_TEXT); // Récupérer le filtre de date
+    
     // Construire la condition de date
     $datecondition = '';
     $params = [
@@ -131,8 +133,8 @@ if ($action === 'getcount' && confirm_sesskey()) {
         'adminid' => get_admin()->id
     ];
     
-    if (!empty($datebefore)) {
-        $timestamp = strtotime($datebefore . ' 00:00:00');
+    if (!empty($datefilter)) {
+        $timestamp = strtotime($datefilter . ' 00:00:00');
         if ($timestamp !== false) {
             $datecondition = 'AND u.timecreated >= :dateafter';
             $params['dateafter'] = $timestamp;
@@ -171,10 +173,10 @@ $filterdate = optional_param('filterdate', '', PARAM_TEXT);
 $datetimestamp = 0;
 
 if (!empty($filterdate)) {
-    $datetimestamp = strtotime($filterdate . ' 23:59:59');
+    $datetimestamp = strtotime($filterdate . ' 00:00:00');
     if ($datetimestamp !== false) {
-        $datecondition = 'AND u.timecreated < :datebefore';
-        $params['datebefore'] = $datetimestamp;
+        $datecondition = 'AND u.timecreated >= :dateafter';
+        $params['dateafter'] = $datetimestamp;
     }
 }
 
@@ -786,7 +788,7 @@ function processBatch(offset) {
     
     // Ajouter le filtre de date si présent
     if (filterDate) {
-        url += '&datebefore=' + encodeURIComponent(filterDate);
+        url += '&filterdate=' + encodeURIComponent(filterDate);
     }
     
     fetch(url)
