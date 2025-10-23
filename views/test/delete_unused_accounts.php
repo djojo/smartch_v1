@@ -178,7 +178,21 @@ if (!empty($filterdate)) {
     }
 }
 
-// Requête pour obtenir les utilisateurs qui ne se sont jamais connectés
+// Compter d'abord le total (pour le compteur et la suppression)
+$sqlcount = "SELECT COUNT(u.id)
+             FROM {user} u
+             WHERE u.lastaccess = 0
+             AND u.deleted = 0
+             AND u.confirmed = 1
+             AND u.id != :guestid
+             AND u.id != :adminid
+             AND u.username != 'guest'
+             $datecondition";
+
+$totalcount = $DB->count_records_sql($sqlcount, $params);
+
+// Requête pour obtenir SEULEMENT les 100 premiers utilisateurs (pour l'affichage)
+$displayLimit = 100;
 $sql = "SELECT u.id, u.username, u.firstname, u.lastname, u.email, u.timecreated, u.suspended
         FROM {user} u
         WHERE u.lastaccess = 0
@@ -190,8 +204,8 @@ $sql = "SELECT u.id, u.username, u.firstname, u.lastname, u.email, u.timecreated
         $datecondition
         ORDER BY u.timecreated DESC";
 
-$unusedusers = $DB->get_records_sql($sql, $params);
-$totalcount = count($unusedusers);
+$unusedusers = $DB->get_records_sql($sql, $params, 0, $displayLimit);
+$displaycount = count($unusedusers);
 
 ?>
 
@@ -465,6 +479,18 @@ $totalcount = count($unusedusers);
         font-size: 12px;
         font-weight: bold;
     }
+    
+    .info-box {
+        background: #d1ecf1;
+        border-left: 4px solid #17a2b8;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+    }
+    
+    .info-box strong {
+        color: #0c5460;
+    }
 </style>
 
 <div class="unused-accounts-container">
@@ -498,6 +524,12 @@ $totalcount = count($unusedusers);
         <h3>📊 Résumé</h3>
         <p><strong>Total des comptes jamais connectés<?php echo !empty($filterdate) ? ' (avec filtre)' : ''; ?> :</strong> <?php echo $totalcount; ?> compte(s)</p>
         <p>Ces utilisateurs ont été créés<?php echo !empty($filterdate) ? ' <strong>avant le ' . date('d/m/Y', $datetimestamp) . '</strong>' : ''; ?> mais ne se sont <strong>JAMAIS</strong> connectés à la plateforme.</p>
+        <?php if ($totalcount > $displayLimit): ?>
+        <p style="margin-top: 10px; font-size: 14px; color: #17a2b8;">
+            ⚡ <em>Le tableau ci-dessous affiche les <?php echo $displayLimit; ?> premiers comptes pour optimiser le temps de chargement. 
+            La suppression s'appliquera bien aux <?php echo $totalcount; ?> comptes.</em>
+        </p>
+        <?php endif; ?>
     </div>
     
     <?php if ($totalcount > 0): ?>
@@ -548,6 +580,16 @@ $totalcount = count($unusedusers);
         </div>
         
         <h3>📋 Liste des comptes jamais connectés</h3>
+        
+        <?php if ($totalcount > $displayLimit): ?>
+        <div class="info-box">
+            <strong>ℹ️ Information :</strong> Pour des raisons de performance, seuls les <strong><?php echo $displayLimit; ?> premiers comptes</strong> sont affichés ci-dessous 
+            (triés par date de création, du plus récent au plus ancien).
+            <br>
+            <strong>IMPORTANT :</strong> Le bouton de suppression supprimera bien <strong>TOUS les <?php echo $totalcount; ?> comptes</strong>, pas seulement ceux affichés.
+        </div>
+        <?php endif; ?>
+        
         <div style="overflow-x: auto;">
             <table class="users-table">
                 <thead>
@@ -582,6 +624,15 @@ $totalcount = count($unusedusers);
                 </tbody>
             </table>
         </div>
+        
+        <?php if ($totalcount > $displayLimit): ?>
+        <div class="info-box" style="margin-top: 15px;">
+            <strong>📊 Affichage :</strong> <?php echo $displaycount; ?> comptes affichés sur un total de <strong><?php echo $totalcount; ?> comptes</strong> correspondant aux critères.
+            <?php if ($totalcount - $displaycount > 0): ?>
+            <br><strong><?php echo ($totalcount - $displaycount); ?> autres comptes</strong> non affichés seront également supprimés lors de la suppression.
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
         
         <div class="action-buttons">
             <button class="btn-delete-all" onclick="startBatchDeletion();">
@@ -618,6 +669,7 @@ $totalcount = count($unusedusers);
                 </ul>
             </li>
             <li><strong>Filtre par date :</strong> Permet de ne supprimer que les comptes créés avant une date spécifique (utilise le champ timecreated)</li>
+            <li><strong>Affichage optimisé :</strong> Limite l'affichage du tableau à <?php echo $displayLimit; ?> résultats maximum pour améliorer les performances de chargement de la page</li>
             <li><strong>Méthode de suppression :</strong> Utilise la fonction <code>delete_user()</code> de Moodle</li>
             <li><strong>Traitement par lots :</strong> Suppression par lots de <?php echo $batchsize; ?> utilisateurs (optimisé pour les gros volumes)</li>
             <li><strong>Technologie :</strong> AJAX avec barre de progression en temps réel</li>
