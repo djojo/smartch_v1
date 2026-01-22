@@ -495,6 +495,27 @@ function getResponsablePedagogique($groupid, $courseid, $sessionid = null)
         
         $findresponsables = $DB->get_records_sql($queryresponsable, null);
         
+        // Si aucun responsable trouvé via smartch_respo_link, chercher les formateurs du groupe
+        // if (empty($findresponsables)) {
+        //     $queryresponsable = 'SELECT DISTINCT u.id, u.firstname, u.lastname 
+        //     FROM mdl_groups g
+        //     JOIN mdl_groups_members gm ON gm.groupid = g.id
+        //     JOIN mdl_user u ON u.id = gm.userid
+        //     WHERE g.id = ' . $groupid;
+            
+        //     $findresponsables = $DB->get_records_sql($queryresponsable, null);
+            
+        //     // Filtrer pour ne garder que ceux qui ont un rôle de formateur sur le cours
+        //     $validResponsables = [];
+        //     foreach($findresponsables as $responsable){
+        //         $role = getUserRoleFromCourse($courseid, $responsable->id);
+        //         if($role && ($role->shortname == "editingteacher" || $role->shortname == "teacher")){
+        //             $validResponsables[] = $responsable;
+        //         }
+        //     }
+        //     $findresponsables = $validResponsables;
+        // }
+        
         $found = reset($findresponsables);
         if ($found) {
             $coach = $found->firstname . ' ' . $found->lastname;
@@ -504,33 +525,6 @@ function getResponsablePedagogique($groupid, $courseid, $sessionid = null)
 
         return array($coach, $found);
     }
-
-
-    // SAVE OLD SYSTEM
-
-    // if (isFreeCourse($courseid)) {
-    //     array('Formation Gratuite', null);
-    // } else {
-    //     $queryresponsable = 'SELECT DISTINCT u.id, u.firstname, u.lastname 
-    //     FROM mdl_groups g
-    //     JOIN mdl_groups_members gm ON gm.groupid = g.id
-    //     JOIN mdl_user u ON u.id = gm.userid
-    //     JOIN mdl_role_assignments ra ON ra.userid = u.id
-    //     JOIN mdl_role r ON r.id = ra.roleid
-    //     WHERE g.id = ' . $groupid . ' 
-    //     AND r.shortname = "smalleditingteacher"';
-    //     // var_dump($queryresponsable);
-    //     $findresponsable = $DB->get_records_sql($queryresponsable, null);
-    //     // var_dump($findresponsable);
-    //     $found = reset($findresponsable);
-    //     if ($found) {
-    //         $coach = $found->firstname . ' ' . $found->lastname;
-    //     } else {
-    //         $coach = "Aucun responsable pédagogique";
-    //     }
-
-    //     return array($coach, $found);
-    // }
 }
 
 function getManagerPortailRH()
@@ -1879,18 +1873,21 @@ ORDER BY
     }
 }
 
+
 function checkUserCanPassAttempt($moduleid, $courseid, $userid){
 
     global $USER;
 
+    // L'admin (user id 2) peut toujours passer
     if($USER->id == 2){
         return true;
     }
 
     $coursetype = getCourseType($courseid);
+    
+    //  CORRECTION : On applique la restriction UNIQUEMENT pour les Certifications Fédérales
     if($coursetype == "Certifications Fédérales"){
         
-        $useractualsessions = [];
         $useractualsessions = [];
         $userattempts = [];
 
@@ -1908,15 +1905,16 @@ function checkUserCanPassAttempt($moduleid, $courseid, $userid){
             if(count($userattempts) < count($useractualsessions)){
                 return true;
             } else {
-                return false;
+                return false; // A déjà utilisé toutes ses tentatives
             }
         } else {
-            return false;
+            return false; // Pas de session en cours pour les Certifications Fédérales
         }
-
+    } else {
+        // Pour toutes les autres formations (IEFF, etc.), autoriser l'accès
+        return true;
     }
 }
-
 
 function generateGUID()
 {
