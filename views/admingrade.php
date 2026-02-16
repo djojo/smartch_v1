@@ -56,6 +56,26 @@ $sections = getCourseSections($course->id);
 //on va chercher toutes les activités
 $activities = getCourseActivitiesRapport($course->id);
 
+// Préchargement de tous les grades en une seule requête (évite N×M requêtes SQL)
+$gradesMap = [];
+if (!empty($groupmembers)) {
+    $useridlist = implode(',', array_map('intval', array_keys($groupmembers)));
+    $allgrades = $DB->get_records_sql('
+        SELECT CONCAT(g.userid, "_", cm.id) as mapkey,
+               g.rawgrade, g.rawgrademax
+        FROM mdl_grade_items gi
+        JOIN mdl_grade_grades g ON gi.id = g.itemid
+        JOIN mdl_course_modules cm ON cm.course = gi.courseid AND cm.instance = gi.iteminstance
+        JOIN mdl_modules md ON cm.module = md.id AND md.name = gi.itemmodule
+        WHERE gi.itemtype = "mod"
+        AND gi.courseid = ' . intval($course->id) . '
+        AND g.userid IN (' . $useridlist . ')
+    ', null);
+    foreach ($allgrades as $g) {
+        $gradesMap[$g->mapkey] = $g;
+    }
+}
+
 
 $content .= '<table>';
 $content .= '<tbody>';
@@ -84,6 +104,7 @@ foreach ($sections as $section) {
   $nbmodule = 0;
   foreach ($tableau as $moduleid) {
     //on cherche dans le tableau des activités
+    $activity = null;
     foreach ($activities as $activityy) {
       if ($activityy->id == $moduleid) {
         $activity = $activityy;
@@ -91,18 +112,11 @@ foreach ($sections as $section) {
       }
     }
     if(isset($activity)){
-      if ($activity->activitytype == 'face2face') {
-        //On va chercher le nombre de planning dans cette section
-        if ($totalsectionsplannings > 0) {
-          //si il reste des plannings dans cette section à mettre
-          $totalsectionsplannings--;
-          $nbmodule++;
-        }
-      } else if ($activity->activityname && $activity->activitytype != "folder") {
+      if ($activity->activityname && $activity->activitytype == "quiz") {
         $nbmodule++;
       }
     }
-    
+
   }
   $sectionname = $section->name;
   if ($sectionname == "") {
@@ -124,6 +138,7 @@ foreach ($sections as $section) {
   $tableau = explode(',', $section->sequence);
   foreach ($tableau as $moduleid) {
     //on cherche dans le tableau des activités
+    $activity = null;
     foreach ($activities as $activityy) {
       if ($activityy->id == $moduleid) {
         $activity = $activityy;
@@ -135,7 +150,7 @@ foreach ($sections as $section) {
         $content .= '<td>' . $activity->activityname . '</td>';
       }
     }
-    
+
   }
 }
 
@@ -155,6 +170,7 @@ foreach ($groupmembers as $groupmember) {
     $tableau = explode(',', $section->sequence);
     foreach ($tableau as $moduleid) {
       //on cherche dans le tableau des activités
+      $activity = null;
       foreach ($activities as $activityy) {
         if ($activityy->id == $moduleid) {
           $activity = $activityy;
@@ -163,7 +179,16 @@ foreach ($groupmembers as $groupmember) {
       }
       if($activity){
         if ($activity->activityname && $activity->activitytype == "quiz") {
-          $grade = getModuleGrade($groupmember->id, $activity->id);
+          $mapkey = $groupmember->id . '_' . $activity->id;
+          $graderow = isset($gradesMap[$mapkey]) ? $gradesMap[$mapkey] : null;
+          if ($graderow && isset($graderow->rawgrade) && $graderow->rawgrade !== null) {
+              $grade = number_format($graderow->rawgrade, 2, '.', '');
+              if (!empty($graderow->rawgrademax)) {
+                  $grade .= '/' . number_format($graderow->rawgrademax, 2, '.', '');
+              }
+          } else {
+              $grade = '';
+          }
           $content .= '<td>' . $grade . '</td>';
         }
       }

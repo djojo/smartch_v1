@@ -6,6 +6,7 @@ require_once(__DIR__ . '/../../../config.php');
 
 include $CFG->dirroot . '/theme/remui/views/utils.php';
 
+set_time_limit(300);
 
 global $USER, $DB, $CFG;
 
@@ -56,6 +57,89 @@ $sections = getCourseSections($course->id);
 //on va chercher toutes les activités
 $activities = getCourseActivitiesRapport($course->id);
 
+// Préchargement en masse pour éviter N requêtes SQL dans les boucles
+// Récupère toutes les completions du cours en une seule requête
+$userids = array_keys($groupmembers);
+$completionsMap = [];
+$timespentMap = [];
+if (!empty($userids)) {
+    $useridlist = implode(',', array_map('intval', $userids));
+
+    // Toutes les completions en une requête
+    $allcompletions = $DB->get_records_sql('
+        SELECT cmc.id, cmc.userid, cmc.coursemoduleid, cmc.completionstate
+        FROM mdl_course_modules_completion cmc
+        JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
+        WHERE cm.course = ' . intval($course->id) . '
+        AND cmc.userid IN (' . $useridlist . ')
+    ', null);
+    foreach ($allcompletions as $c) {
+        $completionsMap[$c->userid][$c->coursemoduleid] = $c->completionstate;
+    }
+
+    // Tout le temps passé en une requête
+    $alltimespent = $DB->get_records_sql('
+        SELECT userid, SUM(timespent) as total
+        FROM mdl_smartch_activity_log
+        WHERE course = ' . intval($course->id) . '
+        AND userid IN (' . $useridlist . ')
+        GROUP BY userid
+    ', null);
+    foreach ($alltimespent as $t) {
+        $timespentMap[$t->userid] = $t->total;
+    }
+}
+
+// Nombre total de modules avec completion tracking activé pour ce cours (1 requête)
+$totalModulesWithCompletion = $DB->count_records_sql('
+    SELECT COUNT(cm.id)
+    FROM mdl_course_modules cm
+    WHERE cm.course = ' . intval($course->id) . '
+    AND cm.completion > 0
+', null);
+
+// Préchargement de tous les plannings de la session en une seule requête
+$planningsMap = [];
+if ($session) {
+    $allplannings = $DB->get_records_sql('
+        SELECT DISTINCT sp.id, sp.sectionid, sp.startdate, sp.enddate, sp.geforplanningid
+        FROM mdl_smartch_planning sp
+        WHERE sp.sessionid = ' . intval($session->id) . '
+        ORDER BY sp.startdate ASC
+    ', null);
+    foreach ($allplannings as $p) {
+        $planningsMap[$p->sectionid][] = $p;
+    }
+}
+
+// Préchargement des activités face2face par section (1 requête)
+$activityPlanningsMap = [];
+if ($session) {
+    $allActivityPlannings = $DB->get_records_sql("
+        SELECT cm.id as id, cm.section as sectionid
+        FROM mdl_course_modules cm
+        JOIN mdl_modules m ON m.id = cm.module
+        WHERE cm.course = " . intval($course->id) . "
+        AND m.name = 'face2face'
+    ", null);
+    foreach ($allActivityPlannings as $ap) {
+        $activityPlanningsMap[$ap->sectionid][] = $ap;
+    }
+}
+
+// Précalcul du statut planning par section (évite getPlanningCompletion dans les boucles)
+$planningCompletionMap = [];
+foreach ($planningsMap as $sectionid => $plannings) {
+    $countactivityplanning = isset($activityPlanningsMap[$sectionid]) ? count($activityPlanningsMap[$sectionid]) : 0;
+    $planningCompletionMap[$sectionid] = [];
+    $countplanning = 1;
+    foreach ($plannings as $planning) {
+        if ($countplanning <= $countactivityplanning) {
+            $planningCompletionMap[$sectionid][] = ($planning->startdate > time()) ? 'Planifiée' : 'Passée';
+            $countplanning++;
+        }
+    }
+}
 
 // On va découper les sections en groupes de 10
 $sectionsChunks = array_chunk($sections, 5);
@@ -88,7 +172,7 @@ foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
         $totalsectionsplannings = 0;
 
         if ($session) {
-            $sectionsplannings = getSectionPlannings($course->id, $session->id, $section->id);
+            $sectionsplannings = isset($planningsMap[$section->id]) ? $planningsMap[$section->id] : [];
             $totalsectionsplannings = count($sectionsplannings);
         }
 
@@ -121,7 +205,7 @@ foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
     // Deuxième ligne avec les noms des activités
     foreach ($sectionsChunk as $section) {
         if ($session) {
-            $sectionsplannings = getSectionPlannings($course->id, $session->id, $section->id);
+            $sectionsplannings = isset($planningsMap[$section->id]) ? $planningsMap[$section->id] : [];
             $totalsectionsplannings = count($sectionsplannings);
         }
 
@@ -149,8 +233,17 @@ foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
 
     // Lignes des étudiants
     foreach ($groupmembers as $groupmember) {
-        $progression = getCompletionPourcent($course->id, $groupmember->id) . '%';
-        $timespent = getTotalTimeSpentOnCourse($groupmember->id, $course->id);
+        // Calcul progression depuis le map préchargé (évite N×M requêtes SQL)
+        if ($totalModulesWithCompletion > 0) {
+            $userCompletions = isset($completionsMap[$groupmember->id]) ? $completionsMap[$groupmember->id] : [];
+            $completedCount = count(array_filter($userCompletions, function($state) { return $state >= 1; }));
+            $progressionVal = number_format($completedCount / $totalModulesWithCompletion * 100, 2);
+        } else {
+            $progressionVal = 0;
+        }
+        $progression = $progressionVal . '%';
+        // Utilise le cache préchargé au lieu d'une requête SQL par apprenant
+        $timespent = isset($timespentMap[$groupmember->id]) ? $timespentMap[$groupmember->id] : 0;
         $totaltimespent += $timespent;
 
         $content .= '<tr>';
@@ -162,7 +255,7 @@ foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
 
         foreach ($sectionsChunk as $section) {
             if ($session) {
-                $sectionsplannings = getSectionPlannings($course->id, $session->id, $section->id);
+                $sectionsplannings = isset($planningsMap[$section->id]) ? $planningsMap[$section->id] : [];
                 $totalsectionsplannings = count($sectionsplannings);
             }
 
@@ -177,12 +270,16 @@ foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
                 }
                 if ($activity && $activity->activitytype == 'face2face') {
                     if ($totalsectionsplannings > 0) {
-                        $completion = getPlanningCompletion($course->id, $session->id, $section->id);
+                        // Utilise le cache précalculé au lieu de getPlanningCompletion (évite 2 requêtes SQL par appel)
+                        $planningIdx = count(isset($planningsMap[$section->id]) ? $planningsMap[$section->id] : []) - $totalsectionsplannings;
+                        $completion = isset($planningCompletionMap[$section->id][$planningIdx]) ? $planningCompletionMap[$section->id][$planningIdx] : '';
                         $content .= '<td>' . $completion . '</td>';
                         $totalsectionsplannings--;
                     }
                 } else if ($activity && $activity->activityname && $activity->activitytype != "folder") {
-                    $completion = getActivityCompletionStatusRapport($moduleid, $groupmember->id);
+                    // Utilise le cache préchargé au lieu d'une requête SQL par activité/apprenant
+                    $completionstate = isset($completionsMap[$groupmember->id][$moduleid]) ? $completionsMap[$groupmember->id][$moduleid] : 0;
+                    $completion = ($completionstate >= 1) ? 'X' : '-';
                     $content .= '<td>' . $completion . '</td>';
                 }
             }
@@ -192,10 +289,22 @@ foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
 
     // Ligne de progression générale
     if ($chunkIndex == count($sectionsChunks) - 1) { // Seulement sur le dernier tableau
+        // Calcul progression équipe depuis les maps préchargés (évite N×M requêtes SQL de getTeamProgress)
+        if ($totalModulesWithCompletion > 0 && count($groupmembers) > 0) {
+            $allprog = 0;
+            foreach ($groupmembers as $gm) {
+                $userCompletions = isset($completionsMap[$gm->id]) ? $completionsMap[$gm->id] : [];
+                $completedCount = count(array_filter($userCompletions, function($state) { return $state >= 1; }));
+                $allprog += $completedCount / $totalModulesWithCompletion * 100;
+            }
+            $teamProgressStr = floor($allprog / count($groupmembers)) . '%';
+        } else {
+            $teamProgressStr = 'N/A';
+        }
         $content .= '<tr>';
         $content .= '<td>PROGRESSION GÉNÉRALE</td>';
         $content .= '<td></td>';
-        $content .= '<td>' . getTeamProgress($course->id, $groupid)[0] . '</td>';
+        $content .= '<td>' . $teamProgressStr . '</td>';
         $content .= '<td>' . convert_to_string_time($totaltimespent) . '</td>';
         $content .= '</tr>';
     }

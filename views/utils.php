@@ -1119,6 +1119,68 @@ ORDER BY u.lastname ASC';
     //on va chercher toutes les activités
     $activities = getCourseActivitiesRapport($course->id);
 
+    // === BULK LOADING ===
+    $completionsMap = [];
+    $timespentMap = [];
+    $userids = array_keys($groupmembers);
+    if (!empty($userids)) {
+        $useridlist = implode(',', array_map('intval', $userids));
+        $allcompletions = $DB->get_records_sql('
+            SELECT cmc.id, cmc.userid, cmc.coursemoduleid, cmc.completionstate
+            FROM mdl_course_modules_completion cmc
+            JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
+            WHERE cm.course = ' . intval($course->id) . '
+            AND cmc.userid IN (' . $useridlist . ')
+        ', null);
+        foreach ($allcompletions as $c) {
+            $completionsMap[$c->userid][$c->coursemoduleid] = $c->completionstate;
+        }
+        $alltimespent = $DB->get_records_sql('
+            SELECT userid, SUM(timespent) as total
+            FROM mdl_smartch_activity_log
+            WHERE course = ' . intval($course->id) . '
+            AND userid IN (' . $useridlist . ')
+            GROUP BY userid
+        ', null);
+        foreach ($alltimespent as $t) {
+            $timespentMap[$t->userid] = $t->total;
+        }
+    }
+    $totalModulesWithCompletion = $DB->count_records_sql('
+        SELECT COUNT(cm.id) FROM mdl_course_modules cm
+        WHERE cm.course = ' . intval($course->id) . ' AND cm.completion > 0
+    ', null);
+    $planningsMap = [];
+    if ($session) {
+        $allplannings = $DB->get_records_sql('
+            SELECT DISTINCT sp.id, sp.sectionid, sp.startdate, sp.enddate, sp.geforplanningid
+            FROM mdl_smartch_planning sp WHERE sp.sessionid = ' . intval($session->id) . '
+            ORDER BY sp.startdate ASC
+        ', null);
+        foreach ($allplannings as $p) { $planningsMap[$p->sectionid][] = $p; }
+    }
+    $activityPlanningsMap = [];
+    if ($session) {
+        $allActivityPlannings = $DB->get_records_sql("
+            SELECT cm.id as id, cm.section as sectionid FROM mdl_course_modules cm
+            JOIN mdl_modules m ON m.id = cm.module
+            WHERE cm.course = " . intval($course->id) . " AND m.name = 'face2face'
+        ", null);
+        foreach ($allActivityPlannings as $ap) { $activityPlanningsMap[$ap->sectionid][] = $ap; }
+    }
+    $planningCompletionMap = [];
+    foreach ($planningsMap as $sectionid => $plannings) {
+        $countactivityplanning = isset($activityPlanningsMap[$sectionid]) ? count($activityPlanningsMap[$sectionid]) : 0;
+        $planningCompletionMap[$sectionid] = [];
+        $countplanning = 1;
+        foreach ($plannings as $planning) {
+            if ($countplanning <= $countactivityplanning) {
+                $planningCompletionMap[$sectionid][] = ($planning->startdate > time()) ? 'Planifiée' : 'Passée';
+                $countplanning++;
+            }
+        }
+    }
+    // === FIN BULK LOADING ===
 
     array_push($data, ""); //saut de ligne
 
@@ -1164,8 +1226,7 @@ ORDER BY u.lastname ASC';
         $totalsectionsplannings = 0;
 
         if ($session) {
-            //on va chercher le nombre de planning dans la section disponible
-            $sectionsplannings = getSectionPlannings($course->id, $session->id, $section->id);
+            $sectionsplannings = isset($planningsMap[$section->id]) ? $planningsMap[$section->id] : [];
             $totalsectionsplannings = count($sectionsplannings);
         }
 
@@ -1180,7 +1241,6 @@ ORDER BY u.lastname ASC';
                 }
             }
             if ($activity->activitytype == 'face2face') {
-                //On va chercher le nombre de planning dans cette section
                 if ($totalsectionsplannings > 0) {
                     $totalsectionsplannings--;
                     array_push($sectiontable, $activity->activityname);
@@ -1202,11 +1262,17 @@ ORDER BY u.lastname ASC';
 
         $membertable = [];
 
-        $progression = getCourseProgression($groupmember->id, $course->id) . '%';
-        $timespent = getTotalTimeSpentOnCourse($groupmember->id, $course->id);
+        // Calcul depuis le cache préchargé
+        if ($totalModulesWithCompletion > 0) {
+            $userCompletions = isset($completionsMap[$groupmember->id]) ? $completionsMap[$groupmember->id] : [];
+            $completedCount = count(array_filter($userCompletions, function($state) { return $state >= 1; }));
+            $progression = number_format($completedCount / $totalModulesWithCompletion * 100, 2) . '%';
+        } else {
+            $progression = '0%';
+        }
+        $timespent = isset($timespentMap[$groupmember->id]) ? $timespentMap[$groupmember->id] : 0;
 
         array_push($membertable, $groupmember->firstname . ' ' . $groupmember->lastname);
-        // array_push($membertable, $groupmember->firstname . ' ' . $groupmember->lastname . ' (' . $groupmember->rolename . ')');
         // array_push($membertable, $groupmember->email);
         array_push($membertable, $groupmember->username);
         array_push($membertable, $progression);
@@ -1215,7 +1281,7 @@ ORDER BY u.lastname ASC';
         foreach ($sections as $section) {
 
             if ($session) {
-                $sectionsplannings = getSectionPlannings($course->id, $session->id, $section->id);
+                $sectionsplannings = isset($planningsMap[$section->id]) ? $planningsMap[$section->id] : [];
                 $totalsectionsplannings = count($sectionsplannings);
             }
 
@@ -1231,14 +1297,14 @@ ORDER BY u.lastname ASC';
                 }
                 if ($activity->activitytype == 'face2face') {
                     if ($totalsectionsplannings > 0) {
-                        //on va chercher le planning correspondant
-                        $completion = getPlanningCompletion($course->id, $session->id, $section->id);
+                        $planningIdx = count(isset($planningsMap[$section->id]) ? $planningsMap[$section->id] : []) - $totalsectionsplannings;
+                        $completion = isset($planningCompletionMap[$section->id][$planningIdx]) ? $planningCompletionMap[$section->id][$planningIdx] : '';
                         array_push($membertable, $completion);
-                        //si il reste des plannings dans cette section à mettre
                         $totalsectionsplannings--;
                     }
                 } else if ($activity->activityname && $activity->activitytype != "folder") {
-                    $completion = getActivityCompletionStatusRapport($moduleid, $groupmember->id);
+                    $completionstate = isset($completionsMap[$groupmember->id][$moduleid]) ? $completionsMap[$groupmember->id][$moduleid] : 0;
+                    $completion = ($completionstate >= 1) ? 'X' : '-';
                     array_push($membertable, $completion);
                 }
             }
@@ -1247,20 +1313,24 @@ ORDER BY u.lastname ASC';
         array_push($data, $membertable);
     }
 
-    //on va chercher les logs du groupe
-    $logs = $DB->get_records_sql('SELECT sa.id, sa.timespent FROM mdl_smartch_activity_log sa
-JOIN mdl_groups_members gm ON gm.userid = sa.userid
-WHERE sa.course = ' . $course->id . ' AND gm.groupid =  ' . $groupid, null);
-
-    $timetotal = 0;
-    foreach ($logs as $log) {
-        $timetotal += $log->timespent;
-    }
-
+    // Calcul temps total depuis le cache
+    $timetotal = array_sum($timespentMap);
     $totaltimespent = convert_to_string_time($timetotal);
 
+    // Calcul progression équipe depuis le cache
+    if ($totalModulesWithCompletion > 0 && count($groupmembers) > 0) {
+        $allprog = 0;
+        foreach ($groupmembers as $gm) {
+            $userCompletions = isset($completionsMap[$gm->id]) ? $completionsMap[$gm->id] : [];
+            $completedCount = count(array_filter($userCompletions, function($state) { return $state >= 1; }));
+            $allprog += $completedCount / $totalModulesWithCompletion * 100;
+        }
+        $teamProgressStr = floor($allprog / count($groupmembers)) . '%';
+    } else {
+        $teamProgressStr = 'N/A';
+    }
 
-    $timegrouptable = ['PROGRESSION GÉNÉRALE', '', getTeamProgress($course->id, $groupid)[0], $totaltimespent];
+    $timegrouptable = ['PROGRESSION GÉNÉRALE', '', $teamProgressStr, $totaltimespent];
     array_push($data, $timegrouptable);
 
     $legendtable = ['Terminé : X', 'Pas terminé : -'];
@@ -1318,11 +1388,11 @@ function downloadXLSTeam($groupid)
 
     //on va chercher les membres du groupe
     $querygroupmembers = 'SELECT DISTINCT u.id, u.username, u.firstname, u.lastname, u.email, r.shortname, r.id as roleid, r.shortname as rolename
-FROM mdl_role_assignments AS ra 
+FROM mdl_role_assignments AS ra
 LEFT JOIN mdl_user_enrolments AS ue ON ra.userid = ue.userid
-LEFT JOIN mdl_role AS r ON ra.roleid = r.id 
-LEFT JOIN mdl_context AS c ON c.id = ra.contextid 
-LEFT JOIN mdl_enrol AS e ON e.courseid = c.instanceid AND ue.enrolid = e.id 
+LEFT JOIN mdl_role AS r ON ra.roleid = r.id
+LEFT JOIN mdl_context AS c ON c.id = ra.contextid
+LEFT JOIN mdl_enrol AS e ON e.courseid = c.instanceid AND ue.enrolid = e.id
 LEFT JOIN mdl_user u ON u.id = ue.userid
 LEFT JOIN mdl_groups_members gm ON u.id = gm.userid
 WHERE gm.groupid = ' . $groupid . '
@@ -1338,6 +1408,89 @@ ORDER BY u.lastname ASC';
     //on va chercher toutes les activités
     $activities = getCourseActivitiesRapport($course->id);
 
+    // === BULK LOADING pour éviter N×M requêtes SQL ===
+    $completionsMap = [];
+    $timespentMap = [];
+    $userids = array_keys($groupmembers);
+    if (!empty($userids)) {
+        $useridlist = implode(',', array_map('intval', $userids));
+
+        // Toutes les completions en une requête
+        $allcompletions = $DB->get_records_sql('
+            SELECT cmc.id, cmc.userid, cmc.coursemoduleid, cmc.completionstate
+            FROM mdl_course_modules_completion cmc
+            JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
+            WHERE cm.course = ' . intval($course->id) . '
+            AND cmc.userid IN (' . $useridlist . ')
+        ', null);
+        foreach ($allcompletions as $c) {
+            $completionsMap[$c->userid][$c->coursemoduleid] = $c->completionstate;
+        }
+
+        // Tout le temps passé en une requête
+        $alltimespent = $DB->get_records_sql('
+            SELECT userid, SUM(timespent) as total
+            FROM mdl_smartch_activity_log
+            WHERE course = ' . intval($course->id) . '
+            AND userid IN (' . $useridlist . ')
+            GROUP BY userid
+        ', null);
+        foreach ($alltimespent as $t) {
+            $timespentMap[$t->userid] = $t->total;
+        }
+    }
+
+    // Nombre total de modules avec completion tracking
+    $totalModulesWithCompletion = $DB->count_records_sql('
+        SELECT COUNT(cm.id)
+        FROM mdl_course_modules cm
+        WHERE cm.course = ' . intval($course->id) . '
+        AND cm.completion > 0
+    ', null);
+
+    // Préchargement plannings
+    $planningsMap = [];
+    if ($session) {
+        $allplannings = $DB->get_records_sql('
+            SELECT DISTINCT sp.id, sp.sectionid, sp.startdate, sp.enddate, sp.geforplanningid
+            FROM mdl_smartch_planning sp
+            WHERE sp.sessionid = ' . intval($session->id) . '
+            ORDER BY sp.startdate ASC
+        ', null);
+        foreach ($allplannings as $p) {
+            $planningsMap[$p->sectionid][] = $p;
+        }
+    }
+
+    // Préchargement activités face2face par section
+    $activityPlanningsMap = [];
+    if ($session) {
+        $allActivityPlannings = $DB->get_records_sql("
+            SELECT cm.id as id, cm.section as sectionid
+            FROM mdl_course_modules cm
+            JOIN mdl_modules m ON m.id = cm.module
+            WHERE cm.course = " . intval($course->id) . "
+            AND m.name = 'face2face'
+        ", null);
+        foreach ($allActivityPlannings as $ap) {
+            $activityPlanningsMap[$ap->sectionid][] = $ap;
+        }
+    }
+
+    // Précalcul statut planning par section
+    $planningCompletionMap = [];
+    foreach ($planningsMap as $sectionid => $plannings) {
+        $countactivityplanning = isset($activityPlanningsMap[$sectionid]) ? count($activityPlanningsMap[$sectionid]) : 0;
+        $planningCompletionMap[$sectionid] = [];
+        $countplanning = 1;
+        foreach ($plannings as $planning) {
+            if ($countplanning <= $countactivityplanning) {
+                $planningCompletionMap[$sectionid][] = ($planning->startdate > time()) ? 'Planifiée' : 'Passée';
+                $countplanning++;
+            }
+        }
+    }
+    // === FIN BULK LOADING ===
 
     array_push($data, ""); //saut de ligne
 
@@ -1383,8 +1536,7 @@ ORDER BY u.lastname ASC';
         $totalsectionsplannings = 0;
 
         if ($session) {
-            //on va chercher le nombre de planning dans la section disponible
-            $sectionsplannings = getSectionPlannings($course->id, $session->id, $section->id);
+            $sectionsplannings = isset($planningsMap[$section->id]) ? $planningsMap[$section->id] : [];
             $totalsectionsplannings = count($sectionsplannings);
         }
 
@@ -1422,8 +1574,15 @@ ORDER BY u.lastname ASC';
 
         $membertable = [];
 
-        $progression = getCourseProgression($groupmember->id, $course->id) . '%';
-        $timespent = getTotalTimeSpentOnCourse($groupmember->id, $course->id);
+        // Calcul progression depuis le cache préchargé
+        if ($totalModulesWithCompletion > 0) {
+            $userCompletions = isset($completionsMap[$groupmember->id]) ? $completionsMap[$groupmember->id] : [];
+            $completedCount = count(array_filter($userCompletions, function($state) { return $state >= 1; }));
+            $progression = number_format($completedCount / $totalModulesWithCompletion * 100, 2) . '%';
+        } else {
+            $progression = '0%';
+        }
+        $timespent = isset($timespentMap[$groupmember->id]) ? $timespentMap[$groupmember->id] : 0;
 
 
 
@@ -1438,7 +1597,7 @@ ORDER BY u.lastname ASC';
         foreach ($sections as $section) {
 
             if ($session) {
-                $sectionsplannings = getSectionPlannings($course->id, $session->id, $section->id);
+                $sectionsplannings = isset($planningsMap[$section->id]) ? $planningsMap[$section->id] : [];
                 $totalsectionsplannings = count($sectionsplannings);
             }
 
@@ -1455,14 +1614,16 @@ ORDER BY u.lastname ASC';
                 }
                 if ($activity->activitytype == 'face2face') {
                     if ($totalsectionsplannings > 0) {
-                        //on va chercher le planning correspondant
-                        $completion = getPlanningCompletion($course->id, $session->id, $section->id);
+                        // Utilise le cache précalculé
+                        $planningIdx = count(isset($planningsMap[$section->id]) ? $planningsMap[$section->id] : []) - $totalsectionsplannings;
+                        $completion = isset($planningCompletionMap[$section->id][$planningIdx]) ? $planningCompletionMap[$section->id][$planningIdx] : '';
                         array_push($membertable, $completion);
-                        //si il reste des plannings dans cette section à mettre
                         $totalsectionsplannings--;
                     }
                 } else if ($activity->activityname && $activity->activitytype != "folder") {
-                    $completion = getActivityCompletionStatusRapport($moduleid, $groupmember->id);
+                    // Utilise le cache completions préchargé
+                    $completionstate = isset($completionsMap[$groupmember->id][$moduleid]) ? $completionsMap[$groupmember->id][$moduleid] : 0;
+                    $completion = ($completionstate >= 1) ? 'X' : '-';
                     array_push($membertable, $completion);
                 }
             }
@@ -1472,19 +1633,27 @@ ORDER BY u.lastname ASC';
     }
 
     //on va chercher les logs du groupe
-    $logs = $DB->get_records_sql('SELECT sa.id, sa.timespent FROM mdl_smartch_activity_log sa
-JOIN mdl_groups_members gm ON gm.userid = sa.userid
-WHERE sa.course = ' . $course->id . ' AND gm.groupid =  ' . $groupid, null);
-
     $timetotal = 0;
-    foreach ($logs as $log) {
-        $timetotal += $log->timespent;
+    foreach ($timespentMap as $ts) {
+        $timetotal += $ts;
     }
 
     $totaltimespent = convert_to_string_time($timetotal);
 
+    // Calcul progression équipe depuis le cache
+    if ($totalModulesWithCompletion > 0 && count($groupmembers) > 0) {
+        $allprog = 0;
+        foreach ($groupmembers as $gm) {
+            $userCompletions = isset($completionsMap[$gm->id]) ? $completionsMap[$gm->id] : [];
+            $completedCount = count(array_filter($userCompletions, function($state) { return $state >= 1; }));
+            $allprog += $completedCount / $totalModulesWithCompletion * 100;
+        }
+        $teamProgressStr = floor($allprog / count($groupmembers)) . '%';
+    } else {
+        $teamProgressStr = 'N/A';
+    }
 
-    $timegrouptable = ['PROGRESSION GÉNÉRALE', '', getTeamProgress($course->id, $groupid)[0], $totaltimespent];
+    $timegrouptable = ['PROGRESSION GÉNÉRALE', '', $teamProgressStr, $totaltimespent];
     array_push($data, $timegrouptable);
 
     $legendtable = ['Terminé : X', 'Pas terminé : -'];
@@ -1643,6 +1812,26 @@ ORDER BY u.lastname ASC';
     }
     array_push($data, $sectiontable);
 
+    // Préchargement de tous les grades en une seule requête (évite N×M requêtes SQL)
+    $gradesMap = [];
+    if (!empty($groupmembers)) {
+        $useridlist = implode(',', array_map('intval', array_keys($groupmembers)));
+        $allgrades = $DB->get_records_sql('
+            SELECT CONCAT(g.userid, "_", cm.id) as mapkey,
+                   g.rawgrade, g.rawgrademax
+            FROM mdl_grade_items gi
+            JOIN mdl_grade_grades g ON gi.id = g.itemid
+            JOIN mdl_course_modules cm ON cm.course = gi.courseid AND cm.instance = gi.iteminstance
+            JOIN mdl_modules md ON cm.module = md.id AND md.name = gi.itemmodule
+            WHERE gi.itemtype = "mod"
+            AND gi.courseid = ' . intval($course->id) . '
+            AND g.userid IN (' . $useridlist . ')
+        ', null);
+        foreach ($allgrades as $g) {
+            $gradesMap[$g->mapkey] = $g;
+        }
+    }
+
     foreach ($groupmembers as $groupmember) {
 
         $membertable = [];
@@ -1660,11 +1849,6 @@ ORDER BY u.lastname ASC';
 
         foreach ($sections as $section) {
 
-            if ($session) {
-                $sectionsplannings = getSectionPlannings($course->id, $session->id, $section->id);
-                $totalsectionsplannings = count($sectionsplannings);
-            }
-
             //on compte le nombre de matière
             $tableau = explode(',', $section->sequence);
             foreach ($tableau as $moduleid) {
@@ -1676,7 +1860,16 @@ ORDER BY u.lastname ASC';
                     }
                 }
                 if ($activity->activityname && $activity->activitytype == "quiz") {
-                    $grade = getModuleGrade($groupmember->id, $activity->id);
+                    $mapkey = $groupmember->id . '_' . $activity->id;
+                    $graderow = isset($gradesMap[$mapkey]) ? $gradesMap[$mapkey] : null;
+                    if ($graderow && isset($graderow->rawgrade) && $graderow->rawgrade !== null) {
+                        $grade = number_format($graderow->rawgrade, 2, '.', '');
+                        if (!empty($graderow->rawgrademax)) {
+                            $grade .= '/' . number_format($graderow->rawgrademax, 2, '.', '');
+                        }
+                    } else {
+                        $grade = '';
+                    }
                     array_push($membertable, $grade);
                 }
             }
