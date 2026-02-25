@@ -21,11 +21,9 @@
     @template theme_remui/smartch_info
 }}
 
-
 {{! modification smartch dashboard}}
 
 <style>
-
 .smartch-menu-box {
     background: red !important;
     color: white;
@@ -36,7 +34,6 @@ img.FFF_background_header{
     position: fixed !important;
 }
 
-
 #topofscroll{
     background:transparent;
 }
@@ -44,11 +41,7 @@ img.FFF_background_header{
 #page-footer{
     display:none;
 }
-
 </style>
-
-
-
 
 <div class="row">
     <div class="col-sm-12 col-md-4 col-lg-4 col-xl-2">
@@ -101,21 +94,7 @@ img.FFF_background_header{
             </div>
         </div>
 	</div>
-    {{/adminfff}}
 
-    <div class="col-sm-12 col-md-4 col-lg-4 col-xl-2">
-        <div onclick="location.href='{{url}}theme/remui/views/calendar.php'" class="smartch_menu_box_item">
-            <div class="icon">
-                <span class="fa fa-calendar"></span>
-            </div>
-            <div class="details">
-                <h4>Calendrier</h4>
-                <p>Voir le calendrier</p>
-            </div>
-        </div>
-	</div>
-
-    {{#adminfff}}
     <div class="col-sm-12 col-md-4 col-lg-4 col-xl-2">
         <div onclick="location.href='{{url}}theme/remui/views/viewstats.php'" class="smartch_menu_box_item">
             <div class="icon">
@@ -127,9 +106,7 @@ img.FFF_background_header{
             </div>
         </div>
 	</div>
-    {{/adminfff}}
 
-    {{#adminfff}}
     <div class="col-sm-12 col-md-4 col-lg-4 col-xl-2">
         <div onclick="location.href='{{url}}theme/remui/views/editslider.php'" class="smartch_menu_box_item">
             <div class="icon">
@@ -141,9 +118,7 @@ img.FFF_background_header{
             </div>
         </div>
 	</div>
-    {{/adminfff}}
 
-    {{#adminfff}}
     <div class="col-sm-12 col-md-4 col-lg-4 col-xl-2">
         <div onclick="location.href='{{url}}theme/remui/views/mailtemplates/index.php'" class="smartch_menu_box_item">
             <div class="icon">
@@ -157,16 +132,4 @@ img.FFF_background_header{
 	</div>
     {{/adminfff}}
 
-    {{! <div class="col-sm-12 col-md-4 col-lg-4 col-xl-3">
-        <div class="smartch_menu_box_item">
-            <div class="icon">
-                <span class="fa fa-bar-chart-o"></span>
-            </div>
-            <div class="details">
-                <h4>Statistiques</h4>
-                <p>Voir les stats</p>
-            </div>
-        </div>
-	</div> }}
-    
 </div>

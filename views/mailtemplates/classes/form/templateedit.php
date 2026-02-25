@@ -3,6 +3,7 @@
 
 // Chemin vers le fichier de configuration Moodle
 require_once $CFG->libdir . '/formslib.php'; //formslib.php = bibliothèque Moodle pour créer des formulaires
+require_once(__DIR__ . '/../../../../../../lib/filelib.php');  // filelib.php = définit FILE_INTERNAL
 
 class templateedit extends moodleform
 {
