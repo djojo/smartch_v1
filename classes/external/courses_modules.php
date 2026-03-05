@@ -265,7 +265,7 @@ if (countCourseActivities($courseid) == 0) {
                             $completion = '<div style="background:#BE965A;" class="smartch_pastille">Passée</div>';
                         }
 
-                        $planningdate = 'Session du ' . userdate($planningTrouve->startdate, '%d/%m/%Y') . ' ' . userdate($planningTrouve->startdate, '%H:%M') . ' - ' . userdate($planningTrouve->enddate, '%H:%M') . '';
+                        $planningdate = 'Session du ' . date('d/m/Y', $planningTrouve->startdate) . ' ' . date('H:i', $planningTrouve->startdate) . ' - ' . date('H:i', $planningTrouve->enddate);
 
                         $type = "";
                         // $type = "Activité présentielle";

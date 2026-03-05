@@ -146,7 +146,7 @@ trait get_smartch_calendar
             }
 
             $event->coursename = $planning->fullname;
-            $event->title = 'Session du ' . userdate($planning->startdate, '%d/%m à %H:%M');
+            $event->title = 'Session du ' . date('d/m à H:i', $planning->startdate);
             // $event->title = $planning->fullname;
             // $event->title = $planning->fullname . " - " . $planning->geforplanningid;
             $event->groupname = $planning->groupname;
