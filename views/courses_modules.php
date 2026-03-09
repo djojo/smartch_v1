@@ -326,7 +326,7 @@ if (countCourseActivities($courseid) == 0) {
                                 $completion = '<div style="background:#009ce0;" class="smartch_pastille">Planifiée</div>';
                             }
 
-                            $planningdate = 'Session du ' . gmdate('d/m/Y', $planningTrouve->startdate) . ' ' . gmdate('H:i', $planningTrouve->startdate) . ' - ' . gmdate('H:i', $planningTrouve->enddate);
+                            $planningdate = 'Session du ' . date('d/m/Y', $planningTrouve->startdate) . ' ' . date('H:i', $planningTrouve->startdate) . ' - ' . date('H:i', $planningTrouve->enddate);
 
                             $type = "";
                             // $type = "Activité présentielle";
