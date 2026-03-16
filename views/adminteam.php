@@ -536,21 +536,28 @@ if (!$userid) {
 
     $timespent = convert_to_string_time($timetotal);
 
-    //on va chercher les stats de l'utilisateur
-    $modulesstatus = getModulesStatus($courseid, $session->id, $userid);
-
-    // $actsccc = getCourseActivitiesStats($courseid);
     $selecteduser = $DB->get_record('user', ['id' => $userid]);
-    // $pourcent = $modulesstatus[0]/($modulesstatus[0]+$modulesstatus[1])*100;
+
+    // Calcul aligné avec adminreport : uniquement les modules avec completion>0
+    $totalModules = (int) $DB->count_records_sql(
+        'SELECT COUNT(cm.id) FROM mdl_course_modules cm WHERE cm.course = ? AND cm.completion > 0',
+        [$courseid]
+    );
+    $modulesfinished = (int) $DB->count_records_sql(
+        'SELECT COUNT(cmc.id) FROM mdl_course_modules_completion cmc
+         JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
+         WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0 AND cmc.completionstate >= 1',
+        [$userid, $courseid]
+    );
+    $modulestocome = max(0, $totalModules - $modulesfinished);
 
     $templatecontextstats = (object)[
         'title1' => 'Score de ',
         'title2' => $selecteduser->firstname . ' ' . $selecteduser->lastname,
         'timespent' => $timespent,
-        // 'progress' => $pourcent,
         'progress' => getCompletionPourcent($courseid, $selecteduser->id),
-        'modulesfinished' => $modulesstatus[0],
-        'modulestocome' => $modulesstatus[1]
+        'modulesfinished' => $modulesfinished,
+        'modulestocome' => $modulestocome
     ];
     //le score de l'étudiant sur ce cours
     $content .= $OUTPUT->render_from_template('theme_remui/smartch_course_your_score', $templatecontextstats);
