@@ -2468,6 +2468,7 @@ function getCourseActivitiesStats($courseid)
     -- AND activity.activitytype != 'url'
     -- AND activity.activitytype != 'bigbluebuttonbn'
     -- AND activity.activitytype != 'lesson'
+    AND cm.completion > 0
     AND c.id = " . $courseid, null);
 
     return $results;
