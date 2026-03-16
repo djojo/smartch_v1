@@ -538,18 +538,20 @@ if (!$userid) {
 
     $selecteduser = $DB->get_record('user', ['id' => $userid]);
 
-    // e-learning : modules avec completion>0 hors face2face
+    // e-learning : modules avec completion>0 hors face2face/folder/smartchfolder
     $totalElearning = (int) $DB->count_records_sql(
         'SELECT COUNT(cm.id) FROM mdl_course_modules cm
          JOIN mdl_modules m ON m.id = cm.module
-         WHERE cm.course = ? AND cm.completion > 0 AND m.name != \'face2face\'',
+         WHERE cm.course = ? AND cm.completion > 0
+         AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\')',
         [$courseid]
     );
     $finishedElearning = (int) $DB->count_records_sql(
         'SELECT COUNT(cmc.id) FROM mdl_course_modules_completion cmc
          JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
          JOIN mdl_modules m ON m.id = cm.module
-         WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0 AND m.name != \'face2face\' AND cmc.completionstate >= 1',
+         WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0
+         AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\') AND cmc.completionstate >= 1',
         [$userid, $courseid]
     );
 

@@ -65,14 +65,14 @@ $timespentMap = [];
 if (!empty($userids)) {
     $useridlist = implode(',', array_map('intval', $userids));
 
-    // Completions e-learning uniquement (hors face2face, comptés via plannings)
+    // Completions e-learning uniquement (hors face2face/folder/smartchfolder)
     $allcompletions = $DB->get_records_sql('
         SELECT cmc.id, cmc.userid, cmc.coursemoduleid, cmc.completionstate
         FROM mdl_course_modules_completion cmc
         JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
         JOIN mdl_modules m ON m.id = cm.module
         WHERE cm.course = ' . intval($course->id) . '
-        AND m.name != \'face2face\'
+        AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\')
         AND cmc.userid IN (' . $useridlist . ')
     ', null);
     foreach ($allcompletions as $c) {
@@ -92,14 +92,14 @@ if (!empty($userids)) {
     }
 }
 
-// Nombre total de modules e-learning avec completion tracking activé (hors face2face)
+// Nombre total de modules e-learning avec completion tracking activé (hors face2face/folder/smartchfolder)
 $totalElearningWithCompletion = (int) $DB->count_records_sql('
     SELECT COUNT(cm.id)
     FROM mdl_course_modules cm
     JOIN mdl_modules m ON m.id = cm.module
     WHERE cm.course = ' . intval($course->id) . '
     AND cm.completion > 0
-    AND m.name != \'face2face\'
+    AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\')
 ', null);
 
 // Nombre de séances présentielles (plannings de la session)
