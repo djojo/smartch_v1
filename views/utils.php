@@ -2468,7 +2468,6 @@ function getCourseActivitiesStats($courseid)
     -- AND activity.activitytype != 'url'
     -- AND activity.activitytype != 'bigbluebuttonbn'
     -- AND activity.activitytype != 'lesson'
-    AND cm.completion > 0
     AND c.id = " . $courseid, null);
 
     return $results;
@@ -2638,13 +2637,21 @@ function getCompletionPourcent($courseid, $userid = null)
         $userid = $USER->id;
     }
 
-    $modulesstatus = getModulesStatus($courseid, null, $userid);
-    $total = $modulesstatus[0] + $modulesstatus[1];
+    // Même logique que adminreport : dénominateur = modules avec completion>0, numérateur = completionstate>=1
+    $total = (int) $DB->count_records_sql(
+        'SELECT COUNT(cm.id) FROM mdl_course_modules cm WHERE cm.course = ? AND cm.completion > 0',
+        [$courseid]
+    );
     if ($total == 0) {
         return 0;
     }
-    $pourcent = $modulesstatus[0]/$total*100;
-    return number_format($pourcent, 2);
+    $completed = (int) $DB->count_records_sql(
+        'SELECT COUNT(cmc.id) FROM mdl_course_modules_completion cmc
+         JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
+         WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0 AND cmc.completionstate >= 1',
+        [$userid, $courseid]
+    );
+    return number_format($completed / $total * 100, 2);
     
 
 
