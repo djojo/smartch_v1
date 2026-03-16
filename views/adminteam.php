@@ -538,9 +538,10 @@ if (!$userid) {
 
     $selecteduser = $DB->get_record('user', ['id' => $userid]);
 
-    // Calcul aligné avec adminreport : uniquement les modules avec completion>0
+    // Calcul aligné avec Moodle : tous les modules avec completion>0 (y compris face2face)
     $totalModules = (int) $DB->count_records_sql(
-        'SELECT COUNT(cm.id) FROM mdl_course_modules cm WHERE cm.course = ? AND cm.completion > 0',
+        'SELECT COUNT(cm.id) FROM mdl_course_modules cm
+         WHERE cm.course = ? AND cm.completion > 0',
         [$courseid]
     );
     $modulesfinished = (int) $DB->count_records_sql(

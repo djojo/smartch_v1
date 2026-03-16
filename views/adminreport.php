@@ -90,7 +90,7 @@ if (!empty($userids)) {
     }
 }
 
-// Nombre total de modules avec completion tracking activé pour ce cours (1 requête)
+// Nombre total de modules avec completion tracking activé pour ce cours (y compris face2face)
 $totalModulesWithCompletion = $DB->count_records_sql('
     SELECT COUNT(cm.id)
     FROM mdl_course_modules cm

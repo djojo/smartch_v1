@@ -2637,9 +2637,10 @@ function getCompletionPourcent($courseid, $userid = null)
         $userid = $USER->id;
     }
 
-    // Même logique que adminreport : dénominateur = modules avec completion>0, numérateur = completionstate>=1
+    // Dénominateur = tous les modules avec completion>0 (y compris face2face)
     $total = (int) $DB->count_records_sql(
-        'SELECT COUNT(cm.id) FROM mdl_course_modules cm WHERE cm.course = ? AND cm.completion > 0',
+        'SELECT COUNT(cm.id) FROM mdl_course_modules cm
+         WHERE cm.course = ? AND cm.completion > 0',
         [$courseid]
     );
     if ($total == 0) {
