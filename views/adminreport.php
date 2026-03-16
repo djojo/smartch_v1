@@ -195,8 +195,10 @@ foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
                 $nbmodule++;
             }
         }
-        $sectionname = $section->name ?: "Généralités";
-        $content .= '<td colspan="' . $nbmodule . '">' . $sectionname . '</td>';
+        if ($nbmodule > 0) {
+            $sectionname = $section->name ?: "Généralités";
+            $content .= '<td colspan="' . $nbmodule . '">' . $sectionname . '</td>';
+        }
     }
 
     $content .= '</tr>';
