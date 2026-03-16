@@ -538,16 +538,19 @@ if (!$userid) {
 
     $selecteduser = $DB->get_record('user', ['id' => $userid]);
 
-    // Calcul aligné avec Moodle : tous les modules avec completion>0 (y compris face2face)
+    // Compteurs affichés : hors face2face (gérés via séances présentielles dans le parcours)
+    // Le % lui inclut les face2face pour rester aligné avec Moodle
     $totalModules = (int) $DB->count_records_sql(
         'SELECT COUNT(cm.id) FROM mdl_course_modules cm
-         WHERE cm.course = ? AND cm.completion > 0',
+         JOIN mdl_modules m ON m.id = cm.module
+         WHERE cm.course = ? AND cm.completion > 0 AND m.name != \'face2face\'',
         [$courseid]
     );
     $modulesfinished = (int) $DB->count_records_sql(
         'SELECT COUNT(cmc.id) FROM mdl_course_modules_completion cmc
          JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
-         WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0 AND cmc.completionstate >= 1',
+         JOIN mdl_modules m ON m.id = cm.module
+         WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0 AND m.name != \'face2face\' AND cmc.completionstate >= 1',
         [$userid, $courseid]
     );
     $modulestocome = max(0, $totalModules - $modulesfinished);
