@@ -65,12 +65,14 @@ $timespentMap = [];
 if (!empty($userids)) {
     $useridlist = implode(',', array_map('intval', $userids));
 
-    // Toutes les completions en une requête
+    // Toutes les completions en une requête, hors face2face (séances présentielles)
     $allcompletions = $DB->get_records_sql('
         SELECT cmc.id, cmc.userid, cmc.coursemoduleid, cmc.completionstate
         FROM mdl_course_modules_completion cmc
         JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
+        JOIN mdl_modules m ON m.id = cm.module
         WHERE cm.course = ' . intval($course->id) . '
+        AND m.name != \'face2face\'
         AND cmc.userid IN (' . $useridlist . ')
     ', null);
     foreach ($allcompletions as $c) {
@@ -90,12 +92,14 @@ if (!empty($userids)) {
     }
 }
 
-// Nombre total de modules avec completion tracking activé pour ce cours (y compris face2face)
+// Nombre total de modules avec completion tracking activé, hors face2face (séances présentielles)
 $totalModulesWithCompletion = $DB->count_records_sql('
     SELECT COUNT(cm.id)
     FROM mdl_course_modules cm
+    JOIN mdl_modules m ON m.id = cm.module
     WHERE cm.course = ' . intval($course->id) . '
     AND cm.completion > 0
+    AND m.name != \'face2face\'
 ', null);
 
 // Préchargement de tous les plannings de la session en une seule requête
