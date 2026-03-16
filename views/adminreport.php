@@ -65,7 +65,7 @@ $timespentMap = [];
 if (!empty($userids)) {
     $useridlist = implode(',', array_map('intval', $userids));
 
-    // Toutes les completions en une requête, hors face2face (séances présentielles)
+    // Completions e-learning uniquement (hors face2face, comptés via plannings)
     $allcompletions = $DB->get_records_sql('
         SELECT cmc.id, cmc.userid, cmc.coursemoduleid, cmc.completionstate
         FROM mdl_course_modules_completion cmc
@@ -92,8 +92,8 @@ if (!empty($userids)) {
     }
 }
 
-// Nombre total de modules avec completion tracking activé, hors face2face (séances présentielles)
-$totalModulesWithCompletion = $DB->count_records_sql('
+// Nombre total de modules e-learning avec completion tracking activé (hors face2face)
+$totalElearningWithCompletion = (int) $DB->count_records_sql('
     SELECT COUNT(cm.id)
     FROM mdl_course_modules cm
     JOIN mdl_modules m ON m.id = cm.module
@@ -101,6 +101,21 @@ $totalModulesWithCompletion = $DB->count_records_sql('
     AND cm.completion > 0
     AND m.name != \'face2face\'
 ', null);
+
+// Nombre de séances présentielles (plannings de la session)
+$totalPlanningsSession = 0;
+$completedPlanningsSession = 0;
+if ($session) {
+    $sessionPlannings = $DB->get_records_sql(
+        'SELECT id, startdate FROM mdl_smartch_planning WHERE sessionid = ?',
+        [$session->id]
+    );
+    $totalPlanningsSession = count($sessionPlannings);
+    foreach ($sessionPlannings as $sp) {
+        if ($sp->startdate < time()) $completedPlanningsSession++;
+    }
+}
+$totalModulesWithCompletion = $totalElearningWithCompletion + $totalPlanningsSession;
 
 // Préchargement de tous les plannings de la session en une seule requête
 $planningsMap = [];
@@ -239,10 +254,10 @@ foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
 
     // Lignes des étudiants
     foreach ($groupmembers as $groupmember) {
-        // Calcul progression depuis le map préchargé (évite N×M requêtes SQL)
+        // Calcul progression : e-learning + séances passées (même logique que adminteam)
         if ($totalModulesWithCompletion > 0) {
             $userCompletions = isset($completionsMap[$groupmember->id]) ? $completionsMap[$groupmember->id] : [];
-            $completedCount = count(array_filter($userCompletions, function($state) { return $state >= 1; }));
+            $completedCount = count(array_filter($userCompletions, function($state) { return $state >= 1; })) + $completedPlanningsSession;
             $progressionVal = number_format($completedCount / $totalModulesWithCompletion * 100, 2);
         } else {
             $progressionVal = 0;

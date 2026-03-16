@@ -538,28 +538,43 @@ if (!$userid) {
 
     $selecteduser = $DB->get_record('user', ['id' => $userid]);
 
-    // Compteurs affichés : hors face2face (gérés via séances présentielles dans le parcours)
-    // Le % lui inclut les face2face pour rester aligné avec Moodle
-    $totalModules = (int) $DB->count_records_sql(
+    // e-learning : modules avec completion>0 hors face2face
+    $totalElearning = (int) $DB->count_records_sql(
         'SELECT COUNT(cm.id) FROM mdl_course_modules cm
          JOIN mdl_modules m ON m.id = cm.module
          WHERE cm.course = ? AND cm.completion > 0 AND m.name != \'face2face\'',
         [$courseid]
     );
-    $modulesfinished = (int) $DB->count_records_sql(
+    $finishedElearning = (int) $DB->count_records_sql(
         'SELECT COUNT(cmc.id) FROM mdl_course_modules_completion cmc
          JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
          JOIN mdl_modules m ON m.id = cm.module
          WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0 AND m.name != \'face2face\' AND cmc.completionstate >= 1',
         [$userid, $courseid]
     );
-    $modulestocome = max(0, $totalModules - $modulesfinished);
+
+    // séances présentielles : plannings de la session du groupe
+    $totalPlannings = 0;
+    $finishedPlannings = 0;
+    if ($session) {
+        $plannings = $DB->get_records_sql(
+            'SELECT id, startdate FROM mdl_smartch_planning WHERE sessionid = ?',
+            [$session->id]
+        );
+        $totalPlannings = count($plannings);
+        foreach ($plannings as $p) {
+            if ($p->startdate < time()) $finishedPlannings++;
+        }
+    }
+
+    $modulesfinished = $finishedElearning + $finishedPlannings;
+    $modulestocome = max(0, ($totalElearning + $totalPlannings) - $modulesfinished);
 
     $templatecontextstats = (object)[
         'title1' => 'Score de ',
         'title2' => $selecteduser->firstname . ' ' . $selecteduser->lastname,
         'timespent' => $timespent,
-        'progress' => getCompletionPourcent($courseid, $selecteduser->id),
+        'progress' => getCompletionPourcent($courseid, $selecteduser->id, $group->id),
         'modulesfinished' => $modulesfinished,
         'modulestocome' => $modulestocome
     ];

@@ -2630,30 +2630,57 @@ function getCompletionRatio($courseid)
     return $complete;
 }
 
-function getCompletionPourcent($courseid, $userid = null)
+function getCompletionPourcent($courseid, $userid = null, $groupid = null)
 {
     global $DB, $USER;
     if (!$userid) {
         $userid = $USER->id;
     }
 
-    // Hors face2face (séances présentielles affichées séparément dans le parcours)
-    $total = (int) $DB->count_records_sql(
+    // e-learning : modules avec completion>0 hors face2face
+    $totalElearning = (int) $DB->count_records_sql(
         'SELECT COUNT(cm.id) FROM mdl_course_modules cm
          JOIN mdl_modules m ON m.id = cm.module
          WHERE cm.course = ? AND cm.completion > 0 AND m.name != \'face2face\'',
         [$courseid]
     );
-    if ($total == 0) {
-        return 0;
-    }
-    $completed = (int) $DB->count_records_sql(
+    $completedElearning = (int) $DB->count_records_sql(
         'SELECT COUNT(cmc.id) FROM mdl_course_modules_completion cmc
          JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
          JOIN mdl_modules m ON m.id = cm.module
          WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0 AND m.name != \'face2face\' AND cmc.completionstate >= 1',
         [$userid, $courseid]
     );
+
+    // séances présentielles : plannings du groupe de l'apprenant
+    $totalPlannings = 0;
+    $completedPlannings = 0;
+    if (!$groupid) {
+        $group = $DB->get_record_sql(
+            'SELECT g.id FROM mdl_groups g
+             JOIN mdl_groups_members gm ON gm.groupid = g.id
+             WHERE gm.userid = ? AND g.courseid = ?',
+            [$userid, $courseid]
+        );
+        if ($group) $groupid = $group->id;
+    }
+    if ($groupid) {
+        $session = $DB->get_record('smartch_session', ['groupid' => $groupid]);
+        if ($session) {
+            $plannings = $DB->get_records_sql(
+                'SELECT id, startdate FROM mdl_smartch_planning WHERE sessionid = ?',
+                [$session->id]
+            );
+            $totalPlannings = count($plannings);
+            foreach ($plannings as $p) {
+                if ($p->startdate < time()) $completedPlannings++;
+            }
+        }
+    }
+
+    $total = $totalElearning + $totalPlannings;
+    if ($total == 0) return 0;
+    $completed = $completedElearning + $completedPlannings;
     return number_format($completed / $total * 100, 2);
     
 
