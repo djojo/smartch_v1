@@ -88,9 +88,9 @@ if ($rolename == "teacher" || $rolename == "smalleditingteacher" || $rolename ==
     JOIN mdl_role r ON r.id = ra.roleid';
 }
 
-//on toggle la visibilité du cours (réservé super-admin uniquement)
+//on toggle la visibilité du cours (réservé super-admin et manager uniquement)
 if (!empty($togglevisible)) {
-    if ($rolename == "super-admin") {
+    if ($rolename == "super-admin" || $rolename == "manager") {
         require_once($CFG->dirroot . '/course/lib.php');
         $course = $DB->get_record('course', ['id' => $courseid]);
         $course->visible = ($course->visible == 1) ? 0 : 1;
@@ -374,8 +374,8 @@ foreach ($courses as $course) {
             
         }
 
-        //si le cours est visible — bouton toggle réservé super-admin uniquement
-        if ($rolename == "super-admin") {
+        //si le cours est visible — bouton toggle réservé super-admin et manager uniquement
+        if ($rolename == "super-admin" || $rolename == "manager") {
             $content .= '<a  href="' . $togglevisibleurl . '">';
             if ($course->visible == 1) {
                 $content .= '<svg data-toggle="tooltip" data-placement="top" title="Cacher le parcours" class="iconsvg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
