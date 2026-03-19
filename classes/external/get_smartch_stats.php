@@ -195,12 +195,13 @@ trait get_smartch_stats
         $activitiestocome = max(0, $totalactivities - $activitiescomplete);
 
         // timespent global
-        $timetotalraw = $DB->get_field_sql(
+        $timetotalraw = (int) $DB->get_field_sql(
             'SELECT COALESCE(SUM(timespent), 0) FROM mdl_smartch_activity_log WHERE userid = ?',
             [$USER->id]
         );
-        require_once($CFG->dirroot . '/theme/remui/views/utils.php');
-        $timespentformatted = convert_to_string_time($timetotalraw);
+        $hours = floor($timetotalraw / 3600);
+        $minutes = floor(($timetotalraw % 3600) / 60);
+        $timespentformatted = $hours . 'h' . ($minutes > 0 ? $minutes . 'min' : '');
 
         $stats['coursesenrolled'] = count($courses);
         $stats['coursescompleted'] = $coursescompleted;
