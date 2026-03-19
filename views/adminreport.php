@@ -360,7 +360,7 @@ $html = '
     <meta http-equiv="Content-Type" content="charset=utf-8" />
     <style type="text/css">
     @page {
-        margin: 50px;
+        margin: 15px;
       }
       
       
