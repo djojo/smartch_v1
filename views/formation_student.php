@@ -184,7 +184,7 @@ $templatecontextstats = (object)[
     'title1' => 'Votre ',
     'title2' => 'score',
     'timespent' => $timespent,
-    'progress' => getCompletionPourcent($courseid, $USER->id),
+    'progress' => getCompletionPourcent($courseid, $USER->id, $groupid ?? null),
     'modulesfinished' => $modulesstatus[0],
     'modulestocome' => $modulesstatus[1]
 ];
