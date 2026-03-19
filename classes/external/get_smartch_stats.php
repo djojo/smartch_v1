@@ -192,10 +192,22 @@ trait get_smartch_stats
             $activitiesprogress = ceil($activitiescomplete / $totalactivities * 100);
         }
 
+        $activitiestocome = max(0, $totalactivities - $activitiescomplete);
+
+        // timespent global
+        $timetotalraw = $DB->get_field_sql(
+            'SELECT COALESCE(SUM(timespent), 0) FROM mdl_smartch_activity_log WHERE userid = ?',
+            [$USER->id]
+        );
+        require_once($CFG->dirroot . '/theme/remui/views/utils.php');
+        $timespentformatted = convert_to_string_time($timetotalraw);
+
         $stats['coursesenrolled'] = count($courses);
         $stats['coursescompleted'] = $coursescompleted;
         $stats['activitiescomplete'] = $activitiescomplete;
+        $stats['activitiestocome'] = $activitiestocome;
         $stats['statsgeneralprogress'] = $activitiesprogress;
+        $stats['timespent'] = $timespentformatted;
 
 
         // $stats['coursesenrolled'] = 2;

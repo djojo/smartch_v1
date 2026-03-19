@@ -38,25 +38,37 @@
     left: 0;
     position: absolute;">
 
-    <div id="rowstats" class="col-sm-6 col-md-6 col-lg-3">
+    <div id="rowstats" class="col-sm-6 col-md-6 col-lg-2">
         <div class="fff-box-stats" style="border-right: 1px solid #004687;">
-            <h1 id="statscoursesenrolled">0</h1>
-            <h5>Formation(s) <br>en cours</h5>
+            <h1 id="statstimespent">0h</h1>
+            <h5>Temps <br>passé</h5>
         </div>
     </div>
-    <div class="col-sm-6 col-md-6 col-lg-3">
-        <div class="fff-box-stats" style="border-right: 1px solid #004687;">
-            <h1 id="statsactivitiescompleted">0</h1>
-            <h5>Activité(s) terminée(s)</h5>
-        </div>
-    </div>
-    <div class="col-sm-6 col-md-6 col-lg-3">
+    <div class="col-sm-6 col-md-6 col-lg-2">
         <div class="fff-box-stats" style="border-right: 1px solid #004687;">
             <h1 id="statsgeneralprogress">0%</h1>
             <h5>De progression<br/> générale</h5>
         </div>
     </div>
-    <div class="col-sm-6 col-md-6 col-lg-3">
+    <div class="col-sm-6 col-md-6 col-lg-2">
+        <div class="fff-box-stats" style="border-right: 1px solid #004687;">
+            <h1 id="statsactivitiescompleted">0</h1>
+            <h5>Activité(s) terminée(s)</h5>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-6 col-lg-2">
+        <div class="fff-box-stats" style="border-right: 1px solid #004687;">
+            <h1 id="statsactivitiestocome">0</h1>
+            <h5>Activité(s) restante(s)</h5>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-6 col-lg-2">
+        <div class="fff-box-stats" style="border-right: 1px solid #004687;">
+            <h1 id="statscoursesenrolled">0</h1>
+            <h5>Formation(s) <br>en cours</h5>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-6 col-lg-2">
         <div class="fff-box-stats">
             <h1 id="statscoursescompleted">0</h1>
             <h5>Formation(s) terminée(s)</h5>
@@ -92,8 +104,10 @@
                 $('#rowstats').ready(function() {
                     document.getElementById('statscoursesenrolled').innerHTML = stats.coursesenrolled;
                     document.getElementById('statsactivitiescompleted').innerHTML = stats.activitiescomplete;
+                    document.getElementById('statsactivitiestocome').innerHTML = stats.activitiestocome;
                     document.getElementById('statsgeneralprogress').innerHTML = stats.statsgeneralprogress + '%';
                     document.getElementById('statscoursescompleted').innerHTML = stats.coursescompleted;
+                    document.getElementById('statstimespent').innerHTML = stats.timespent;
                 });
 
                 
