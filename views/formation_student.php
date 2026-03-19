@@ -168,8 +168,6 @@ if ($session) {
     $sessionid = $session->id;
 }
 
-$modulesstatus = getModulesStatus($courseid, $sessionid);
-
 //on va chercher les logs de l'utilisateur
 $logs = $DB->get_records_sql('SELECT * FROM mdl_smartch_activity_log WHERE course = ' . $courseid . ' AND userid = ' . $USER->id, null);
 
@@ -180,13 +178,46 @@ foreach ($logs as $log) {
 
 $timespent = convert_to_string_time($timetotal);
 
+// même logique que la vue formateur (adminteam.php)
+$totalElearning = (int) $DB->count_records_sql(
+    'SELECT COUNT(cm.id) FROM mdl_course_modules cm
+     JOIN mdl_modules m ON m.id = cm.module
+     WHERE cm.course = ? AND cm.completion > 0
+     AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\')',
+    [$courseid]
+);
+$finishedElearning = (int) $DB->count_records_sql(
+    'SELECT COUNT(cmc.id) FROM mdl_course_modules_completion cmc
+     JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
+     JOIN mdl_modules m ON m.id = cm.module
+     WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0
+     AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\') AND cmc.completionstate >= 1',
+    [$USER->id, $courseid]
+);
+
+$totalPlannings = 0;
+$finishedPlannings = 0;
+if ($session) {
+    $plannings = $DB->get_records_sql(
+        'SELECT id, startdate FROM mdl_smartch_planning WHERE sessionid = ?',
+        [$session->id]
+    );
+    $totalPlannings = count($plannings);
+    foreach ($plannings as $p) {
+        if ($p->startdate < time()) $finishedPlannings++;
+    }
+}
+
+$modulesfinished = $finishedElearning + $finishedPlannings;
+$modulestocome = max(0, ($totalElearning + $totalPlannings) - $modulesfinished);
+
 $templatecontextstats = (object)[
     'title1' => 'Votre ',
     'title2' => 'score',
     'timespent' => $timespent,
     'progress' => getCompletionPourcent($courseid, $USER->id, $groupid ?? null),
-    'modulesfinished' => $modulesstatus[0],
-    'modulestocome' => $modulesstatus[1]
+    'modulesfinished' => $modulesfinished,
+    'modulestocome' => $modulestocome
 ];
 //le score de l'étudiant sur ce cours
 $content .= $OUTPUT->render_from_template('theme_remui/smartch_course_your_score', $templatecontextstats);
