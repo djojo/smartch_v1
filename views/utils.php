@@ -1205,6 +1205,7 @@ ORDER BY u.lastname ASC';
                 }
             }
         }
+        if ($nbmodule == 0) continue; // section sans activité, on skip
         $sectionname = $section->name;
         if ($sectionname == "") {
             $sectionname = "Généralités";
@@ -1515,6 +1516,7 @@ ORDER BY u.lastname ASC';
                 }
             }
         }
+        if ($nbmodule == 0) continue; // section sans activité, on skip
         $sectionname = $section->name;
         if ($sectionname == "") {
             $sectionname = "Généralités";
@@ -1711,55 +1713,42 @@ ORDER BY u.lastname ASC';
     }
 
     $highestColumn = $sheet->getHighestColumn();
+    $highestColumnIdx = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn);
+    $lastDataRow = $rowNumber - 1;
 
     // Ligne 2 en gras
-    if ($row2Number) {
-        $sheet->getStyle('A' . $row2Number . ':' . $highestColumn . $row2Number)->getFont()->setBold(true);
-    }
+    $sheet->getStyle('A2:' . $highestColumn . '2')->getFont()->setBold(true);
 
-    // Ligne 3 : centrage des noms de matières et bordures par groupe de colonnes
-    if ($row3Number) {
-        // trouver les plages de colonnes par matière (chercher les cellules non vides de la ligne 2)
-        $col = 'A';
-        $sectionStart = null;
-        $lastCol = null;
-        while ($col <= $highestColumn) {
-            $val = $sheet->getCell($col . $row2Number)->getValue();
-            if ($val !== '' && $val !== null && !in_array($val, ['Nom Prénom de l\'apprenant', 'N° INNO', '% de progression totale', 'Temps total passé'])) {
-                // fin de la section précédente
-                if ($sectionStart !== null) {
-                    // centrage du nom de matière sur la plage
-                    $sheet->mergeCells($sectionStart . $row2Number . ':' . $lastCol . $row2Number);
-                    $sheet->getStyle($sectionStart . $row2Number . ':' . $lastCol . $row2Number)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-                    // bordure autour de la section (lignes 2 à fin)
-                    $lastDataRow = $rowNumber - 1;
-                    $borderStyle = [
-                        'borders' => [
-                            'outline' => [
-                                'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
-                                'color' => ['argb' => 'FF000000'],
-                            ],
-                        ],
-                    ];
-                    $sheet->getStyle($sectionStart . $row2Number . ':' . $lastCol . $lastDataRow)->applyFromArray($borderStyle);
+    // Centrage + bordures par section (colonnes 5+ = après les 4 colonnes fixes)
+    $sectionStart = null;
+    $sectionStartIdx = null;
+    for ($colIdx = 5; $colIdx <= $highestColumnIdx; $colIdx++) {
+        $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx);
+        $val = $sheet->getCell($col . '2')->getValue();
+        $isLast = ($colIdx === $highestColumnIdx);
+
+        if ($val !== '' && $val !== null) {
+            // fermer section précédente
+            if ($sectionStart !== null) {
+                $sectionEnd = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx - 1);
+                if ($sectionStart !== $sectionEnd) {
+                    $sheet->mergeCells($sectionStart . '2:' . $sectionEnd . '2');
                 }
-                $sectionStart = $col;
+                $sheet->getStyle($sectionStart . '2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle($sectionStart . '2:' . $sectionEnd . $lastDataRow)->applyFromArray([
+                    'borders' => ['outline' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM, 'color' => ['argb' => 'FF000000']]],
+                ]);
             }
-            $lastCol = $col;
-            $col++;
+            $sectionStart = $col;
         }
-        // dernière section
-        if ($sectionStart !== null) {
-            $sheet->mergeCells($sectionStart . $row2Number . ':' . $lastCol . $row2Number);
-            $sheet->getStyle($sectionStart . $row2Number . ':' . $lastCol . $row2Number)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-            $lastDataRow = $rowNumber - 1;
-            $sheet->getStyle($sectionStart . $row2Number . ':' . $lastCol . $lastDataRow)->applyFromArray([
-                'borders' => [
-                    'outline' => [
-                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
-                        'color' => ['argb' => 'FF000000'],
-                    ],
-                ],
+
+        if ($isLast && $sectionStart !== null) {
+            if ($sectionStart !== $col) {
+                $sheet->mergeCells($sectionStart . '2:' . $col . '2');
+            }
+            $sheet->getStyle($sectionStart . '2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle($sectionStart . '2:' . $col . $lastDataRow)->applyFromArray([
+                'borders' => ['outline' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM, 'color' => ['argb' => 'FF000000']]],
             ]);
         }
     }
