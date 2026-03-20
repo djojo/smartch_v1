@@ -1719,9 +1719,8 @@ ORDER BY u.lastname ASC';
     // Ligne 2 en gras
     $sheet->getStyle('A2:' . $highestColumn . '2')->getFont()->setBold(true);
 
-    // Centrage + bordures par section (colonnes 5+ = après les 4 colonnes fixes)
+    // Bordures par section (colonnes 5+ = après les 4 colonnes fixes)
     $sectionStart = null;
-    $sectionStartIdx = null;
     for ($colIdx = 5; $colIdx <= $highestColumnIdx; $colIdx++) {
         $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx);
         $val = $sheet->getCell($col . '2')->getValue();
@@ -1731,10 +1730,6 @@ ORDER BY u.lastname ASC';
             // fermer section précédente
             if ($sectionStart !== null) {
                 $sectionEnd = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx - 1);
-                if ($sectionStart !== $sectionEnd) {
-                    $sheet->mergeCells($sectionStart . '2:' . $sectionEnd . '2');
-                }
-                $sheet->getStyle($sectionStart . '2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
                 $sheet->getStyle($sectionStart . '2:' . $sectionEnd . $lastDataRow)->applyFromArray([
                     'borders' => ['outline' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM, 'color' => ['argb' => 'FF000000']]],
                 ]);
@@ -1743,10 +1738,6 @@ ORDER BY u.lastname ASC';
         }
 
         if ($isLast && $sectionStart !== null) {
-            if ($sectionStart !== $col) {
-                $sheet->mergeCells($sectionStart . '2:' . $col . '2');
-            }
-            $sheet->getStyle($sectionStart . '2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
             $sheet->getStyle($sectionStart . '2:' . $col . $lastDataRow)->applyFromArray([
                 'borders' => ['outline' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM, 'color' => ['argb' => 'FF000000']]],
             ]);
