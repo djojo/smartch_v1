@@ -74,41 +74,7 @@ trait get_smartch_stats
             WHERE c.format != "site" AND c.visible = 1';
         $courses = $DB->get_records_sql($querycourses, null);
 
-        $coursesenrolled = 0;
         foreach ($courses as $key => $course) {
-            // exclure les formations dont TOUTES les sessions sont expirées (même logique que get_smartch_my_courses)
-            $activesession = $DB->get_record_sql(
-                'SELECT ss.id, ss.enddate FROM mdl_smartch_session ss
-                 JOIN mdl_groups g ON g.id = ss.groupid
-                 JOIN mdl_groups_members gm ON gm.groupid = g.id
-                 WHERE gm.userid = ? AND g.courseid = ?
-                 AND (ss.enddate = 0 OR (ss.enddate + (24 * 60 * 60 * 2)) >= UNIX_TIMESTAMP())
-                 LIMIT 1',
-                [$USER->id, $course->id]
-            );
-            $nosession = !$DB->record_exists_sql(
-                'SELECT 1 FROM mdl_smartch_session ss
-                 JOIN mdl_groups g ON g.id = ss.groupid
-                 JOIN mdl_groups_members gm ON gm.groupid = g.id
-                 WHERE gm.userid = ? AND g.courseid = ?',
-                [$USER->id, $course->id]
-            );
-            // skip si le cours a des sessions et qu'aucune n'est active
-            if (!$nosession && !$activesession) {
-                continue;
-            }
-
-            // session à utiliser pour les plannings
-            $group = $DB->get_record_sql(
-                'SELECT g.id FROM mdl_groups g
-                 JOIN mdl_groups_members gm ON gm.groupid = g.id
-                 WHERE gm.userid = ? AND g.courseid = ?',
-                [$USER->id, $course->id]
-            );
-            $session = $activesession ? $DB->get_record('smartch_session', ['id' => $activesession->id]) : null;
-
-            $coursesenrolled++;
-
             // e-learning : même logique que getCompletionPourcent (completion > 0, exclut face2face/folder/smartchfolder)
             $totalactivities += (int) $DB->count_records_sql(
                 'SELECT COUNT(cm.id) FROM mdl_course_modules cm
@@ -127,14 +93,23 @@ trait get_smartch_stats
             );
 
             // séances présentielles
-            if ($session) {
-                $plannings = $DB->get_records_sql(
-                    'SELECT id, startdate FROM mdl_smartch_planning WHERE sessionid = ?',
-                    [$session->id]
-                );
-                $totalactivities += count($plannings);
-                foreach ($plannings as $planning) {
-                    if ($planning->startdate < time()) $activitiescomplete++;
+            $group = $DB->get_record_sql(
+                'SELECT g.id FROM mdl_groups g
+                 JOIN mdl_groups_members gm ON gm.groupid = g.id
+                 WHERE gm.userid = ? AND g.courseid = ?',
+                [$USER->id, $course->id]
+            );
+            if ($group) {
+                $session = $DB->get_record('smartch_session', ['groupid' => $group->id]);
+                if ($session) {
+                    $plannings = $DB->get_records_sql(
+                        'SELECT id, startdate FROM mdl_smartch_planning WHERE sessionid = ?',
+                        [$session->id]
+                    );
+                    $totalactivities += count($plannings);
+                    foreach ($plannings as $planning) {
+                        if ($planning->startdate < time()) $activitiescomplete++;
+                    }
                 }
             }
         }
@@ -146,7 +121,7 @@ trait get_smartch_stats
             $activitiesprogress = number_format($activitiescomplete / $totalactivities * 100, 2);
         }
 
-        $stats['coursesenrolled'] = $coursesenrolled;
+        $stats['coursesenrolled'] = count($courses);
         $stats['coursescompleted'] = $coursescompleted;
         $stats['activitiescomplete'] = $activitiescomplete;
         $stats['statsgeneralprogress'] = $activitiesprogress;
