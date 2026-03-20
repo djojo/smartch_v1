@@ -76,20 +76,36 @@ trait get_smartch_stats
 
         $coursesenrolled = 0;
         foreach ($courses as $key => $course) {
-            // exclure les formations dont la session est expirée (même logique que get_smartch_my_courses)
+            // exclure les formations dont TOUTES les sessions sont expirées (même logique que get_smartch_my_courses)
+            $activesession = $DB->get_record_sql(
+                'SELECT ss.id, ss.enddate FROM mdl_smartch_session ss
+                 JOIN mdl_groups g ON g.id = ss.groupid
+                 JOIN mdl_groups_members gm ON gm.groupid = g.id
+                 WHERE gm.userid = ? AND g.courseid = ?
+                 AND (ss.enddate = 0 OR (ss.enddate + (24 * 60 * 60 * 2)) >= UNIX_TIMESTAMP())
+                 LIMIT 1',
+                [$USER->id, $course->id]
+            );
+            $nosession = !$DB->record_exists_sql(
+                'SELECT 1 FROM mdl_smartch_session ss
+                 JOIN mdl_groups g ON g.id = ss.groupid
+                 JOIN mdl_groups_members gm ON gm.groupid = g.id
+                 WHERE gm.userid = ? AND g.courseid = ?',
+                [$USER->id, $course->id]
+            );
+            // skip si le cours a des sessions et qu'aucune n'est active
+            if (!$nosession && !$activesession) {
+                continue;
+            }
+
+            // session à utiliser pour les plannings
             $group = $DB->get_record_sql(
                 'SELECT g.id FROM mdl_groups g
                  JOIN mdl_groups_members gm ON gm.groupid = g.id
                  WHERE gm.userid = ? AND g.courseid = ?',
                 [$USER->id, $course->id]
             );
-            $session = null;
-            if ($group) {
-                $session = $DB->get_record('smartch_session', ['groupid' => $group->id]);
-                if ($session && $session->enddate > 0 && ($session->enddate + (24 * 60 * 60 * 2)) < time()) {
-                    continue; // session expirée, on skip
-                }
-            }
+            $session = $activesession ? $DB->get_record('smartch_session', ['id' => $activesession->id]) : null;
 
             $coursesenrolled++;
 
