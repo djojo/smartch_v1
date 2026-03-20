@@ -1543,6 +1543,7 @@ ORDER BY u.lastname ASC';
         //on compte le nombre de matière
         $tableau = explode(',', $section->sequence);
         foreach ($tableau as $moduleid) {
+            $activity = null;
             //on cherche dans le tableau des activités
             foreach ($activities as $activityy) {
                 if ($activityy->id == $moduleid) {
@@ -1550,6 +1551,7 @@ ORDER BY u.lastname ASC';
                     break; // Sortir de la boucle dès que l'élément est trouvé
                 }
             }
+            if (!$activity) continue;
             if ($activity->activitytype == 'face2face') {
                 //On va chercher le nombre de planning dans cette section
                 if ($totalsectionsplannings > 0) {
@@ -1605,6 +1607,7 @@ ORDER BY u.lastname ASC';
             //on compte le nombre de matière
             $tableau = explode(',', $section->sequence);
             foreach ($tableau as $moduleid) {
+                $activity = null;
                 //on cherche dans le tableau des activités
                 foreach ($activities as $activityy) {
                     if ($activityy->id == $moduleid) {
@@ -1612,6 +1615,7 @@ ORDER BY u.lastname ASC';
                         break; // Sortir de la boucle dès que l'élément est trouvé
                     }
                 }
+                if (!$activity) continue;
                 if ($activity->activitytype == 'face2face') {
                     if ($totalsectionsplannings > 0) {
                         // Utilise le cache précalculé
@@ -1691,13 +1695,72 @@ ORDER BY u.lastname ASC';
 
     // Remplir les données dans le Spreadsheet
     $rowNumber = 1;
+    $row2Number = null; // ligne des noms de matières (ligne 2 = headers)
+    $row3Number = null; // ligne des noms d'activités
     foreach ($data as $row) {
         if (is_array($row)) {
             $column = 'A';
             foreach ($row as $cell) {
                 $sheet->setCellValue($column++ . $rowNumber, $cell);
             }
+            // repérer la ligne headers (ligne 2) et la ligne activités (ligne 3)
+            if ($rowNumber == 2) $row2Number = 2;
+            if ($rowNumber == 3) $row3Number = 3;
             $rowNumber++;
+        }
+    }
+
+    $highestColumn = $sheet->getHighestColumn();
+
+    // Ligne 2 en gras
+    if ($row2Number) {
+        $sheet->getStyle('A' . $row2Number . ':' . $highestColumn . $row2Number)->getFont()->setBold(true);
+    }
+
+    // Ligne 3 : centrage des noms de matières et bordures par groupe de colonnes
+    if ($row3Number) {
+        // trouver les plages de colonnes par matière (chercher les cellules non vides de la ligne 2)
+        $col = 'A';
+        $sectionStart = null;
+        $lastCol = null;
+        while ($col <= $highestColumn) {
+            $val = $sheet->getCell($col . $row2Number)->getValue();
+            if ($val !== '' && $val !== null && !in_array($val, ['Nom Prénom de l\'apprenant', 'N° INNO', '% de progression totale', 'Temps total passé'])) {
+                // fin de la section précédente
+                if ($sectionStart !== null) {
+                    // centrage du nom de matière sur la plage
+                    $sheet->mergeCells($sectionStart . $row2Number . ':' . $lastCol . $row2Number);
+                    $sheet->getStyle($sectionStart . $row2Number . ':' . $lastCol . $row2Number)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                    // bordure autour de la section (lignes 2 à fin)
+                    $lastDataRow = $rowNumber - 1;
+                    $borderStyle = [
+                        'borders' => [
+                            'outline' => [
+                                'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                                'color' => ['argb' => 'FF000000'],
+                            ],
+                        ],
+                    ];
+                    $sheet->getStyle($sectionStart . $row2Number . ':' . $lastCol . $lastDataRow)->applyFromArray($borderStyle);
+                }
+                $sectionStart = $col;
+            }
+            $lastCol = $col;
+            $col++;
+        }
+        // dernière section
+        if ($sectionStart !== null) {
+            $sheet->mergeCells($sectionStart . $row2Number . ':' . $lastCol . $row2Number);
+            $sheet->getStyle($sectionStart . $row2Number . ':' . $lastCol . $row2Number)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $lastDataRow = $rowNumber - 1;
+            $sheet->getStyle($sectionStart . $row2Number . ':' . $lastCol . $lastDataRow)->applyFromArray([
+                'borders' => [
+                    'outline' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                        'color' => ['argb' => 'FF000000'],
+                    ],
+                ],
+            ]);
         }
     }
 
