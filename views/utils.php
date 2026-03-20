@@ -1205,7 +1205,6 @@ ORDER BY u.lastname ASC';
                 }
             }
         }
-        if ($nbmodule == 0) continue; // section sans activité, on skip
         $sectionname = $section->name;
         if ($sectionname == "") {
             $sectionname = "Généralités";
@@ -1516,7 +1515,6 @@ ORDER BY u.lastname ASC';
                 }
             }
         }
-        if ($nbmodule == 0) continue; // section sans activité, on skip
         $sectionname = $section->name;
         if ($sectionname == "") {
             $sectionname = "Généralités";
@@ -1545,7 +1543,6 @@ ORDER BY u.lastname ASC';
         //on compte le nombre de matière
         $tableau = explode(',', $section->sequence);
         foreach ($tableau as $moduleid) {
-            $activity = null;
             //on cherche dans le tableau des activités
             foreach ($activities as $activityy) {
                 if ($activityy->id == $moduleid) {
@@ -1553,7 +1550,6 @@ ORDER BY u.lastname ASC';
                     break; // Sortir de la boucle dès que l'élément est trouvé
                 }
             }
-            if (!$activity) continue;
             if ($activity->activitytype == 'face2face') {
                 //On va chercher le nombre de planning dans cette section
                 if ($totalsectionsplannings > 0) {
@@ -1609,7 +1605,6 @@ ORDER BY u.lastname ASC';
             //on compte le nombre de matière
             $tableau = explode(',', $section->sequence);
             foreach ($tableau as $moduleid) {
-                $activity = null;
                 //on cherche dans le tableau des activités
                 foreach ($activities as $activityy) {
                     if ($activityy->id == $moduleid) {
@@ -1617,7 +1612,6 @@ ORDER BY u.lastname ASC';
                         break; // Sortir de la boucle dès que l'élément est trouvé
                     }
                 }
-                if (!$activity) continue;
                 if ($activity->activitytype == 'face2face') {
                     if ($totalsectionsplannings > 0) {
                         // Utilise le cache précalculé
@@ -1697,50 +1691,13 @@ ORDER BY u.lastname ASC';
 
     // Remplir les données dans le Spreadsheet
     $rowNumber = 1;
-    $row2Number = null; // ligne des noms de matières (ligne 2 = headers)
-    $row3Number = null; // ligne des noms d'activités
     foreach ($data as $row) {
         if (is_array($row)) {
             $column = 'A';
             foreach ($row as $cell) {
                 $sheet->setCellValue($column++ . $rowNumber, $cell);
             }
-            // repérer la ligne headers (ligne 2) et la ligne activités (ligne 3)
-            if ($rowNumber == 2) $row2Number = 2;
-            if ($rowNumber == 3) $row3Number = 3;
             $rowNumber++;
-        }
-    }
-
-    $highestColumn = $sheet->getHighestColumn();
-    $highestColumnIdx = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn);
-    $lastDataRow = $rowNumber - 1;
-
-    // Ligne 2 en gras
-    $sheet->getStyle('A2:' . $highestColumn . '2')->getFont()->setBold(true);
-
-    // Bordures par section (colonnes 5+ = après les 4 colonnes fixes)
-    $sectionStart = null;
-    for ($colIdx = 5; $colIdx <= $highestColumnIdx; $colIdx++) {
-        $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx);
-        $val = $sheet->getCell($col . '2')->getValue();
-        $isLast = ($colIdx === $highestColumnIdx);
-
-        if ($val !== '' && $val !== null) {
-            // fermer section précédente
-            if ($sectionStart !== null) {
-                $sectionEnd = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIdx - 1);
-                $sheet->getStyle($sectionStart . '2:' . $sectionEnd . $lastDataRow)->applyFromArray([
-                    'borders' => ['outline' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM, 'color' => ['argb' => 'FF000000']]],
-                ]);
-            }
-            $sectionStart = $col;
-        }
-
-        if ($isLast && $sectionStart !== null) {
-            $sheet->getStyle($sectionStart . '2:' . $col . $lastDataRow)->applyFromArray([
-                'borders' => ['outline' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM, 'color' => ['argb' => 'FF000000']]],
-            ]);
         }
     }
 
