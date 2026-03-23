@@ -1515,16 +1515,18 @@ ORDER BY u.lastname ASC';
                 }
             }
         }
+        if ($nbmodule == 0) continue; // skip sections sans activité
         $sectionname = $section->name;
         if ($sectionname == "") {
             $sectionname = "Généralités";
         }
-        $textmodule = $sectionname;
-        array_push($headertable, $textmodule);
-        $nbmodule--;
-        for ($i = 0; $i < $nbmodule; $i++) {
+        if (!isset($sectionRanges)) { $sectionRanges = []; $colIdx = 5; }
+        $sectionRanges[] = ['start' => $colIdx, 'end' => $colIdx + $nbmodule - 1];
+        array_push($headertable, $sectionname);
+        for ($i = 0; $i < $nbmodule - 1; $i++) {
             array_push($headertable, "");
         }
+        $colIdx += $nbmodule;
     }
 
     array_push($data, $headertable);
@@ -1543,6 +1545,7 @@ ORDER BY u.lastname ASC';
         //on compte le nombre de matière
         $tableau = explode(',', $section->sequence);
         foreach ($tableau as $moduleid) {
+            $activity = null;
             //on cherche dans le tableau des activités
             foreach ($activities as $activityy) {
                 if ($activityy->id == $moduleid) {
@@ -1550,8 +1553,8 @@ ORDER BY u.lastname ASC';
                     break; // Sortir de la boucle dès que l'élément est trouvé
                 }
             }
+            if (!$activity) continue;
             if ($activity->activitytype == 'face2face') {
-                //On va chercher le nombre de planning dans cette section
                 if ($totalsectionsplannings > 0) {
                     $totalsectionsplannings--;
                     array_push($sectiontable, $activity->activityname);
@@ -1698,6 +1701,29 @@ ORDER BY u.lastname ASC';
                 $sheet->setCellValue($column++ . $rowNumber, $cell);
             }
             $rowNumber++;
+        }
+    }
+
+    // Formatage : merge + centrage + gras + bordures sur la ligne 2 (noms de sections)
+    if (!empty($sectionRanges)) {
+        foreach ($sectionRanges as $range) {
+            $startLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($range['start']);
+            $endLetter   = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($range['end']);
+            $startCell   = $startLetter . '2';
+            $endCell     = $endLetter . '2';
+            // Merge si plusieurs colonnes
+            if ($range['start'] < $range['end']) {
+                $sheet->mergeCells($startCell . ':' . $endCell);
+            }
+            // Centrage + gras
+            $sheet->getStyle($startCell . ':' . $endCell)
+                ->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle($startCell . ':' . $endCell)
+                ->getFont()->setBold(true);
+            // Bordures
+            $sheet->getStyle($startCell . ':' . $endCell)
+                ->getBorders()->getOutline()
+                ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
         }
     }
 
