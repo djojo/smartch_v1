@@ -1494,6 +1494,21 @@ ORDER BY u.lastname ASC';
 
     array_push($data, ""); //saut de ligne
 
+    // Filtrer les sections sans activité (évite les colonnes vides/dupliquées)
+    $sections = array_filter($sections, function($section) use ($activities) {
+        if (empty($section->sequence)) return false;
+        $tableau = explode(',', $section->sequence);
+        foreach ($tableau as $moduleid) {
+            foreach ($activities as $activityy) {
+                if ($activityy->id == $moduleid && $activityy->activityname && $activityy->activitytype != "folder") {
+                    return true;
+                }
+            }
+        }
+        return false;
+    });
+    $sections = array_values($sections);
+
     $headertable = ['Nom Prénom de l\'apprenant', 'N° INNO', '% de progression totale', 'Temps total passé'];
 
     foreach ($sections as $section) {
@@ -1506,7 +1521,7 @@ ORDER BY u.lastname ASC';
             foreach ($activities as $activityy) {
                 if ($activityy->id == $moduleid) {
                     $activity = $activityy;
-                    break; // Sortir de la boucle dès que l'élément est trouvé
+                    break;
                 }
             }
             if ($activity) {
@@ -1519,8 +1534,7 @@ ORDER BY u.lastname ASC';
         if ($sectionname == "") {
             $sectionname = "Généralités";
         }
-        $textmodule = $sectionname;
-        array_push($headertable, $textmodule);
+        array_push($headertable, $sectionname);
         $nbmodule--;
         for ($i = 0; $i < $nbmodule; $i++) {
             array_push($headertable, "");
@@ -1543,15 +1557,16 @@ ORDER BY u.lastname ASC';
         //on compte le nombre de matière
         $tableau = explode(',', $section->sequence);
         foreach ($tableau as $moduleid) {
+            $activity = null;
             //on cherche dans le tableau des activités
             foreach ($activities as $activityy) {
                 if ($activityy->id == $moduleid) {
                     $activity = $activityy;
-                    break; // Sortir de la boucle dès que l'élément est trouvé
+                    break;
                 }
             }
+            if (!$activity) continue;
             if ($activity->activitytype == 'face2face') {
-                //On va chercher le nombre de planning dans cette section
                 if ($totalsectionsplannings > 0) {
                     $totalsectionsplannings--;
                     array_push($sectiontable, $activity->activityname);
@@ -1605,23 +1620,23 @@ ORDER BY u.lastname ASC';
             //on compte le nombre de matière
             $tableau = explode(',', $section->sequence);
             foreach ($tableau as $moduleid) {
+                $activity = null;
                 //on cherche dans le tableau des activités
                 foreach ($activities as $activityy) {
                     if ($activityy->id == $moduleid) {
                         $activity = $activityy;
-                        break; // Sortir de la boucle dès que l'élément est trouvé
+                        break;
                     }
                 }
+                if (!$activity) continue;
                 if ($activity->activitytype == 'face2face') {
                     if ($totalsectionsplannings > 0) {
-                        // Utilise le cache précalculé
                         $planningIdx = count(isset($planningsMap[$section->id]) ? $planningsMap[$section->id] : []) - $totalsectionsplannings;
                         $completion = isset($planningCompletionMap[$section->id][$planningIdx]) ? $planningCompletionMap[$section->id][$planningIdx] : '';
                         array_push($membertable, $completion);
                         $totalsectionsplannings--;
                     }
                 } else if ($activity->activityname && $activity->activitytype != "folder") {
-                    // Utilise le cache completions préchargé
                     $completionstate = isset($completionsMap[$groupmember->id][$moduleid]) ? $completionsMap[$groupmember->id][$moduleid] : 0;
                     $completion = ($completionstate >= 1) ? 'X' : '-';
                     array_push($membertable, $completion);
@@ -1691,14 +1706,33 @@ ORDER BY u.lastname ASC';
 
     // Remplir les données dans le Spreadsheet
     $rowNumber = 1;
+    $headerRow = null; // numéro de ligne du header (matières)
+    $sectionRow = null; // numéro de ligne des activités
     foreach ($data as $row) {
         if (is_array($row)) {
             $column = 'A';
             foreach ($row as $cell) {
                 $sheet->setCellValue($column++ . $rowNumber, $cell);
             }
+            // Ligne 2 = header matières (bold + centrage)
+            if ($rowNumber == 2) {
+                $headerRow = $rowNumber;
+            }
+            // Ligne 3 = activités (centrage)
+            if ($rowNumber == 3) {
+                $sectionRow = $rowNumber;
+            }
             $rowNumber++;
         }
+    }
+
+    // Mettre la ligne 2 en gras et centrer les noms de matières
+    if ($headerRow) {
+        $lastCol = $sheet->getHighestColumn();
+        $sheet->getStyle('A' . $headerRow . ':' . $lastCol . $headerRow)
+            ->getFont()->setBold(true);
+        $sheet->getStyle('A' . $headerRow . ':' . $lastCol . $headerRow)
+            ->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
     }
 
     // Écrire dans un fichier .xlsx
