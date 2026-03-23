@@ -1700,35 +1700,6 @@ ORDER BY u.lastname ASC';
             $rowNumber++;
         }
     }
-    $lastDataRow = $rowNumber - 1;
-
-    // Bordures par section
-    $sectionRanges = [];
-    $startPos = 5;
-    $colPos = 5;
-    for ($i = 4; $i < count($headertable); $i++) {
-        if ($i > 4 && $headertable[$i] !== '') {
-            $sectionRanges[] = ['start' => $startPos, 'end' => $colPos - 1];
-            $startPos = $colPos;
-        }
-        $colPos++;
-    }
-    if ($startPos < $colPos) {
-        $sectionRanges[] = ['start' => $startPos, 'end' => $colPos - 1];
-    }
-    $borderStyle = [
-        'borders' => [
-            'outline' => [
-                'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                'color' => ['argb' => 'FF000000'],
-            ],
-        ],
-    ];
-    foreach ($sectionRanges as $range) {
-        $startLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($range['start']);
-        $endLetter   = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($range['end']);
-        $sheet->getStyle($startLetter . '2:' . $endLetter . $lastDataRow)->applyFromArray($borderStyle);
-    }
 
     // Écrire dans un fichier .xlsx
     $writer = new Xlsx($spreadsheet);
