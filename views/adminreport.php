@@ -160,7 +160,22 @@ foreach ($planningsMap as $sectionid => $plannings) {
     }
 }
 
-// On va découper les sections en groupes de 10
+// Filtrer les sections sans activité avant le chunking (évite les pages vides)
+$sections = array_filter($sections, function($section) use ($activities) {
+    if (empty($section->sequence)) return false;
+    $tableau = explode(',', $section->sequence);
+    foreach ($tableau as $moduleid) {
+        foreach ($activities as $activity) {
+            if ($activity->id == $moduleid && $activity->activityname && $activity->activitytype != "folder") {
+                return true;
+            }
+        }
+    }
+    return false;
+});
+$sections = array_values($sections);
+
+// On va découper les sections en groupes de 5
 $sectionsChunks = array_chunk($sections, 5);
 
 // Calculer le temps total passé avant la boucle des tableaux
