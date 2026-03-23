@@ -1520,11 +1520,16 @@ ORDER BY u.lastname ASC';
             $sectionname = "Généralités";
         }
         $textmodule = $sectionname;
+        // tracker position pour bordures
+        if (!isset($sectionRanges)) { $sectionRanges = []; $xlsColIdx = 5; }
+        $sectionRanges[] = ['start' => $xlsColIdx, 'end' => $xlsColIdx + max(0, $nbmodule) - 1 + ($nbmodule == 0 ? 1 : 0)];
         array_push($headertable, $textmodule);
         $nbmodule--;
         for ($i = 0; $i < $nbmodule; $i++) {
             array_push($headertable, "");
+            $xlsColIdx++;
         }
+        $xlsColIdx++;
     }
 
     array_push($data, $headertable);
@@ -1543,6 +1548,7 @@ ORDER BY u.lastname ASC';
         //on compte le nombre de matière
         $tableau = explode(',', $section->sequence);
         foreach ($tableau as $moduleid) {
+            $activity = null;
             //on cherche dans le tableau des activités
             foreach ($activities as $activityy) {
                 if ($activityy->id == $moduleid) {
@@ -1550,6 +1556,7 @@ ORDER BY u.lastname ASC';
                     break; // Sortir de la boucle dès que l'élément est trouvé
                 }
             }
+            if (!$activity) continue;
             if ($activity->activitytype == 'face2face') {
                 //On va chercher le nombre de planning dans cette section
                 if ($totalsectionsplannings > 0) {
@@ -1698,6 +1705,26 @@ ORDER BY u.lastname ASC';
                 $sheet->setCellValue($column++ . $rowNumber, $cell);
             }
             $rowNumber++;
+        }
+    }
+    $lastDataRow = $rowNumber - 1;
+
+    // Bordures par section : encadrement sur toutes les lignes (entête + données)
+    if (!empty($sectionRanges)) {
+        $borderStyle = [
+            'borders' => [
+                'outline' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['argb' => 'FF000000'],
+                ],
+            ],
+        ];
+        foreach ($sectionRanges as $range) {
+            $startLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($range['start']);
+            $endLetter   = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($range['end']);
+            // Bordure de la ligne 2 (entête section) jusqu'à la dernière ligne de données
+            $sheet->getStyle($startLetter . '2:' . $endLetter . $lastDataRow)
+                ->applyFromArray($borderStyle);
         }
     }
 
