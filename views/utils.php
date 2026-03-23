@@ -956,6 +956,9 @@ function getCourseActivitiesRapport($courseid)
         UNION
         SELECT a.id, a.name AS activityname, 'face2face' AS activitytype, a.intro AS summary
         FROM mdl_face2face a
+        UNION
+        SELECT a.id, a.name AS activityname, 'smartchfolder' AS activitytype, a.intro AS summary
+        FROM mdl_smartchfolder a
     ) activity ON activity.id = cm.instance AND activity.activitytype = m.name
     WHERE c.id = " . $courseid, null);
 
@@ -1699,6 +1702,35 @@ ORDER BY u.lastname ASC';
             }
             $rowNumber++;
         }
+    }
+    $lastDataRow = $rowNumber - 1;
+
+    // Bordures par section
+    $sectionRanges = [];
+    $startPos = 5;
+    $colPos = 5;
+    for ($i = 4; $i < count($headertable); $i++) {
+        if ($i > 4 && $headertable[$i] !== '') {
+            $sectionRanges[] = ['start' => $startPos, 'end' => $colPos - 1];
+            $startPos = $colPos;
+        }
+        $colPos++;
+    }
+    if ($startPos < $colPos) {
+        $sectionRanges[] = ['start' => $startPos, 'end' => $colPos - 1];
+    }
+    $borderStyle = [
+        'borders' => [
+            'outline' => [
+                'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                'color' => ['argb' => 'FF000000'],
+            ],
+        ],
+    ];
+    foreach ($sectionRanges as $range) {
+        $startLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($range['start']);
+        $endLetter   = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($range['end']);
+        $sheet->getStyle($startLetter . '2:' . $endLetter . $lastDataRow)->applyFromArray($borderStyle);
     }
 
     // Écrire dans un fichier .xlsx
