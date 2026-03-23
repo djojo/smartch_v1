@@ -956,9 +956,6 @@ function getCourseActivitiesRapport($courseid)
         UNION
         SELECT a.id, a.name AS activityname, 'face2face' AS activitytype, a.intro AS summary
         FROM mdl_face2face a
-        UNION
-        SELECT a.id, a.name AS activityname, 'smartchfolder' AS activitytype, a.intro AS summary
-        FROM mdl_smartchfolder a
     ) activity ON activity.id = cm.instance AND activity.activitytype = m.name
     WHERE c.id = " . $courseid, null);
 
@@ -1533,21 +1530,6 @@ ORDER BY u.lastname ASC';
     array_push($data, $headertable);
 
 
-    // Calculer les ranges de colonnes par section pour les bordures
-    $sectionRanges = [];
-    $startPos = 5;
-    $colPos = 5;
-    for ($i = 4; $i < count($headertable); $i++) {
-        if ($i > 4 && $headertable[$i] !== "") {
-            $sectionRanges[] = ['start' => $startPos, 'end' => $colPos - 1];
-            $startPos = $colPos;
-        }
-        $colPos++;
-    }
-    if ($startPos < $colPos) {
-        $sectionRanges[] = ['start' => $startPos, 'end' => $colPos - 1];
-    }
-
     $sectiontable = ['', '', '', '', ''];
     foreach ($sections as $section) {
 
@@ -1561,7 +1543,6 @@ ORDER BY u.lastname ASC';
         //on compte le nombre de matière
         $tableau = explode(',', $section->sequence);
         foreach ($tableau as $moduleid) {
-            $activity = null;
             //on cherche dans le tableau des activités
             foreach ($activities as $activityy) {
                 if ($activityy->id == $moduleid) {
@@ -1569,7 +1550,6 @@ ORDER BY u.lastname ASC';
                     break; // Sortir de la boucle dès que l'élément est trouvé
                 }
             }
-            if (!$activity) continue;
             if ($activity->activitytype == 'face2face') {
                 //On va chercher le nombre de planning dans cette section
                 if ($totalsectionsplannings > 0) {
@@ -1625,7 +1605,6 @@ ORDER BY u.lastname ASC';
             //on compte le nombre de matière
             $tableau = explode(',', $section->sequence);
             foreach ($tableau as $moduleid) {
-                $activity = null;
                 //on cherche dans le tableau des activités
                 foreach ($activities as $activityy) {
                     if ($activityy->id == $moduleid) {
@@ -1633,7 +1612,6 @@ ORDER BY u.lastname ASC';
                         break; // Sortir de la boucle dès que l'élément est trouvé
                     }
                 }
-                if (!$activity) continue;
                 if ($activity->activitytype == 'face2face') {
                     if ($totalsectionsplannings > 0) {
                         // Utilise le cache précalculé
@@ -1720,26 +1698,6 @@ ORDER BY u.lastname ASC';
                 $sheet->setCellValue($column++ . $rowNumber, $cell);
             }
             $rowNumber++;
-        }
-    }
-    $lastDataRow = $rowNumber - 1;
-
-    // Bordures par section : encadrement sur toutes les lignes (entête + données)
-    if (!empty($sectionRanges)) {
-        $borderStyle = [
-            'borders' => [
-                'outline' => [
-                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                    'color' => ['argb' => 'FF000000'],
-                ],
-            ],
-        ];
-        foreach ($sectionRanges as $range) {
-            $startLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($range['start']);
-            $endLetter   = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($range['end']);
-            // Bordure de la ligne 2 (entête section) jusqu'à la dernière ligne de données
-            $sheet->getStyle($startLetter . '2:' . $endLetter . $lastDataRow)
-                ->applyFromArray($borderStyle);
         }
     }
 
