@@ -1735,6 +1735,12 @@ ORDER BY u.lastname ASC';
         $startLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($range['start']);
         $endLetter   = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($range['end']);
         $sheet->getStyle($startLetter . '2:' . $endLetter . $lastDataRow)->applyFromArray($borderStyle);
+        // Merge et centrage du nom de section en ligne 2
+        if ($range['start'] !== $range['end']) {
+            $sheet->mergeCells($startLetter . '2:' . $endLetter . '2');
+        }
+        $sheet->getStyle($startLetter . '2')->getAlignment()
+            ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
     }
 
     // Écrire dans un fichier .xlsx
