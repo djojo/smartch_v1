@@ -409,7 +409,7 @@ $html = '
       body {
         font-family: "source_sans_proregular", Calibri, Candara, Segoe, Segoe UI,
           Optima, Arial, sans-serif;
-        font-size: 0.3rem;
+        font-size: 0.25rem;
       }
       
     </style>
