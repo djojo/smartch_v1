@@ -956,6 +956,9 @@ function getCourseActivitiesRapport($courseid)
         UNION
         SELECT a.id, a.name AS activityname, 'face2face' AS activitytype, a.intro AS summary
         FROM mdl_face2face a
+        UNION
+        SELECT a.id, a.name AS activityname, 'smartchfolder' AS activitytype, a.intro AS summary
+        FROM mdl_smartchfolder a
     ) activity ON activity.id = cm.instance AND activity.activitytype = m.name
     WHERE c.id = " . $courseid, null);
 
@@ -1622,6 +1625,7 @@ ORDER BY u.lastname ASC';
             //on compte le nombre de matière
             $tableau = explode(',', $section->sequence);
             foreach ($tableau as $moduleid) {
+                $activity = null;
                 //on cherche dans le tableau des activités
                 foreach ($activities as $activityy) {
                     if ($activityy->id == $moduleid) {
@@ -1629,6 +1633,7 @@ ORDER BY u.lastname ASC';
                         break; // Sortir de la boucle dès que l'élément est trouvé
                     }
                 }
+                if (!$activity) continue;
                 if ($activity->activitytype == 'face2face') {
                     if ($totalsectionsplannings > 0) {
                         // Utilise le cache précalculé
