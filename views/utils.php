@@ -1520,20 +1520,30 @@ ORDER BY u.lastname ASC';
             $sectionname = "Généralités";
         }
         $textmodule = $sectionname;
-        // tracker position pour bordures
-        if (!isset($sectionRanges)) { $sectionRanges = []; $xlsColIdx = 5; }
-        $sectionRanges[] = ['start' => $xlsColIdx, 'end' => $xlsColIdx + max(0, $nbmodule) - 1 + ($nbmodule == 0 ? 1 : 0)];
         array_push($headertable, $textmodule);
         $nbmodule--;
         for ($i = 0; $i < $nbmodule; $i++) {
             array_push($headertable, "");
-            $xlsColIdx++;
         }
-        $xlsColIdx++;
     }
 
     array_push($data, $headertable);
 
+
+    // Calculer les ranges de colonnes par section pour les bordures
+    $sectionRanges = [];
+    $startPos = 5;
+    $colPos = 5;
+    for ($i = 4; $i < count($headertable); $i++) {
+        if ($i > 4 && $headertable[$i] !== "") {
+            $sectionRanges[] = ['start' => $startPos, 'end' => $colPos - 1];
+            $startPos = $colPos;
+        }
+        $colPos++;
+    }
+    if ($startPos < $colPos) {
+        $sectionRanges[] = ['start' => $startPos, 'end' => $colPos - 1];
+    }
 
     $sectiontable = ['', '', '', '', ''];
     foreach ($sections as $section) {
