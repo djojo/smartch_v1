@@ -1495,8 +1495,6 @@ ORDER BY u.lastname ASC';
     array_push($data, ""); //saut de ligne
 
     $headertable = ['Nom Prénom de l\'apprenant', 'N° INNO', '% de progression totale', 'Temps total passé'];
-    $sectionMergeRanges = []; // pour merge/bordures : [['start'=>5, 'end'=>7, 'name'=>'Positionnement'], ...]
-    $currentCol = 5; // A=1,B=2,C=3,D=4 déjà prises
 
     foreach ($sections as $section) {
         //on compte le nombre de matière
@@ -1508,7 +1506,7 @@ ORDER BY u.lastname ASC';
             foreach ($activities as $activityy) {
                 if ($activityy->id == $moduleid) {
                     $activity = $activityy;
-                    break;
+                    break; // Sortir de la boucle dès que l'élément est trouvé
                 }
             }
             if ($activity) {
@@ -1517,17 +1515,16 @@ ORDER BY u.lastname ASC';
                 }
             }
         }
-        if ($nbmodule == 0) continue; // skip sections vides
         $sectionname = $section->name;
         if ($sectionname == "") {
             $sectionname = "Généralités";
         }
-        $sectionMergeRanges[] = ['start' => $currentCol, 'end' => $currentCol + $nbmodule - 1, 'name' => $sectionname];
-        array_push($headertable, $sectionname);
-        for ($i = 0; $i < $nbmodule - 1; $i++) {
+        $textmodule = $sectionname;
+        array_push($headertable, $textmodule);
+        $nbmodule--;
+        for ($i = 0; $i < $nbmodule; $i++) {
             array_push($headertable, "");
         }
-        $currentCol += $nbmodule;
     }
 
     array_push($data, $headertable);
@@ -1546,16 +1543,15 @@ ORDER BY u.lastname ASC';
         //on compte le nombre de matière
         $tableau = explode(',', $section->sequence);
         foreach ($tableau as $moduleid) {
-            $activity = null;
             //on cherche dans le tableau des activités
             foreach ($activities as $activityy) {
                 if ($activityy->id == $moduleid) {
                     $activity = $activityy;
-                    break;
+                    break; // Sortir de la boucle dès que l'élément est trouvé
                 }
             }
-            if (!$activity) continue;
             if ($activity->activitytype == 'face2face') {
+                //On va chercher le nombre de planning dans cette section
                 if ($totalsectionsplannings > 0) {
                     $totalsectionsplannings--;
                     array_push($sectiontable, $activity->activityname);
@@ -1609,23 +1605,23 @@ ORDER BY u.lastname ASC';
             //on compte le nombre de matière
             $tableau = explode(',', $section->sequence);
             foreach ($tableau as $moduleid) {
-                $activity = null;
                 //on cherche dans le tableau des activités
                 foreach ($activities as $activityy) {
                     if ($activityy->id == $moduleid) {
                         $activity = $activityy;
-                        break;
+                        break; // Sortir de la boucle dès que l'élément est trouvé
                     }
                 }
-                if (!$activity) continue;
                 if ($activity->activitytype == 'face2face') {
                     if ($totalsectionsplannings > 0) {
+                        // Utilise le cache précalculé
                         $planningIdx = count(isset($planningsMap[$section->id]) ? $planningsMap[$section->id] : []) - $totalsectionsplannings;
                         $completion = isset($planningCompletionMap[$section->id][$planningIdx]) ? $planningCompletionMap[$section->id][$planningIdx] : '';
                         array_push($membertable, $completion);
                         $totalsectionsplannings--;
                     }
                 } else if ($activity->activityname && $activity->activitytype != "folder") {
+                    // Utilise le cache completions préchargé
                     $completionstate = isset($completionsMap[$groupmember->id][$moduleid]) ? $completionsMap[$groupmember->id][$moduleid] : 0;
                     $completion = ($completionstate >= 1) ? 'X' : '-';
                     array_push($membertable, $completion);
@@ -1695,46 +1691,13 @@ ORDER BY u.lastname ASC';
 
     // Remplir les données dans le Spreadsheet
     $rowNumber = 1;
-    $headerRowNum = null;
     foreach ($data as $row) {
         if (is_array($row)) {
             $column = 'A';
             foreach ($row as $cell) {
                 $sheet->setCellValue($column++ . $rowNumber, $cell);
             }
-            if ($rowNumber == 2) $headerRowNum = 2; // ligne des noms de sections
             $rowNumber++;
-        }
-    }
-
-    // Formatage ligne 2 : merge par section + centrage + gras + bordures
-    if ($headerRowNum && !empty($sectionMergeRanges)) {
-        $colLetters = [];
-        for ($i = 1; $i <= 300; $i++) {
-            $colLetters[$i] = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i);
-        }
-        foreach ($sectionMergeRanges as $range) {
-            $startLetter = $colLetters[$range['start']];
-            $endLetter   = $colLetters[$range['end']];
-            $startCell   = $startLetter . $headerRowNum;
-            $endCell     = $endLetter   . $headerRowNum;
-
-            // Merge si plusieurs colonnes
-            if ($range['start'] < $range['end']) {
-                $sheet->mergeCells($startCell . ':' . $endCell);
-            }
-
-            // Centrage + gras
-            $sheet->getStyle($startCell . ':' . $endCell)
-                ->getAlignment()
-                ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-            $sheet->getStyle($startCell . ':' . $endCell)
-                ->getFont()->setBold(true);
-
-            // Bordures autour du groupe
-            $sheet->getStyle($startCell . ':' . $endCell)
-                ->getBorders()->getOutline()
-                ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
         }
     }
 
