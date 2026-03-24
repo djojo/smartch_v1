@@ -1252,7 +1252,7 @@ ORDER BY u.lastname ASC';
     array_push($data, $headertable);
 
 
-    $sectiontable = ['', '', '', '', ''];
+    $sectiontable = ['', '', '', ''];
 
     foreach ($sections as $section) {
 
