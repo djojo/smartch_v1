@@ -1806,6 +1806,9 @@ ORDER BY u.lastname ASC';
         $sheet->getStyle($startLetter . '2')->getAlignment()
             ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle($startLetter . '2')->getFont()->setBold(true);
+        $sheet->getStyle($startLetter . '2:' . $endLetter . '2')->getBorders()->getBottom()
+            ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)
+            ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF000000'));
     }
 
     // Auto-fit largeur des colonnes
