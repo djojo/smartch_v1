@@ -1808,6 +1808,11 @@ ORDER BY u.lastname ASC';
         $sheet->getStyle($startLetter . '2')->getFont()->setBold(true);
     }
 
+    // Auto-fit largeur des colonnes
+    foreach (range(1, count($headertable)) as $col) {
+        $sheet->getColumnDimensionByColumn($col)->setAutoSize(true);
+    }
+
     // Écrire dans un fichier .xlsx
     $writer = new Xlsx($spreadsheet);
     $fileName = $course->groupname . '-' . date("d-m-Y");
