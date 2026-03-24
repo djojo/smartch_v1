@@ -1770,6 +1770,9 @@ ORDER BY u.lastname ASC';
     }
     $lastDataRow = $rowNumber - 1;
 
+    // Gras sur toute la ligne 2 (en-têtes)
+    $sheet->getStyle('A2:' . \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headertable)) . '2')->getFont()->setBold(true);
+
     // Bordures par section
     $sectionRanges = [];
     $startPos = 5;
