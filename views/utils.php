@@ -1811,8 +1811,11 @@ ORDER BY u.lastname ASC';
             ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF000000'));
     }
 
-    // Bordure en bas de la ligne 3 (noms d'activités)
+    // Bordure en bas des lignes 2 et 3 sur toute la largeur (colonnes fixes incluses)
     $lastCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headertable));
+    $sheet->getStyle('A2:' . $lastCol . '2')->getBorders()->getBottom()
+        ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)
+        ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF000000'));
     $sheet->getStyle('A3:' . $lastCol . '3')->getBorders()->getBottom()
         ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)
         ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF000000'));
