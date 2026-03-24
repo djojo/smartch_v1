@@ -1250,6 +1250,7 @@ ORDER BY u.lastname ASC';
         //on compte le nombre de matière
         $tableau = explode(',', $section->sequence);
         foreach ($tableau as $moduleid) {
+            $activity = null;
             //on cherche dans le tableau des activités
             foreach ($activities as $activityy) {
                 if ($activityy->id == $moduleid) {
@@ -1257,6 +1258,7 @@ ORDER BY u.lastname ASC';
                     break; // Sortir de la boucle dès que l'élément est trouvé
                 }
             }
+            if (!$activity) continue;
             if ($activity->activitytype == 'face2face') {
                 if ($totalsectionsplannings > 0) {
                     $totalsectionsplannings--;
