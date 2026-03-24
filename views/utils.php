@@ -1811,6 +1811,12 @@ ORDER BY u.lastname ASC';
             ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF000000'));
     }
 
+    // Bordure en bas de la ligne 3 (noms d'activités)
+    $lastCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headertable));
+    $sheet->getStyle('A3:' . $lastCol . '3')->getBorders()->getBottom()
+        ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)
+        ->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF000000'));
+
     // Auto-fit largeur des colonnes
     foreach (range(1, count($headertable)) as $col) {
         $sheet->getColumnDimensionByColumn($col)->setAutoSize(true);
