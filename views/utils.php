@@ -1164,6 +1164,22 @@ ORDER BY u.lastname ASC';
         ', null);
         foreach ($allplannings as $p) { $planningsMap[$p->sectionid][] = $p; }
     }
+
+    // Filtrer les sections sans activité valide (ni face2face planifié)
+    $sections = array_filter($sections, function($section) use ($activities, $planningsMap) {
+        if (empty($section->sequence)) return false;
+        $tableau = explode(',', $section->sequence);
+        foreach ($tableau as $moduleid) {
+            foreach ($activities as $activity) {
+                if ($activity->id == $moduleid && $activity->activityname && $activity->activitytype != "folder") {
+                    return true;
+                }
+            }
+        }
+        return isset($planningsMap[$section->id]) && count($planningsMap[$section->id]) > 0;
+    });
+    $sections = array_values($sections);
+
     $activityPlanningsMap = [];
     if ($session) {
         $allActivityPlannings = $DB->get_records_sql("
@@ -1250,6 +1266,7 @@ ORDER BY u.lastname ASC';
         //on compte le nombre de matière
         $tableau = explode(',', $section->sequence);
         foreach ($tableau as $moduleid) {
+            $activity = null;
             //on cherche dans le tableau des activités
             foreach ($activities as $activityy) {
                 if ($activityy->id == $moduleid) {
@@ -1257,6 +1274,7 @@ ORDER BY u.lastname ASC';
                     break; // Sortir de la boucle dès que l'élément est trouvé
                 }
             }
+            if (!$activity) continue;
             if ($activity->activitytype == 'face2face') {
                 if ($totalsectionsplannings > 0) {
                     $totalsectionsplannings--;
@@ -1479,6 +1497,21 @@ ORDER BY u.lastname ASC';
             $planningsMap[$p->sectionid][] = $p;
         }
     }
+
+    // Filtrer les sections sans activité valide (ni face2face planifié)
+    $sections = array_filter($sections, function($section) use ($activities, $planningsMap) {
+        if (empty($section->sequence)) return false;
+        $tableau = explode(',', $section->sequence);
+        foreach ($tableau as $moduleid) {
+            foreach ($activities as $activity) {
+                if ($activity->id == $moduleid && $activity->activityname && $activity->activitytype != "folder") {
+                    return true;
+                }
+            }
+        }
+        return isset($planningsMap[$section->id]) && count($planningsMap[$section->id]) > 0;
+    });
+    $sections = array_values($sections);
 
     // Préchargement activités face2face par section
     $activityPlanningsMap = [];
