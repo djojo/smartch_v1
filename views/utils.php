@@ -1166,12 +1166,15 @@ ORDER BY u.lastname ASC';
     }
 
     // Filtrer les sections sans activité valide (ni face2face planifié)
-    $sections = array_filter($sections, function($section) use ($activities, $planningsMap) {
+    // Activités à exclure du rapport CSV
+    $excludedActivityNames = ['Support de formation', 'Dossier de ligue', 'Devoir'];
+
+    $sections = array_filter($sections, function($section) use ($activities, $planningsMap, $excludedActivityNames) {
         if (empty($section->sequence)) return false;
         $tableau = explode(',', $section->sequence);
         foreach ($tableau as $moduleid) {
             foreach ($activities as $activity) {
-                if ($activity->id == $moduleid && $activity->activityname && $activity->activitytype != "folder") {
+                if ($activity->id == $moduleid && $activity->activityname && $activity->activitytype != "folder" && !in_array($activity->activityname, $excludedActivityNames)) {
                     return true;
                 }
             }
@@ -1232,7 +1235,7 @@ ORDER BY u.lastname ASC';
                         $nbmodule++;
                         $face2facecount++;
                     }
-                } else if ($activity->activityname && $activity->activitytype != "folder") {
+                } else if ($activity->activityname && $activity->activitytype != "folder" && !in_array($activity->activityname, $excludedActivityNames)) {
                     $nbmodule++;
                 }
             }
@@ -1241,11 +1244,12 @@ ORDER BY u.lastname ASC';
         if ($sectionname == "") {
             $sectionname = "Généralités";
         }
-        $textmodule = $sectionname;
-        array_push($headertable, $textmodule);
-        $nbmodule--;
-        for ($i = 0; $i < $nbmodule; $i++) {
-            array_push($headertable, "");
+        if ($nbmodule > 0) {
+            array_push($headertable, $sectionname);
+            $nbmodule--;
+            for ($i = 0; $i < $nbmodule; $i++) {
+                array_push($headertable, "");
+            }
         }
     }
 
@@ -1280,7 +1284,7 @@ ORDER BY u.lastname ASC';
                     $totalsectionsplannings--;
                     array_push($sectiontable, $activity->activityname);
                 }
-            } else if ($activity->activityname && $activity->activitytype != "folder") {
+            } else if ($activity->activityname && $activity->activitytype != "folder" && !in_array($activity->activityname, $excludedActivityNames)) {
                 array_push($sectiontable, $activity->activityname);
             }
         }
@@ -1339,7 +1343,7 @@ ORDER BY u.lastname ASC';
                         array_push($membertable, $completion);
                         $totalsectionsplannings--;
                     }
-                } else if ($activity->activityname && $activity->activitytype != "folder") {
+                } else if ($activity->activityname && $activity->activitytype != "folder" && !in_array($activity->activityname, $excludedActivityNames)) {
                     $completionstate = isset($completionsMap[$groupmember->id][$moduleid]) ? $completionsMap[$groupmember->id][$moduleid] : 0;
                     $completion = ($completionstate >= 1) ? 'X' : '-';
                     array_push($membertable, $completion);
@@ -1501,7 +1505,7 @@ ORDER BY u.lastname ASC';
     }
 
     // Activités à exclure du rapport XLS
-    $excludedActivityNames = ['Support de formation', 'Dossier de ligue'];
+    $excludedActivityNames = ['Support de formation', 'Dossier de ligue', 'Devoir'];
 
     // Filtrer les sections sans activité valide (ni face2face planifié)
     $sections = array_filter($sections, function($section) use ($activities, $planningsMap, $excludedActivityNames) {
@@ -1586,15 +1590,16 @@ ORDER BY u.lastname ASC';
                 }
             }
         }
-        $sectionname = $section->name;
-        if ($sectionname == "") {
-            $sectionname = "Généralités";
-        }
-        $textmodule = $sectionname;
-        array_push($headertable, $textmodule);
-        $nbmodule--;
-        for ($i = 0; $i < $nbmodule; $i++) {
-            array_push($headertable, "");
+        if ($nbmodule > 0) {
+            $sectionname = $section->name;
+            if ($sectionname == "") {
+                $sectionname = "Généralités";
+            }
+            array_push($headertable, $sectionname);
+            $nbmodule--;
+            for ($i = 0; $i < $nbmodule; $i++) {
+                array_push($headertable, "");
+            }
         }
     }
 
