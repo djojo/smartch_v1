@@ -1802,6 +1802,7 @@ ORDER BY u.lastname ASC';
         }
         $sheet->getStyle($startLetter . '2')->getAlignment()
             ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle($startLetter . '2')->getFont()->setBold(true);
     }
 
     // Écrire dans un fichier .xlsx
