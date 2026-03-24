@@ -1516,6 +1516,12 @@ ORDER BY u.lastname ASC';
         //on compte le nombre de matière
         $tableau = explode(',', $section->sequence);
         $nbmodule = 0;
+        $totalsectionsplannings = 0;
+        if ($session) {
+            $sectionsplannings = isset($planningsMap[$section->id]) ? $planningsMap[$section->id] : [];
+            $totalsectionsplannings = count($sectionsplannings);
+        }
+        $face2facecount = 0;
         foreach ($tableau as $moduleid) {
             $activity = null;
             //on cherche dans le tableau des activités
@@ -1526,7 +1532,12 @@ ORDER BY u.lastname ASC';
                 }
             }
             if ($activity) {
-                if ($activity->activityname && $activity->activitytype != "folder") {
+                if ($activity->activitytype == 'face2face') {
+                    if ($face2facecount < $totalsectionsplannings) {
+                        $nbmodule++;
+                        $face2facecount++;
+                    }
+                } else if ($activity->activityname && $activity->activitytype != "folder") {
                     $nbmodule++;
                 }
             }
