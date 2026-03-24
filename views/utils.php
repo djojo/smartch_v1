@@ -1157,7 +1157,9 @@ ORDER BY u.lastname ASC';
     if ($session) {
         $allplannings = $DB->get_records_sql('
             SELECT DISTINCT sp.id, sp.sectionid, sp.startdate, sp.enddate, sp.geforplanningid
-            FROM mdl_smartch_planning sp WHERE sp.sessionid = ' . intval($session->id) . '
+            FROM mdl_smartch_planning sp
+            JOIN mdl_smartch_session ss ON ss.id = sp.sessionid
+            WHERE ss.groupid = ' . intval($groupid) . '
             ORDER BY sp.startdate ASC
         ', null);
         foreach ($allplannings as $p) { $planningsMap[$p->sectionid][] = $p; }
