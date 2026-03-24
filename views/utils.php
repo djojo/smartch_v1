@@ -1500,13 +1500,19 @@ ORDER BY u.lastname ASC';
         }
     }
 
+    // Activités à exclure du rapport XLS
+    $excludedActivityNames = ['Support de formation', 'Dossier de ligue'];
+
     // Filtrer les sections sans activité valide (ni face2face planifié)
-    $sections = array_filter($sections, function($section) use ($activities, $planningsMap) {
+    $sections = array_filter($sections, function($section) use ($activities, $planningsMap, $excludedActivityNames) {
         if (empty($section->sequence)) return false;
         $tableau = explode(',', $section->sequence);
         foreach ($tableau as $moduleid) {
             foreach ($activities as $activity) {
-                if ($activity->id == $moduleid && $activity->activityname && $activity->activitytype != "folder") {
+                if ($activity->id == $moduleid
+                    && $activity->activityname
+                    && $activity->activitytype != "folder"
+                    && !in_array($activity->activityname, $excludedActivityNames)) {
                     return true;
                 }
             }
@@ -1547,7 +1553,8 @@ ORDER BY u.lastname ASC';
 
     array_push($data, ""); //saut de ligne
 
-    $headertable = ['Nom Prénom de l\'apprenant', 'N° INNO', '% de progression totale', 'Temps total passé'];
+    // Ligne 2 : noms des sections (colonnes A-D vides)
+    $headertable = ['', '', '', ''];
 
     foreach ($sections as $section) {
         //on compte le nombre de matière
@@ -1574,7 +1581,7 @@ ORDER BY u.lastname ASC';
                         $nbmodule++;
                         $face2facecount++;
                     }
-                } else if ($activity->activityname && $activity->activitytype != "folder") {
+                } else if ($activity->activityname && $activity->activitytype != "folder" && !in_array($activity->activityname, $excludedActivityNames)) {
                     $nbmodule++;
                 }
             }
@@ -1594,7 +1601,8 @@ ORDER BY u.lastname ASC';
     array_push($data, $headertable);
 
 
-    $sectiontable = ['', '', '', ''];
+    // Ligne 3 : 4 labels fixes + noms d'activités
+    $sectiontable = ['Nom Prénom de l\'apprenant', 'N° INNO', '% de progression totale', 'Temps total passé'];
     foreach ($sections as $section) {
 
         $totalsectionsplannings = 0;
@@ -1622,7 +1630,7 @@ ORDER BY u.lastname ASC';
                     $totalsectionsplannings--;
                     array_push($sectiontable, $activity->activityname);
                 }
-            } else if ($activity->activityname && $activity->activitytype != "folder") {
+            } else if ($activity->activityname && $activity->activitytype != "folder" && !in_array($activity->activityname, $excludedActivityNames)) {
                 array_push($sectiontable, $activity->activityname);
             }
         }
@@ -1688,7 +1696,7 @@ ORDER BY u.lastname ASC';
                         array_push($membertable, $completion);
                         $totalsectionsplannings--;
                     }
-                } else if ($activity->activityname && $activity->activitytype != "folder") {
+                } else if ($activity->activityname && $activity->activitytype != "folder" && !in_array($activity->activityname, $excludedActivityNames)) {
                     // Utilise le cache completions préchargé
                     $completionstate = isset($completionsMap[$groupmember->id][$moduleid]) ? $completionsMap[$groupmember->id][$moduleid] : 0;
                     $completion = ($completionstate >= 1) ? 'X' : '-';
@@ -1770,8 +1778,9 @@ ORDER BY u.lastname ASC';
     }
     $lastDataRow = $rowNumber - 1;
 
-    // Gras sur toute la ligne 2 (en-têtes)
+    // Gras sur toute la ligne 2 (noms de sections) et les 4 labels fixes en ligne 3
     $sheet->getStyle('A2:' . \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headertable)) . '2')->getFont()->setBold(true);
+    $sheet->getStyle('A3:D3')->getFont()->setBold(true);
 
     // Bordures par section
     $sectionRanges = [];
