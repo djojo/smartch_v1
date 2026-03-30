@@ -559,22 +559,27 @@ if (!$userid) {
         [$userid, $courseid]
     );
 
-    // séances présentielles : on compte les plannings de la session (pas les modules face2face)
-    $totalPlannings = 0;
-    $finishedPlannings = 0;
-    if ($session) {
-        $plannings = $DB->get_records_sql(
-            'SELECT id, startdate FROM mdl_smartch_planning WHERE sessionid = ?',
-            [$session->id]
-        );
-        $totalPlannings = count($plannings);
-        foreach ($plannings as $p) {
-            if ($p->startdate < time()) $finishedPlannings++;
-        }
-    }
+    // séances présentielles : face2face distincts dont la section a un planning dans la session
+    $totalFace2face = (int) $DB->count_records_sql(
+        'SELECT COUNT(DISTINCT cm.id) FROM mdl_course_modules cm
+         JOIN mdl_modules m ON m.id = cm.module
+         JOIN mdl_smartch_planning sp ON sp.sectionid = cm.section AND sp.sessionid = ?
+         WHERE cm.course = ? AND cm.completion > 0
+         AND m.name = \'face2face\'',
+        [$sessionid, $courseid]
+    );
+    $finishedFace2face = (int) $DB->count_records_sql(
+        'SELECT COUNT(DISTINCT cm.id) FROM mdl_course_modules_completion cmc
+         JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
+         JOIN mdl_modules m ON m.id = cm.module
+         JOIN mdl_smartch_planning sp ON sp.sectionid = cm.section AND sp.sessionid = ?
+         WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0
+         AND m.name = \'face2face\' AND cmc.completionstate >= 1',
+        [$sessionid, $userid, $courseid]
+    );
 
-    $modulesfinished = $finishedElearning + $finishedPlannings;
-    $modulestocome = max(0, ($totalElearning + $totalPlannings) - $modulesfinished);
+    $modulesfinished = $finishedElearning + $finishedFace2face;
+    $modulestocome = max(0, ($totalElearning + $totalFace2face) - $modulesfinished);
 
     $templatecontextstats = (object)[
         'title1' => 'Score de ',
