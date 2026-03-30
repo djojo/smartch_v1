@@ -566,8 +566,8 @@ if (!$userid) {
          AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\') AND cmc.completionstate >= 1',
         [$userid, $courseid]
     );*/
-    // Correct : Ne compter que les activités avec planning dans cette session
-    $finishedElearning = (int) $DB->count_records_sql(
+    // : Ne compter que les activités avec planning dans cette session
+    /*$finishedElearning = (int) $DB->count_records_sql(
         'SELECT COUNT(DISTINCT cmc.id) FROM mdl_course_modules_completion cmc
      JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
      JOIN mdl_modules m ON m.id = cm.module
@@ -576,6 +576,16 @@ if (!$userid) {
      AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\') 
      AND cmc.completionstate >= 1',
         [$sessionid, $userid, $courseid]
+    );*/
+
+    $finishedElearning = (int) $DB->count_records_sql(
+        'SELECT COUNT(DISTINCT cm.id) FROM mdl_course_modules_completion cmc
+     JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
+     JOIN mdl_modules m ON m.id = cm.module
+     WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0
+     AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\')
+     AND cmc.completionstate >= 1',
+        [$userid, $courseid]
     );
 
     // face2face uniquement si leur section a un planning dans la session du groupe
