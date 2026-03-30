@@ -538,39 +538,25 @@ if (!$userid) {
 
     $selecteduser = $DB->get_record('user', ['id' => $userid]);
 
-    // e-learning : modules avec completion>0 hors face2face/folder/smartchfolder
-    $totalElearning = (int) $DB->count_records_sql(
+    // total modules affichés dans le détail du parcours (e-learning + face2face, hors folder/smartchfolder)
+    $totalModules = (int) $DB->count_records_sql(
         'SELECT COUNT(cm.id) FROM mdl_course_modules cm
          JOIN mdl_modules m ON m.id = cm.module
          WHERE cm.course = ? AND cm.completion > 0
-         AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\')',
+         AND m.name NOT IN (\'folder\', \'smartchfolder\')',
         [$courseid]
     );
-    $finishedElearning = (int) $DB->count_records_sql(
+    $finishedModules = (int) $DB->count_records_sql(
         'SELECT COUNT(cmc.id) FROM mdl_course_modules_completion cmc
          JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
          JOIN mdl_modules m ON m.id = cm.module
          WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0
-         AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\') AND cmc.completionstate >= 1',
+         AND m.name NOT IN (\'folder\', \'smartchfolder\') AND cmc.completionstate >= 1',
         [$userid, $courseid]
     );
 
-    // séances présentielles : plannings de la session du groupe
-    $totalPlannings = 0;
-    $finishedPlannings = 0;
-    if ($session) {
-        $plannings = $DB->get_records_sql(
-            'SELECT id, startdate FROM mdl_smartch_planning WHERE sessionid = ?',
-            [$session->id]
-        );
-        $totalPlannings = count($plannings);
-        foreach ($plannings as $p) {
-            if ($p->startdate < time()) $finishedPlannings++;
-        }
-    }
-
-    $modulesfinished = $finishedElearning + $finishedPlannings;
-    $modulestocome = max(0, ($totalElearning + $totalPlannings) - $modulesfinished);
+    $modulesfinished = $finishedModules;
+    $modulestocome = max(0, $totalModules - $modulesfinished);
 
     $templatecontextstats = (object)[
         'title1' => 'Score de ',
