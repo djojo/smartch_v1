@@ -542,22 +542,22 @@ if (!$userid) {
     $sessionid = $session ? $session->id : 0;
 
     // e-learning (hors face2face/folder/smartchfolder)
-    /*$totalElearning = (int) $DB->count_records_sql(
+    $totalElearning = (int) $DB->count_records_sql(
         'SELECT COUNT(cm.id) FROM mdl_course_modules cm
          JOIN mdl_modules m ON m.id = cm.module
          WHERE cm.course = ? AND cm.completion > 0
          AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\')',
         [$courseid]
-    );*/
+    );
     //  Avec filtre session
-    $totalElearning = (int) $DB->count_records_sql(
+    /*$totalElearning = (int) $DB->count_records_sql(
         'SELECT COUNT(DISTINCT cm.id) FROM mdl_course_modules cm
      JOIN mdl_modules m ON m.id = cm.module
      JOIN mdl_smartch_planning sp ON sp.sectionid = cm.section AND sp.sessionid = ?
      WHERE cm.course = ? AND cm.completion > 0
      AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\')',
         [$sessionid, $courseid]
-    );
+    );*/
     /* $finishedElearning = (int) $DB->count_records_sql(
         'SELECT COUNT(cmc.id) FROM mdl_course_modules_completion cmc
          JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
