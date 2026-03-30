@@ -559,27 +559,31 @@ if (!$userid) {
         [$userid, $courseid]
     );
 
-    // séances présentielles : face2face distincts dont la section a un planning dans la session
-    $totalFace2face = (int) $DB->count_records_sql(
-        'SELECT COUNT(DISTINCT cm.id) FROM mdl_course_modules cm
-         JOIN mdl_modules m ON m.id = cm.module
-         JOIN mdl_smartch_planning sp ON sp.sectionid = cm.section AND sp.sessionid = ?
-         WHERE cm.course = ? AND cm.completion > 0
-         AND m.name = \'face2face\'',
-        [$sessionid, $courseid]
-    );
-    $finishedFace2face = (int) $DB->count_records_sql(
-        'SELECT COUNT(DISTINCT cm.id) FROM mdl_course_modules_completion cmc
-         JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
-         JOIN mdl_modules m ON m.id = cm.module
-         JOIN mdl_smartch_planning sp ON sp.sectionid = cm.section AND sp.sessionid = ?
-         WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0
-         AND m.name = \'face2face\' AND cmc.completionstate >= 1',
-        [$sessionid, $userid, $courseid]
-    );
+    // séances présentielles : plannings de la session dont la section a un face2face dans le cours
+    $totalPlannings = 0;
+    $finishedPlannings = 0;
+    if ($session) {
+        $plannings = $DB->get_records_sql(
+            'SELECT sp.id, sp.startdate FROM mdl_smartch_planning sp
+             WHERE sp.sessionid = ?
+             AND EXISTS (
+                 SELECT 1 FROM mdl_course_modules cm
+                 JOIN mdl_modules m ON m.id = cm.module
+                 WHERE m.name = \'face2face\'
+                 AND cm.section = sp.sectionid
+                 AND cm.course = ?
+                 AND cm.completion > 0
+             )',
+            [$session->id, $courseid]
+        );
+        $totalPlannings = count($plannings);
+        foreach ($plannings as $p) {
+            if ($p->startdate < time()) $finishedPlannings++;
+        }
+    }
 
-    $modulesfinished = $finishedElearning + $finishedFace2face;
-    $modulestocome = max(0, ($totalElearning + $totalFace2face) - $modulesfinished);
+    $modulesfinished = $finishedElearning + $finishedPlannings;
+    $modulestocome = max(0, ($totalElearning + $totalPlannings) - $modulesfinished);
 
     $templatecontextstats = (object)[
         'title1' => 'Score de ',
