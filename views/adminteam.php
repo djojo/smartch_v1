@@ -20,8 +20,8 @@ $rolename = getMainRole();
 
 //on regarde si la personne est reponsable pédgagogique
 $isResponsablePedagogique = hasResponsablePedagogiqueRole();
-if(!$isResponsablePedagogique){
-    if($rolename != "super-admin" && $rolename != "manager" && $rolename != "teacher" && $rolename != "editingteacher" && $rolename != "smalleditingteacher" && $rolename != "noneditingteacher"){
+if (!$isResponsablePedagogique) {
+    if ($rolename != "super-admin" && $rolename != "manager" && $rolename != "teacher" && $rolename != "editingteacher" && $rolename != "smalleditingteacher" && $rolename != "noneditingteacher") {
         isStudent();
     }
 }
@@ -180,8 +180,8 @@ $freecat = $DB->get_record_sql('SELECT * from mdl_course_categories WHERE name =
 //si on est sur une formation gratuite
 if ($course->category == $freecat->id) {
     //on ne montre pas cette page pour les admins
-    if($rolename == 'teacher' || $rolename == 'smalleditingteacher' || $rolename == "editingteacher" || $rolename == "student" || $rolename == "noneditingteacher") {
-        redirect(new moodle_url('/theme/remui/views/formation.php?id='.$courseid));
+    if ($rolename == 'teacher' || $rolename == 'smalleditingteacher' || $rolename == "editingteacher" || $rolename == "student" || $rolename == "noneditingteacher") {
+        redirect(new moodle_url('/theme/remui/views/formation.php?id=' . $courseid));
     }
 }
 
@@ -189,9 +189,9 @@ if ($course->category == $freecat->id) {
 //On créer l'url pour le retour
 $portail = getConfigPortail();
 
-if($portail == "portailformation"){
+if ($portail == "portailformation") {
     $backurl = new moodle_url('/theme/remui/views/adminformations.php');
-} else if($portail == "portailrh"){
+} else if ($portail == "portailrh") {
     //on va chercher la cohort
     $enrol = $DB->get_record_sql('SELECT * 
     FROM mdl_enrol
@@ -324,7 +324,7 @@ $content .= '<div class="row">
     <div class="smartch_flex_mobile" style="margin-top:30px;">
         <div class="smartch_flex_mobile">
             <h1 style="letter-spacing:1px;cursor:pointer;" class="smartch_title FFF-Hero-Bold FFF-Blue">' . extraireNomEquipe($group->name) . '</h1> 
-            <a class="smartch_btn ml-3" href="' . new moodle_url('/theme/remui/views/groupmessage.php') . '?teamid=' . $teamid . '&returnurl='.$PAGE->url.'">
+            <a class="smartch_btn ml-3" href="' . new moodle_url('/theme/remui/views/groupmessage.php') . '?teamid=' . $teamid . '&returnurl=' . $PAGE->url . '">
                         <svg style="width:20px;margin-right:5px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
                         </svg>
@@ -549,13 +549,24 @@ if (!$userid) {
          AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\')',
         [$courseid]
     );
-    $finishedElearning = (int) $DB->count_records_sql(
+    /* $finishedElearning = (int) $DB->count_records_sql(
         'SELECT COUNT(cmc.id) FROM mdl_course_modules_completion cmc
          JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
          JOIN mdl_modules m ON m.id = cm.module
          WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0
          AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\') AND cmc.completionstate >= 1',
         [$userid, $courseid]
+    );*/
+    // Ne compter que les activités avec planning dans cette session
+    $finishedElearning = (int) $DB->count_records_sql(
+        'SELECT COUNT(DISTINCT cmc.id) FROM mdl_course_modules_completion cmc
+     JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
+     JOIN mdl_modules m ON m.id = cm.module
+     JOIN mdl_smartch_planning sp ON sp.sectionid = cm.section AND sp.sessionid = ?
+     WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0
+     AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\') 
+     AND cmc.completionstate >= 1',
+        [$sessionid, $userid, $courseid]
     );
 
     // face2face uniquement si leur section a un planning dans la session du groupe
