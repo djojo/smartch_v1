@@ -538,25 +538,47 @@ if (!$userid) {
 
     $selecteduser = $DB->get_record('user', ['id' => $userid]);
 
-    // total modules affichés dans le détail du parcours (e-learning + face2face, hors folder/smartchfolder)
-    $totalModules = (int) $DB->count_records_sql(
+    // session du groupe pour filtrer les face2face avec planning
+    $sessionid = $session ? $session->id : 0;
+
+    // e-learning (hors face2face/folder/smartchfolder)
+    $totalElearning = (int) $DB->count_records_sql(
         'SELECT COUNT(cm.id) FROM mdl_course_modules cm
          JOIN mdl_modules m ON m.id = cm.module
          WHERE cm.course = ? AND cm.completion > 0
-         AND m.name NOT IN (\'folder\', \'smartchfolder\')',
+         AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\')',
         [$courseid]
     );
-    $finishedModules = (int) $DB->count_records_sql(
+    $finishedElearning = (int) $DB->count_records_sql(
         'SELECT COUNT(cmc.id) FROM mdl_course_modules_completion cmc
          JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
          JOIN mdl_modules m ON m.id = cm.module
          WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0
-         AND m.name NOT IN (\'folder\', \'smartchfolder\') AND cmc.completionstate >= 1',
+         AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\') AND cmc.completionstate >= 1',
         [$userid, $courseid]
     );
 
-    $modulesfinished = $finishedModules;
-    $modulestocome = max(0, $totalModules - $modulesfinished);
+    // face2face uniquement si leur section a un planning dans la session du groupe
+    $totalFace2face = (int) $DB->count_records_sql(
+        'SELECT COUNT(DISTINCT cm.id) FROM mdl_course_modules cm
+         JOIN mdl_modules m ON m.id = cm.module
+         JOIN mdl_smartch_planning sp ON sp.sectionid = cm.section AND sp.sessionid = ?
+         WHERE cm.course = ? AND cm.completion > 0
+         AND m.name = \'face2face\'',
+        [$sessionid, $courseid]
+    );
+    $finishedFace2face = (int) $DB->count_records_sql(
+        'SELECT COUNT(DISTINCT cmc.id) FROM mdl_course_modules_completion cmc
+         JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
+         JOIN mdl_modules m ON m.id = cm.module
+         JOIN mdl_smartch_planning sp ON sp.sectionid = cm.section AND sp.sessionid = ?
+         WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0
+         AND m.name = \'face2face\' AND cmc.completionstate >= 1',
+        [$sessionid, $userid, $courseid]
+    );
+
+    $modulesfinished = $finishedElearning + $finishedFace2face;
+    $modulestocome = max(0, ($totalElearning + $totalFace2face) - $modulesfinished);
 
     $templatecontextstats = (object)[
         'title1' => 'Score de ',
