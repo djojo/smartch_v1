@@ -597,8 +597,17 @@ if (!$userid) {
          AND m.name = \'face2face\'',
         [$sessionid, $courseid]
     );*/
-    $totalFace2face = (int) $DB->count_records_sql(
+    /*$totalFace2face = (int) $DB->count_records_sql(
         'SELECT COUNT(DISTINCT sp.id) FROM mdl_course_modules cm
+     JOIN mdl_modules m ON m.id = cm.module
+     JOIN mdl_smartch_planning sp ON sp.sectionid = cm.section AND sp.sessionid = ?
+     WHERE cm.course = ? AND cm.completion > 0
+     AND m.name = \'face2face\'',
+        [$sessionid, $courseid]
+    );*/
+
+    $totalFace2face = (int) $DB->count_records_sql(
+        'SELECT COUNT(DISTINCT cm.id) FROM mdl_course_modules cm
      JOIN mdl_modules m ON m.id = cm.module
      JOIN mdl_smartch_planning sp ON sp.sectionid = cm.section AND sp.sessionid = ?
      WHERE cm.course = ? AND cm.completion > 0
@@ -614,8 +623,17 @@ if (!$userid) {
          AND m.name = \'face2face\' AND cmc.completionstate >= 1',
         [$sessionid, $userid, $courseid]
     );*/
-    $finishedFace2face = (int) $DB->count_records_sql(
+    /*$finishedFace2face = (int) $DB->count_records_sql(
         'SELECT COUNT(DISTINCT sp.id) FROM mdl_course_modules_completion cmc
+     JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
+     JOIN mdl_modules m ON m.id = cm.module
+     JOIN mdl_smartch_planning sp ON sp.sectionid = cm.section AND sp.sessionid = ?
+     WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0
+     AND m.name = \'face2face\' AND cmc.completionstate >= 1',
+        [$sessionid, $userid, $courseid]
+    );*/
+    $finishedFace2face = (int) $DB->count_records_sql(
+        'SELECT COUNT(DISTINCT cm.id) FROM mdl_course_modules_completion cmc
      JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
      JOIN mdl_modules m ON m.id = cm.module
      JOIN mdl_smartch_planning sp ON sp.sectionid = cm.section AND sp.sessionid = ?
