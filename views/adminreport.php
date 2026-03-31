@@ -163,8 +163,20 @@ foreach ($planningsMap as $sectionid => $plannings) {
 // Activités à exclure du rapport
 $excludedActivityNames = ['Support de formation', 'Dossier de ligue', 'Devoir'];
 
+// Précharger les cm_ids avec completion activée
+$cmidsWithCompletion = [];
+$completionRows = $DB->get_records_sql('
+    SELECT cm.id FROM mdl_course_modules cm
+    WHERE cm.course = ' . intval($course->id) . '
+    AND cm.completion > 0
+    AND cm.deletioninprogress = 0
+', null);
+foreach ($completionRows as $row) {
+    $cmidsWithCompletion[$row->id] = true;
+}
+
 // Filtrer les sections sans activité avant le chunking (évite les pages vides)
-$sections = array_filter($sections, function($section) use ($activities, $planningsMap, $excludedActivityNames) {
+$sections = array_filter($sections, function($section) use ($activities, $planningsMap, $excludedActivityNames, $cmidsWithCompletion) {
     if (empty($section->sequence)) return false;
     $tableau = explode(',', $section->sequence);
     foreach ($tableau as $moduleid) {
@@ -173,7 +185,8 @@ $sections = array_filter($sections, function($section) use ($activities, $planni
                 && $activity->activityname
                 && $activity->activitytype != "folder"
                 && $activity->activitytype != "smartchfolder"
-                && !in_array($activity->activityname, $excludedActivityNames)) {
+                && !in_array($activity->activityname, $excludedActivityNames)
+                && isset($cmidsWithCompletion[$moduleid])) {
                 return true;
             }
         }
@@ -232,7 +245,7 @@ foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
                     $totalsectionsplannings--;
                     $nbmodule++;
                 }
-            } else if ($activity && $activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames)) {
+            } else if ($activity && $activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames) && isset($cmidsWithCompletion[$moduleid])) {
                 $nbmodule++;
             }
         }
@@ -266,7 +279,7 @@ foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
                     $totalsectionsplannings--;
                     $content .= '<td>' . $activity->activityname . '</td>';
                 }
-            } else if ($activity && $activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames)) {
+            } else if ($activity && $activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames) && isset($cmidsWithCompletion[$moduleid])) {
                 $content .= '<td>' . $activity->activityname . '</td>';
             }
         }
@@ -319,7 +332,7 @@ foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
                         $content .= '<td>' . $completion . '</td>';
                         $totalsectionsplannings--;
                     }
-                } else if ($activity && $activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames)) {
+                } else if ($activity && $activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames) && isset($cmidsWithCompletion[$moduleid])) {
                     // Utilise le cache préchargé au lieu d'une requête SQL par activité/apprenant
                     $completionstate = isset($completionsMap[$groupmember->id][$moduleid]) ? $completionsMap[$groupmember->id][$moduleid] : 0;
                     $completion = ($completionstate >= 1) ? 'X' : '-';

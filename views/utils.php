@@ -1169,12 +1169,24 @@ ORDER BY u.lastname ASC';
     // Activités à exclure du rapport CSV
     $excludedActivityNames = ['Support de formation', 'Dossier de ligue', 'Devoir'];
 
-    $sections = array_filter($sections, function($section) use ($activities, $planningsMap, $excludedActivityNames) {
+    // Précharger les cm_ids avec completion activée
+    $cmidsWithCompletion = [];
+    $completionRows = $DB->get_records_sql('
+        SELECT cm.id FROM mdl_course_modules cm
+        WHERE cm.course = ' . intval($course->id) . '
+        AND cm.completion > 0
+        AND cm.deletioninprogress = 0
+    ', null);
+    foreach ($completionRows as $row) {
+        $cmidsWithCompletion[$row->id] = true;
+    }
+
+    $sections = array_filter($sections, function($section) use ($activities, $planningsMap, $excludedActivityNames, $cmidsWithCompletion) {
         if (empty($section->sequence)) return false;
         $tableau = explode(',', $section->sequence);
         foreach ($tableau as $moduleid) {
             foreach ($activities as $activity) {
-                if ($activity->id == $moduleid && $activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames)) {
+                if ($activity->id == $moduleid && $activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames) && isset($cmidsWithCompletion[$moduleid])) {
                     return true;
                 }
             }
@@ -1235,7 +1247,7 @@ ORDER BY u.lastname ASC';
                         $nbmodule++;
                         $face2facecount++;
                     }
-                } else if ($activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames)) {
+                } else if ($activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames) && isset($cmidsWithCompletion[$moduleid])) {
                     $nbmodule++;
                 }
             }
@@ -1284,7 +1296,7 @@ ORDER BY u.lastname ASC';
                     $totalsectionsplannings--;
                     array_push($sectiontable, $activity->activityname);
                 }
-            } else if ($activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames)) {
+            } else if ($activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames) && isset($cmidsWithCompletion[$moduleid])) {
                 array_push($sectiontable, $activity->activityname);
             }
         }
@@ -1343,7 +1355,7 @@ ORDER BY u.lastname ASC';
                         array_push($membertable, $completion);
                         $totalsectionsplannings--;
                     }
-                } else if ($activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames)) {
+                } else if ($activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames) && isset($cmidsWithCompletion[$moduleid])) {
                     $completionstate = isset($completionsMap[$groupmember->id][$moduleid]) ? $completionsMap[$groupmember->id][$moduleid] : 0;
                     $completion = ($completionstate >= 1) ? 'X' : '-';
                     array_push($membertable, $completion);
@@ -1507,8 +1519,20 @@ ORDER BY u.lastname ASC';
     // Activités à exclure du rapport XLS
     $excludedActivityNames = ['Support de formation', 'Dossier de ligue', 'Devoir'];
 
+    // Précharger les cm_ids avec completion activée
+    $cmidsWithCompletion = [];
+    $completionRows = $DB->get_records_sql('
+        SELECT cm.id FROM mdl_course_modules cm
+        WHERE cm.course = ' . intval($course->id) . '
+        AND cm.completion > 0
+        AND cm.deletioninprogress = 0
+    ', null);
+    foreach ($completionRows as $row) {
+        $cmidsWithCompletion[$row->id] = true;
+    }
+
     // Filtrer les sections sans activité valide (ni face2face planifié)
-    $sections = array_filter($sections, function($section) use ($activities, $planningsMap, $excludedActivityNames) {
+    $sections = array_filter($sections, function($section) use ($activities, $planningsMap, $excludedActivityNames, $cmidsWithCompletion) {
         if (empty($section->sequence)) return false;
         $tableau = explode(',', $section->sequence);
         foreach ($tableau as $moduleid) {
@@ -1517,7 +1541,8 @@ ORDER BY u.lastname ASC';
                     && $activity->activityname
                     && $activity->activitytype != "folder"
                     && $activity->activitytype != "smartchfolder"
-                    && !in_array($activity->activityname, $excludedActivityNames)) {
+                    && !in_array($activity->activityname, $excludedActivityNames)
+                    && isset($cmidsWithCompletion[$moduleid])) {
                     return true;
                 }
             }
@@ -1586,7 +1611,7 @@ ORDER BY u.lastname ASC';
                         $nbmodule++;
                         $face2facecount++;
                     }
-                } else if ($activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames)) {
+                } else if ($activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames) && isset($cmidsWithCompletion[$moduleid])) {
                     $nbmodule++;
                 }
             }
@@ -1636,7 +1661,7 @@ ORDER BY u.lastname ASC';
                     $totalsectionsplannings--;
                     array_push($sectiontable, $activity->activityname);
                 }
-            } else if ($activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames)) {
+            } else if ($activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames) && isset($cmidsWithCompletion[$moduleid])) {
                 array_push($sectiontable, $activity->activityname);
             }
         }
@@ -1702,7 +1727,7 @@ ORDER BY u.lastname ASC';
                         array_push($membertable, $completion);
                         $totalsectionsplannings--;
                     }
-                } else if ($activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames)) {
+                } else if ($activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames) && isset($cmidsWithCompletion[$moduleid])) {
                     // Utilise le cache completions préchargé
                     $completionstate = isset($completionsMap[$groupmember->id][$moduleid]) ? $completionsMap[$groupmember->id][$moduleid] : 0;
                     $completion = ($completionstate >= 1) ? 'X' : '-';
