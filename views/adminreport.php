@@ -207,6 +207,24 @@ $totaltimespent = 0;
 // $totaltimespent = format_time($totaltimespent);
 
 foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
+    // Vérifier si le chunk a au moins une colonne visible (évite les pages vides)
+    $chunkHasColumns = false;
+    foreach ($sectionsChunk as $sectionCheck) {
+        if (isset($planningsMap[$sectionCheck->id]) && count($planningsMap[$sectionCheck->id]) > 0) {
+            $chunkHasColumns = true;
+            break;
+        }
+        if (!empty($sectionCheck->sequence)) {
+            foreach (explode(',', $sectionCheck->sequence) as $mid) {
+                if (isset($cmidsWithCompletion[$mid])) {
+                    $chunkHasColumns = true;
+                    break 2;
+                }
+            }
+        }
+    }
+    if (!$chunkHasColumns) continue;
+
     if ($chunkIndex > 0) {
         $content .= '<div style="page-break-before: always;"></div>'; // Saut de page
     }
