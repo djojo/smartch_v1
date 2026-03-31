@@ -172,6 +172,7 @@ $sections = array_filter($sections, function($section) use ($activities, $planni
             if ($activity->id == $moduleid
                 && $activity->activityname
                 && $activity->activitytype != "folder"
+                && $activity->activitytype != "smartchfolder"
                 && !in_array($activity->activityname, $excludedActivityNames)) {
                 return true;
             }
@@ -231,7 +232,7 @@ foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
                     $totalsectionsplannings--;
                     $nbmodule++;
                 }
-            } else if ($activity && $activity->activityname && $activity->activitytype != "folder" && !in_array($activity->activityname, $excludedActivityNames)) {
+            } else if ($activity && $activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames)) {
                 $nbmodule++;
             }
         }
@@ -265,7 +266,7 @@ foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
                     $totalsectionsplannings--;
                     $content .= '<td>' . $activity->activityname . '</td>';
                 }
-            } else if ($activity && $activity->activityname && $activity->activitytype != "folder" && !in_array($activity->activityname, $excludedActivityNames)) {
+            } else if ($activity && $activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames)) {
                 $content .= '<td>' . $activity->activityname . '</td>';
             }
         }
@@ -318,7 +319,7 @@ foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
                         $content .= '<td>' . $completion . '</td>';
                         $totalsectionsplannings--;
                     }
-                } else if ($activity && $activity->activityname && $activity->activitytype != "folder" && !in_array($activity->activityname, $excludedActivityNames)) {
+                } else if ($activity && $activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames)) {
                     // Utilise le cache préchargé au lieu d'une requête SQL par activité/apprenant
                     $completionstate = isset($completionsMap[$groupmember->id][$moduleid]) ? $completionsMap[$groupmember->id][$moduleid] : 0;
                     $completion = ($completionstate >= 1) ? 'X' : '-';

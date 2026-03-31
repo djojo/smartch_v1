@@ -1174,7 +1174,7 @@ ORDER BY u.lastname ASC';
         $tableau = explode(',', $section->sequence);
         foreach ($tableau as $moduleid) {
             foreach ($activities as $activity) {
-                if ($activity->id == $moduleid && $activity->activityname && $activity->activitytype != "folder" && !in_array($activity->activityname, $excludedActivityNames)) {
+                if ($activity->id == $moduleid && $activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames)) {
                     return true;
                 }
             }
@@ -1235,7 +1235,7 @@ ORDER BY u.lastname ASC';
                         $nbmodule++;
                         $face2facecount++;
                     }
-                } else if ($activity->activityname && $activity->activitytype != "folder" && !in_array($activity->activityname, $excludedActivityNames)) {
+                } else if ($activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames)) {
                     $nbmodule++;
                 }
             }
@@ -1284,7 +1284,7 @@ ORDER BY u.lastname ASC';
                     $totalsectionsplannings--;
                     array_push($sectiontable, $activity->activityname);
                 }
-            } else if ($activity->activityname && $activity->activitytype != "folder" && !in_array($activity->activityname, $excludedActivityNames)) {
+            } else if ($activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames)) {
                 array_push($sectiontable, $activity->activityname);
             }
         }
@@ -1343,7 +1343,7 @@ ORDER BY u.lastname ASC';
                         array_push($membertable, $completion);
                         $totalsectionsplannings--;
                     }
-                } else if ($activity->activityname && $activity->activitytype != "folder" && !in_array($activity->activityname, $excludedActivityNames)) {
+                } else if ($activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames)) {
                     $completionstate = isset($completionsMap[$groupmember->id][$moduleid]) ? $completionsMap[$groupmember->id][$moduleid] : 0;
                     $completion = ($completionstate >= 1) ? 'X' : '-';
                     array_push($membertable, $completion);
@@ -1516,6 +1516,7 @@ ORDER BY u.lastname ASC';
                 if ($activity->id == $moduleid
                     && $activity->activityname
                     && $activity->activitytype != "folder"
+                    && $activity->activitytype != "smartchfolder"
                     && !in_array($activity->activityname, $excludedActivityNames)) {
                     return true;
                 }
@@ -1585,7 +1586,7 @@ ORDER BY u.lastname ASC';
                         $nbmodule++;
                         $face2facecount++;
                     }
-                } else if ($activity->activityname && $activity->activitytype != "folder" && !in_array($activity->activityname, $excludedActivityNames)) {
+                } else if ($activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames)) {
                     $nbmodule++;
                 }
             }
@@ -1635,7 +1636,7 @@ ORDER BY u.lastname ASC';
                     $totalsectionsplannings--;
                     array_push($sectiontable, $activity->activityname);
                 }
-            } else if ($activity->activityname && $activity->activitytype != "folder" && !in_array($activity->activityname, $excludedActivityNames)) {
+            } else if ($activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames)) {
                 array_push($sectiontable, $activity->activityname);
             }
         }
@@ -1701,7 +1702,7 @@ ORDER BY u.lastname ASC';
                         array_push($membertable, $completion);
                         $totalsectionsplannings--;
                     }
-                } else if ($activity->activityname && $activity->activitytype != "folder" && !in_array($activity->activityname, $excludedActivityNames)) {
+                } else if ($activity->activityname && $activity->activitytype != "folder" && $activity->activitytype != "smartchfolder" && !in_array($activity->activityname, $excludedActivityNames)) {
                     // Utilise le cache completions préchargé
                     $completionstate = isset($completionsMap[$groupmember->id][$moduleid]) ? $completionsMap[$groupmember->id][$moduleid] : 0;
                     $completion = ($completionstate >= 1) ? 'X' : '-';

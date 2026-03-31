@@ -449,9 +449,8 @@ if (countCourseActivities($courseid) == 0) {
                     } else if ($activity->activitytype == "resource") {
                         $type = "fichier";
                     } else if ($activity->activitytype == "smartchfolder") {
-                        $type = "support de formation";
-                        //on vire la completion
-                        $completion = "";
+                        // Support de formation : ne pas afficher comme activité
+                        continue;
                     } else if ($activity->activitytype == "folder") {
 
                         $requestfolder = "SELECT COUNT(*) count
