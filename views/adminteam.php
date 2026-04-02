@@ -541,29 +541,32 @@ if (!$userid) {
     // session du groupe
     $sessionid = $session ? $session->id : 0;
 
+    // Types d'activités trackés dans les rapports (whitelist = cohérent avec getCourseActivitiesRapport)
+    $trackedActivityTypes = "'scorm','assign','resource','feedback','quiz','page','url','lesson','bigbluebuttonbn','book','data','forum','h5pactivity'";
+
     // Noms d'activités exclus des métriques (cohérent avec les rapports)
     $excludedActivityNamesMetrics = ['Dossier de ligue', 'Devoir'];
     $excludedNamesQuoted = implode(',', array_map(function($n) use ($DB) {
         return "'" . $DB->sql_like_escape($n) . "'";
     }, $excludedActivityNamesMetrics));
-    // Précharger les cm.ids à exclure par nom (toutes tables d'activités concernées)
+    // Précharger les cm.ids à exclure par nom — JOIN avec acttype pour éviter les faux positifs
     $excludedByNameRows = $DB->get_records_sql("
         SELECT cm.id FROM mdl_course_modules cm
         JOIN mdl_modules m ON m.id = cm.module
         LEFT JOIN (
-            SELECT id, name FROM mdl_assign
-            UNION ALL SELECT id, name FROM mdl_resource
-            UNION ALL SELECT id, name FROM mdl_feedback
-            UNION ALL SELECT id, name FROM mdl_quiz
-            UNION ALL SELECT id, name FROM mdl_scorm
-            UNION ALL SELECT id, name FROM mdl_h5pactivity
-            UNION ALL SELECT id, name FROM mdl_bigbluebuttonbn
-            UNION ALL SELECT id, name FROM mdl_page
-            UNION ALL SELECT id, name FROM mdl_url
-            UNION ALL SELECT id, name FROM mdl_book
-            UNION ALL SELECT id, name FROM mdl_lesson
-            UNION ALL SELECT id, name FROM mdl_data
-        ) act ON act.id = cm.instance
+            SELECT id, name, 'assign' as acttype FROM mdl_assign
+            UNION ALL SELECT id, name, 'resource' FROM mdl_resource
+            UNION ALL SELECT id, name, 'feedback' FROM mdl_feedback
+            UNION ALL SELECT id, name, 'quiz' FROM mdl_quiz
+            UNION ALL SELECT id, name, 'scorm' FROM mdl_scorm
+            UNION ALL SELECT id, name, 'h5pactivity' FROM mdl_h5pactivity
+            UNION ALL SELECT id, name, 'bigbluebuttonbn' FROM mdl_bigbluebuttonbn
+            UNION ALL SELECT id, name, 'page' FROM mdl_page
+            UNION ALL SELECT id, name, 'url' FROM mdl_url
+            UNION ALL SELECT id, name, 'book' FROM mdl_book
+            UNION ALL SELECT id, name, 'lesson' FROM mdl_lesson
+            UNION ALL SELECT id, name, 'data' FROM mdl_data
+        ) act ON act.id = cm.instance AND act.acttype = m.name
         WHERE cm.course = " . intval($courseid) . "
         AND act.name IN (" . $excludedNamesQuoted . ")
     ", null);
@@ -571,13 +574,13 @@ if (!$userid) {
         ? implode(',', array_map('intval', array_keys($excludedByNameRows)))
         : '0';
 
-    // e-learning (hors face2face/folder/smartchfolder et activités exclues par nom)
+    // e-learning : whitelist des types trackés + exclusion par nom (cohérent avec les rapports)
     $totalElearning = (int) $DB->count_records_sql(
         'SELECT COUNT(cm.id) FROM mdl_course_modules cm
          JOIN mdl_modules m ON m.id = cm.module
          WHERE cm.course = ? AND cm.completion > 0
          AND cm.deletioninprogress = 0
-         AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\')
+         AND m.name IN (' . $trackedActivityTypes . ')
          AND cm.id NOT IN (' . $excludedByNameSql . ')',
         [$courseid]
     );
@@ -587,7 +590,7 @@ if (!$userid) {
          JOIN mdl_modules m ON m.id = cm.module
          WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0
          AND cm.deletioninprogress = 0
-         AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\')
+         AND m.name IN (' . $trackedActivityTypes . ')
          AND cm.id NOT IN (' . $excludedByNameSql . ')
          AND cmc.completionstate >= 1',
         [$userid, $courseid]
