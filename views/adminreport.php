@@ -161,7 +161,7 @@ foreach ($planningsMap as $sectionid => $plannings) {
 }
 
 // Activités à exclure du rapport
-$excludedActivityNames = ['Support de formation', 'Dossier de ligue', 'Devoir'];
+$excludedActivityNames = ['Dossier de ligue', 'Devoir'];
 
 // Précharger les cm_ids avec completion activée
 $cmidsWithCompletion = [];
@@ -210,20 +210,16 @@ foreach ($sectionsChunks as $chunkIndex => $sectionsChunk) {
     // Vérifier si le chunk a au moins une colonne visible (évite les pages vides)
     $chunkHasColumns = false;
     foreach ($sectionsChunk as $sectionCheck) {
+        // Fallback : cohérent avec le filtre de sections (plannings = colonne valide)
+        if (isset($planningsMap[$sectionCheck->id]) && count($planningsMap[$sectionCheck->id]) > 0) {
+            $chunkHasColumns = true;
+            break;
+        }
         if (!empty($sectionCheck->sequence)) {
             foreach (explode(',', $sectionCheck->sequence) as $mid) {
                 if (isset($cmidsWithCompletion[$mid])) {
                     $chunkHasColumns = true;
                     break 2;
-                }
-                // face2face avec planning associé
-                foreach ($activities as $actCheck) {
-                    if ($actCheck->id == $mid && $actCheck->activitytype == 'face2face'
-                        && isset($planningsMap[$sectionCheck->id])
-                        && count($planningsMap[$sectionCheck->id]) > 0) {
-                        $chunkHasColumns = true;
-                        break 3;
-                    }
                 }
             }
         }

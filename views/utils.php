@@ -1167,7 +1167,7 @@ ORDER BY u.lastname ASC';
 
     // Filtrer les sections sans activité valide (ni face2face planifié)
     // Activités à exclure du rapport CSV
-    $excludedActivityNames = ['Support de formation', 'Dossier de ligue', 'Devoir'];
+    $excludedActivityNames = ['Dossier de ligue', 'Devoir'];
 
     // Précharger les cm_ids avec completion activée
     $cmidsWithCompletion = [];
@@ -1517,7 +1517,7 @@ ORDER BY u.lastname ASC';
     }
 
     // Activités à exclure du rapport XLS
-    $excludedActivityNames = ['Support de formation', 'Dossier de ligue', 'Devoir'];
+    $excludedActivityNames = ['Dossier de ligue', 'Devoir'];
 
     // Précharger les cm_ids avec completion activée
     $cmidsWithCompletion = [];
