@@ -541,12 +541,44 @@ if (!$userid) {
     // session du groupe
     $sessionid = $session ? $session->id : 0;
 
-    // e-learning (hors face2face/folder/smartchfolder)
+    // Noms d'activités exclus des métriques (cohérent avec les rapports)
+    $excludedActivityNamesMetrics = ['Dossier de ligue', 'Devoir'];
+    $excludedNamesQuoted = implode(',', array_map(function($n) use ($DB) {
+        return "'" . $DB->sql_like_escape($n) . "'";
+    }, $excludedActivityNamesMetrics));
+    // Précharger les cm.ids à exclure par nom (toutes tables d'activités concernées)
+    $excludedByNameRows = $DB->get_records_sql("
+        SELECT cm.id FROM mdl_course_modules cm
+        JOIN mdl_modules m ON m.id = cm.module
+        LEFT JOIN (
+            SELECT id, name FROM mdl_assign
+            UNION ALL SELECT id, name FROM mdl_resource
+            UNION ALL SELECT id, name FROM mdl_feedback
+            UNION ALL SELECT id, name FROM mdl_quiz
+            UNION ALL SELECT id, name FROM mdl_scorm
+            UNION ALL SELECT id, name FROM mdl_h5pactivity
+            UNION ALL SELECT id, name FROM mdl_bigbluebuttonbn
+            UNION ALL SELECT id, name FROM mdl_page
+            UNION ALL SELECT id, name FROM mdl_url
+            UNION ALL SELECT id, name FROM mdl_book
+            UNION ALL SELECT id, name FROM mdl_lesson
+            UNION ALL SELECT id, name FROM mdl_data
+        ) act ON act.id = cm.instance
+        WHERE cm.course = " . intval($courseid) . "
+        AND act.name IN (" . $excludedNamesQuoted . ")
+    ", null);
+    $excludedByNameSql = !empty($excludedByNameRows)
+        ? implode(',', array_map('intval', array_keys($excludedByNameRows)))
+        : '0';
+
+    // e-learning (hors face2face/folder/smartchfolder et activités exclues par nom)
     $totalElearning = (int) $DB->count_records_sql(
         'SELECT COUNT(cm.id) FROM mdl_course_modules cm
          JOIN mdl_modules m ON m.id = cm.module
          WHERE cm.course = ? AND cm.completion > 0
-         AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\')',
+         AND cm.deletioninprogress = 0
+         AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\')
+         AND cm.id NOT IN (' . $excludedByNameSql . ')',
         [$courseid]
     );
     $finishedElearning = (int) $DB->count_records_sql(
@@ -554,7 +586,9 @@ if (!$userid) {
          JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
          JOIN mdl_modules m ON m.id = cm.module
          WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0
+         AND cm.deletioninprogress = 0
          AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\')
+         AND cm.id NOT IN (' . $excludedByNameSql . ')
          AND cmc.completionstate >= 1',
         [$userid, $courseid]
     );
