@@ -569,19 +569,13 @@ if (countCourseActivities($courseid) == 0) {
 
 
 
-                                    //on va chercher la session en cours
-                                    $useractualsessions = getActualUserSessions($courseid, $USER->id);
-                                    //on va chercher le nombre de tentative sur la session en cours
-                                    $userattempts = getUserQuizAttempts($activity->id, $USER->id, $useractualsessions);
-
-                                    // echo '<script>console.log("Nombre de session totale sur la période: '.count($useractualsessions).'")</script>';
-                                    // echo '<script>console.log("Nombre de tentative sur la période: '.count($userattempts).'")</script>';
-                                    if(count($useractualsessions) > 0){
-                                        //si il y a moins de tentative actuelle que de session en cours
-                                        if(count($userattempts) < count($useractualsessions)){
-                                        } else {
-                                            $urlactivity = "";
-                                        }
+                                    // 1 tentative par inscription : on compare le total des sessions
+                                    // avec le total des tentatives (sans filtre de date).
+                                    // Chaque réinscription (nouveau paiement) crée une nouvelle session
+                                    // dans mdl_smartch_session, débloquant automatiquement une tentative.
+                                    $userattempts = getUserQuizAttempts($activity->id, $USER->id);
+                                    if(count($usertotalsessions) > 0 && count($userattempts) < count($usertotalsessions)){
+                                        // peut passer
                                     } else {
                                         $urlactivity = "";
                                     }
