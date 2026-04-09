@@ -640,7 +640,7 @@ if (!$userid) {
         'title1' => 'Score de ',
         'title2' => $selecteduser->firstname . ' ' . $selecteduser->lastname,
         'timespent' => $timespent,
-        'progress' => getCompletionPourcent($courseid, $selecteduser->id, $group->id),
+        'progress' => ($totalElearning + $totalFace2face) > 0 ? number_format($modulesfinished / ($totalElearning + $totalFace2face) * 100, 2) : 0,
         'modulesfinished' => $modulesfinished,
         'modulestocome' => $modulestocome
     ];
