@@ -2244,31 +2244,20 @@ function checkUserCanPassAttempt($moduleid, $courseid, $userid){
     }
 
     $coursetype = getCourseType($courseid);
-    
+
     //  CORRECTION : On applique la restriction UNIQUEMENT pour les Certifications Fédérales
     if($coursetype == "Certifications Fédérales"){
-        
-        $useractualsessions = [];
-        $userattempts = [];
 
-        //on va chercher la session en cours
-        $useractualsessions = getActualUserSessions($courseid, $userid);
-        //on va chercher le nombre de tentative sur la session en cours
-        $userattempts = getUserQuizAttempts($moduleid, $userid, $useractualsessions);
+        // On compare le nombre total d'inscriptions (sessions) avec le nombre total de tentatives.
+        // Chaque réinscription (nouveau paiement) crée une nouvelle session dans mdl_smartch_session,
+        // ce qui débloque automatiquement une nouvelle tentative sans reset manuel.
+        $usersessions = getUserSessions($courseid, $userid);
+        $userattempts = getUserQuizAttempts($moduleid, $userid);
 
-        echo '<script>console.log("Nombre de session totale sur la période: '.count($useractualsessions).'")</script>';
-        echo '<script>console.log("Nombre de tentative sur la période: '.count($userattempts).'")</script>';
-
-        //si il y a une session en cours
-        if(count($useractualsessions) > 0){
-            //si il y a moins de tentative actuelle que de session en cours
-            if(count($userattempts) < count($useractualsessions)){
-                return true;
-            } else {
-                return false; // A déjà utilisé toutes ses tentatives
-            }
+        if(count($usersessions) > 0 && count($userattempts) < count($usersessions)){
+            return true;
         } else {
-            return false; // Pas de session en cours pour les Certifications Fédérales
+            return false;
         }
     } else {
         // Pour toutes les autres formations (IEFF, etc.), autoriser l'accès
