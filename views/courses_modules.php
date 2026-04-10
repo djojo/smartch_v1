@@ -630,9 +630,8 @@ if (countCourseActivities($courseid) == 0) {
                                                 //on affiche les tentatives
                                                 if($activity->activitytype == "quiz"){
                                                     $content .= $attemptshtml;
-                                                    //on affiche la complétion si la certification est terminé
-                                                    // (il y a plus ou autant de attempts que de session)
-                                                    if(count($useractualsessions) >= count($userattempts)){
+                                                    // Badge "Terminé" uniquement si toutes les sessions sont épuisées
+                                                    if(count($usertotalsessions) > 0 && count($userattempts) >= count($usertotalsessions)){
                                                         $content .= '<div>' . $completion . '</div>';
                                                     }
                                                 } else {
