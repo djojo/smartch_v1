@@ -567,7 +567,7 @@ if (countCourseActivities($courseid) == 0) {
                                         $attemptshtml .= '<div style="padding:5px 10px;margin-left:10px;width:130px;text-align:center;border-radius:5px;">'.$score.'</div>';
                                         $attemptshtml .= '</div>';
 
-
+                                    }
 
                                     // 1 tentative par inscription : on compare le total des sessions
                                     // avec le total des tentatives (sans filtre de date).
@@ -579,16 +579,7 @@ if (countCourseActivities($courseid) == 0) {
                                     } else {
                                         $urlactivity = "";
                                     }
-                                    // //si il y a moins de tentative que de session actuelle
-                                    // // et qu'il ya une session en cours
-                                    // if(count($usertotalsessions) > count($userattempts) && count($useractualsessions) > 0){
-                                    //     //on lui laisse faire une autre tentative
-                                    // } else {
-                                    //     $urlactivity = "";
-                                    // }
-                                    // // $urlactivity = new moodle_url('/mod/' . $activity->activitytype . '/view.php?id=' . $activity->id);
 
-                                }
 
                                 }
                             }
