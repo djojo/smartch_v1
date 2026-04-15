@@ -178,38 +178,97 @@ foreach ($logs as $log) {
 
 $timespent = convert_to_string_time($timetotal);
 
-// même logique que la vue formateur (adminteam.php)
+// Whitelist + exclusion par nom (cohérent avec adminteam.php)
+$trackedActivityTypes = "'scorm','assign','resource','feedback','quiz','page','url','lesson','bigbluebuttonbn','book','data','forum','h5pactivity'";
+$excludedActivityNamesMetrics = ['Dossier de ligue', 'Devoir'];
+$excludedNamesQuoted = implode(',', array_map(function($n) use ($DB) {
+    return "'" . $DB->sql_like_escape($n) . "'";
+}, $excludedActivityNamesMetrics));
+$excludedByNameRows = $DB->get_records_sql("
+    SELECT cm.id FROM mdl_course_modules cm
+    JOIN mdl_modules m ON m.id = cm.module
+    LEFT JOIN (
+        SELECT id, name, 'assign' as acttype FROM mdl_assign
+        UNION ALL SELECT id, name, 'resource' FROM mdl_resource
+        UNION ALL SELECT id, name, 'feedback' FROM mdl_feedback
+        UNION ALL SELECT id, name, 'quiz' FROM mdl_quiz
+        UNION ALL SELECT id, name, 'scorm' FROM mdl_scorm
+        UNION ALL SELECT id, name, 'h5pactivity' FROM mdl_h5pactivity
+        UNION ALL SELECT id, name, 'bigbluebuttonbn' FROM mdl_bigbluebuttonbn
+        UNION ALL SELECT id, name, 'page' FROM mdl_page
+        UNION ALL SELECT id, name, 'url' FROM mdl_url
+        UNION ALL SELECT id, name, 'book' FROM mdl_book
+        UNION ALL SELECT id, name, 'lesson' FROM mdl_lesson
+        UNION ALL SELECT id, name, 'data' FROM mdl_data
+    ) act ON act.id = cm.instance AND act.acttype = m.name
+    WHERE cm.course = " . intval($courseid) . "
+    AND act.name IN (" . $excludedNamesQuoted . ")
+", null);
+$excludedByNameSql = !empty($excludedByNameRows)
+    ? implode(',', array_map('intval', array_keys($excludedByNameRows)))
+    : '0';
+
+// e-learning : whitelist + exclusion par nom + deletioninprogress=0
 $totalElearning = (int) $DB->count_records_sql(
     'SELECT COUNT(cm.id) FROM mdl_course_modules cm
      JOIN mdl_modules m ON m.id = cm.module
      WHERE cm.course = ? AND cm.completion > 0
-     AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\')',
+     AND cm.deletioninprogress = 0
+     AND m.name IN (' . $trackedActivityTypes . ')
+     AND cm.id NOT IN (' . $excludedByNameSql . ')',
     [$courseid]
 );
 $finishedElearning = (int) $DB->count_records_sql(
-    'SELECT COUNT(cmc.id) FROM mdl_course_modules_completion cmc
+    'SELECT COUNT(DISTINCT cm.id) FROM mdl_course_modules_completion cmc
      JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
      JOIN mdl_modules m ON m.id = cm.module
      WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0
-     AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\') AND cmc.completionstate >= 1',
+     AND cm.deletioninprogress = 0
+     AND m.name IN (' . $trackedActivityTypes . ')
+     AND cm.id NOT IN (' . $excludedByNameSql . ')
+     AND cmc.completionstate >= 1',
     [$USER->id, $courseid]
 );
 
-$totalPlannings = 0;
-$finishedPlannings = 0;
+// face2face : MIN(nb_plannings, nb_face2face) par section + completions réelles
+$totalFace2face = 0;
+$finishedFace2face = 0;
 if ($session) {
-    $plannings = $DB->get_records_sql(
-        'SELECT id, startdate FROM mdl_smartch_planning WHERE sessionid = ?',
-        [$session->id]
+    $sectionStats = $DB->get_records_sql(
+        'SELECT sp.sectionid,
+                COUNT(DISTINCT sp.id) as nb_plannings,
+                COUNT(DISTINCT cm.id) as nb_face2face
+         FROM mdl_smartch_planning sp
+         JOIN mdl_course_modules cm ON cm.section = sp.sectionid AND cm.course = ?
+         JOIN mdl_modules m ON m.id = cm.module AND m.name = \'face2face\'
+         WHERE sp.sessionid = ? AND cm.completion > 0
+         GROUP BY sp.sectionid',
+        [$courseid, $session->id]
     );
-    $totalPlannings = count($plannings);
-    foreach ($plannings as $p) {
-        if ($p->startdate < time()) $finishedPlannings++;
+    foreach ($sectionStats as $s) {
+        $totalFace2face += min($s->nb_plannings, $s->nb_face2face);
+    }
+
+    $sectionFinished = $DB->get_records_sql(
+        'SELECT sp.sectionid,
+                COUNT(DISTINCT sp.id) as nb_plannings,
+                COUNT(DISTINCT cm.id) as nb_face2face
+         FROM mdl_smartch_planning sp
+         JOIN mdl_course_modules cm ON cm.section = sp.sectionid AND cm.course = ?
+         JOIN mdl_modules m ON m.id = cm.module AND m.name = \'face2face\'
+         JOIN mdl_course_modules_completion cmc ON cmc.coursemoduleid = cm.id
+              AND cmc.userid = ? AND cmc.completionstate >= 1
+         WHERE sp.sessionid = ? AND cm.completion > 0
+         GROUP BY sp.sectionid',
+        [$courseid, $USER->id, $session->id]
+    );
+    foreach ($sectionFinished as $s) {
+        $finishedFace2face += min($s->nb_plannings, $s->nb_face2face);
     }
 }
 
-$modulesfinished = $finishedElearning + $finishedPlannings;
-$modulestocome = max(0, ($totalElearning + $totalPlannings) - $modulesfinished);
+$modulesfinished = $finishedElearning + $finishedFace2face;
+$modulestocome = max(0, ($totalElearning + $totalFace2face) - $modulesfinished);
 
 $templatecontextstats = (object)[
     'title1' => 'Votre ',
