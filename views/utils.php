@@ -1122,21 +1122,74 @@ ORDER BY u.lastname ASC';
     //on va chercher toutes les activités
     $activities = getCourseActivitiesRapport($course->id);
 
+    // Types d'activités trackés (whitelist — cohérent avec adminteam.php)
+    $trackedActivityTypes = "'scorm','assign','resource','feedback','quiz','page','url','lesson','bigbluebuttonbn','book','data','forum','h5pactivity'";
+    $excludedActivityNamesMetrics = ['Dossier de ligue', 'Devoir'];
+    $excludedNamesQuoted = implode(',', array_map(function($n) use ($DB) {
+        return "'" . $DB->sql_like_escape($n) . "'";
+    }, $excludedActivityNamesMetrics));
+    $excludedByNameRows = $DB->get_records_sql("
+        SELECT cm.id FROM mdl_course_modules cm
+        JOIN mdl_modules m ON m.id = cm.module
+        LEFT JOIN (
+            SELECT id, name, 'assign' as acttype FROM mdl_assign
+            UNION ALL SELECT id, name, 'resource' FROM mdl_resource
+            UNION ALL SELECT id, name, 'feedback' FROM mdl_feedback
+            UNION ALL SELECT id, name, 'quiz' FROM mdl_quiz
+            UNION ALL SELECT id, name, 'scorm' FROM mdl_scorm
+            UNION ALL SELECT id, name, 'h5pactivity' FROM mdl_h5pactivity
+            UNION ALL SELECT id, name, 'bigbluebuttonbn' FROM mdl_bigbluebuttonbn
+            UNION ALL SELECT id, name, 'page' FROM mdl_page
+            UNION ALL SELECT id, name, 'url' FROM mdl_url
+            UNION ALL SELECT id, name, 'book' FROM mdl_book
+            UNION ALL SELECT id, name, 'lesson' FROM mdl_lesson
+            UNION ALL SELECT id, name, 'data' FROM mdl_data
+        ) act ON act.id = cm.instance AND act.acttype = m.name
+        WHERE cm.course = " . intval($course->id) . "
+        AND act.name IN (" . $excludedNamesQuoted . ")
+    ", null);
+    $excludedByNameSql = !empty($excludedByNameRows)
+        ? implode(',', array_map('intval', array_keys($excludedByNameRows)))
+        : '0';
+
     // === BULK LOADING ===
     $completionsMap = [];
     $timespentMap = [];
+    $face2faceCompletionsMap = [];
     $userids = array_keys($groupmembers);
     if (!empty($userids)) {
         $useridlist = implode(',', array_map('intval', $userids));
+        // Completions e-learning : whitelist + exclusion par nom + deletioninprogress=0
         $allcompletions = $DB->get_records_sql('
             SELECT cmc.id, cmc.userid, cmc.coursemoduleid, cmc.completionstate
             FROM mdl_course_modules_completion cmc
             JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
+            JOIN mdl_modules m ON m.id = cm.module
             WHERE cm.course = ' . intval($course->id) . '
+            AND cm.completion > 0
+            AND cm.deletioninprogress = 0
+            AND m.name IN (' . $trackedActivityTypes . ')
+            AND cm.id NOT IN (' . $excludedByNameSql . ')
             AND cmc.userid IN (' . $useridlist . ')
         ', null);
         foreach ($allcompletions as $c) {
             $completionsMap[$c->userid][$c->coursemoduleid] = $c->completionstate;
+        }
+        // Completions face2face par user dans la session
+        if ($session) {
+            $allface2face = $DB->get_records_sql('
+                SELECT cmc.userid, COUNT(DISTINCT cm.id) as nb_completed
+                FROM mdl_course_modules_completion cmc
+                JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
+                JOIN mdl_modules m ON m.id = cm.module AND m.name = \'face2face\'
+                JOIN mdl_smartch_planning sp ON sp.sectionid = cm.section AND sp.sessionid = ?
+                WHERE cm.course = ? AND cm.completion > 0 AND cmc.completionstate >= 1
+                AND cmc.userid IN (' . $useridlist . ')
+                GROUP BY cmc.userid
+            ', [$session->id, $course->id]);
+            foreach ($allface2face as $f) {
+                $face2faceCompletionsMap[$f->userid] = (int) $f->nb_completed;
+            }
         }
         $alltimespent = $DB->get_records_sql('
             SELECT userid, SUM(timespent) as total
@@ -1149,10 +1202,35 @@ ORDER BY u.lastname ASC';
             $timespentMap[$t->userid] = $t->total;
         }
     }
-    $totalModulesWithCompletion = $DB->count_records_sql('
+    // Total e-learning : whitelist + exclusion par nom + deletioninprogress=0
+    $totalElearningWithCompletion = (int) $DB->count_records_sql('
         SELECT COUNT(cm.id) FROM mdl_course_modules cm
-        WHERE cm.course = ' . intval($course->id) . ' AND cm.completion > 0
+        JOIN mdl_modules m ON m.id = cm.module
+        WHERE cm.course = ' . intval($course->id) . '
+        AND cm.completion > 0
+        AND cm.deletioninprogress = 0
+        AND m.name IN (' . $trackedActivityTypes . ')
+        AND cm.id NOT IN (' . $excludedByNameSql . ')
     ', null);
+    // Total face2face : MIN(nb_plannings, nb_face2face) par section
+    $totalFace2faceSession = 0;
+    if ($session) {
+        $sectionStats = $DB->get_records_sql(
+            'SELECT sp.sectionid,
+                    COUNT(DISTINCT sp.id) as nb_plannings,
+                    COUNT(DISTINCT cm.id) as nb_face2face
+             FROM mdl_smartch_planning sp
+             JOIN mdl_course_modules cm ON cm.section = sp.sectionid AND cm.course = ?
+             JOIN mdl_modules m ON m.id = cm.module AND m.name = \'face2face\'
+             WHERE sp.sessionid = ? AND cm.completion > 0
+             GROUP BY sp.sectionid',
+            [$course->id, $session->id]
+        );
+        foreach ($sectionStats as $s) {
+            $totalFace2faceSession += min($s->nb_plannings, $s->nb_face2face);
+        }
+    }
+    $totalModulesWithCompletion = $totalElearningWithCompletion + $totalFace2faceSession;
     $planningsMap = [];
     if ($session) {
         $allplannings = $DB->get_records_sql('
@@ -1313,10 +1391,12 @@ ORDER BY u.lastname ASC';
 
         $membertable = [];
 
-        // Calcul depuis le cache préchargé
+        // Calcul progression : e-learning + face2face par user (cohérent avec adminteam.php)
         if ($totalModulesWithCompletion > 0) {
             $userCompletions = isset($completionsMap[$groupmember->id]) ? $completionsMap[$groupmember->id] : [];
-            $completedCount = count(array_filter($userCompletions, function($state) { return $state >= 1; }));
+            $completedElearning = count(array_filter($userCompletions, function($state) { return $state >= 1; }));
+            $completedFace2face = isset($face2faceCompletionsMap[$groupmember->id]) ? $face2faceCompletionsMap[$groupmember->id] : 0;
+            $completedCount = $completedElearning + min($completedFace2face, $totalFace2faceSession);
             $progression = number_format($completedCount / $totalModulesWithCompletion * 100, 2) . '%';
         } else {
             $progression = '0%';
@@ -1375,7 +1455,9 @@ ORDER BY u.lastname ASC';
         $allprog = 0;
         foreach ($groupmembers as $gm) {
             $userCompletions = isset($completionsMap[$gm->id]) ? $completionsMap[$gm->id] : [];
-            $completedCount = count(array_filter($userCompletions, function($state) { return $state >= 1; }));
+            $completedElearning = count(array_filter($userCompletions, function($state) { return $state >= 1; }));
+            $completedFace2face = isset($face2faceCompletionsMap[$gm->id]) ? $face2faceCompletionsMap[$gm->id] : 0;
+            $completedCount = $completedElearning + min($completedFace2face, $totalFace2faceSession);
             $allprog += $completedCount / $totalModulesWithCompletion * 100;
         }
         $teamProgressStr = floor($allprog / count($groupmembers)) . '%';
@@ -1461,23 +1543,76 @@ ORDER BY u.lastname ASC';
     //on va chercher toutes les activités
     $activities = getCourseActivitiesRapport($course->id);
 
+    // Types d'activités trackés (whitelist — cohérent avec adminteam.php)
+    $trackedActivityTypes = "'scorm','assign','resource','feedback','quiz','page','url','lesson','bigbluebuttonbn','book','data','forum','h5pactivity'";
+    $excludedActivityNamesMetrics = ['Dossier de ligue', 'Devoir'];
+    $excludedNamesQuoted = implode(',', array_map(function($n) use ($DB) {
+        return "'" . $DB->sql_like_escape($n) . "'";
+    }, $excludedActivityNamesMetrics));
+    $excludedByNameRows = $DB->get_records_sql("
+        SELECT cm.id FROM mdl_course_modules cm
+        JOIN mdl_modules m ON m.id = cm.module
+        LEFT JOIN (
+            SELECT id, name, 'assign' as acttype FROM mdl_assign
+            UNION ALL SELECT id, name, 'resource' FROM mdl_resource
+            UNION ALL SELECT id, name, 'feedback' FROM mdl_feedback
+            UNION ALL SELECT id, name, 'quiz' FROM mdl_quiz
+            UNION ALL SELECT id, name, 'scorm' FROM mdl_scorm
+            UNION ALL SELECT id, name, 'h5pactivity' FROM mdl_h5pactivity
+            UNION ALL SELECT id, name, 'bigbluebuttonbn' FROM mdl_bigbluebuttonbn
+            UNION ALL SELECT id, name, 'page' FROM mdl_page
+            UNION ALL SELECT id, name, 'url' FROM mdl_url
+            UNION ALL SELECT id, name, 'book' FROM mdl_book
+            UNION ALL SELECT id, name, 'lesson' FROM mdl_lesson
+            UNION ALL SELECT id, name, 'data' FROM mdl_data
+        ) act ON act.id = cm.instance AND act.acttype = m.name
+        WHERE cm.course = " . intval($course->id) . "
+        AND act.name IN (" . $excludedNamesQuoted . ")
+    ", null);
+    $excludedByNameSql = !empty($excludedByNameRows)
+        ? implode(',', array_map('intval', array_keys($excludedByNameRows)))
+        : '0';
+
     // === BULK LOADING pour éviter N×M requêtes SQL ===
     $completionsMap = [];
     $timespentMap = [];
+    $face2faceCompletionsMap = [];
     $userids = array_keys($groupmembers);
     if (!empty($userids)) {
         $useridlist = implode(',', array_map('intval', $userids));
 
-        // Toutes les completions en une requête
+        // Completions e-learning : whitelist + exclusion par nom + deletioninprogress=0
         $allcompletions = $DB->get_records_sql('
             SELECT cmc.id, cmc.userid, cmc.coursemoduleid, cmc.completionstate
             FROM mdl_course_modules_completion cmc
             JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
+            JOIN mdl_modules m ON m.id = cm.module
             WHERE cm.course = ' . intval($course->id) . '
+            AND cm.completion > 0
+            AND cm.deletioninprogress = 0
+            AND m.name IN (' . $trackedActivityTypes . ')
+            AND cm.id NOT IN (' . $excludedByNameSql . ')
             AND cmc.userid IN (' . $useridlist . ')
         ', null);
         foreach ($allcompletions as $c) {
             $completionsMap[$c->userid][$c->coursemoduleid] = $c->completionstate;
+        }
+
+        // Completions face2face par user dans la session
+        if ($session) {
+            $allface2face = $DB->get_records_sql('
+                SELECT cmc.userid, COUNT(DISTINCT cm.id) as nb_completed
+                FROM mdl_course_modules_completion cmc
+                JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
+                JOIN mdl_modules m ON m.id = cm.module AND m.name = \'face2face\'
+                JOIN mdl_smartch_planning sp ON sp.sectionid = cm.section AND sp.sessionid = ?
+                WHERE cm.course = ? AND cm.completion > 0 AND cmc.completionstate >= 1
+                AND cmc.userid IN (' . $useridlist . ')
+                GROUP BY cmc.userid
+            ', [$session->id, $course->id]);
+            foreach ($allface2face as $f) {
+                $face2faceCompletionsMap[$f->userid] = (int) $f->nb_completed;
+            }
         }
 
         // Tout le temps passé en une requête
@@ -1493,13 +1628,37 @@ ORDER BY u.lastname ASC';
         }
     }
 
-    // Nombre total de modules avec completion tracking
-    $totalModulesWithCompletion = $DB->count_records_sql('
+    // Total e-learning : whitelist + exclusion par nom + deletioninprogress=0
+    $totalElearningWithCompletion = (int) $DB->count_records_sql('
         SELECT COUNT(cm.id)
         FROM mdl_course_modules cm
+        JOIN mdl_modules m ON m.id = cm.module
         WHERE cm.course = ' . intval($course->id) . '
         AND cm.completion > 0
+        AND cm.deletioninprogress = 0
+        AND m.name IN (' . $trackedActivityTypes . ')
+        AND cm.id NOT IN (' . $excludedByNameSql . ')
     ', null);
+    // Total face2face : MIN(nb_plannings, nb_face2face) par section
+    $totalFace2faceSession = 0;
+    if ($session) {
+        $sectionStats = $DB->get_records_sql(
+            'SELECT sp.sectionid,
+                    COUNT(DISTINCT sp.id) as nb_plannings,
+                    COUNT(DISTINCT cm.id) as nb_face2face
+             FROM mdl_smartch_planning sp
+             JOIN mdl_course_modules cm ON cm.section = sp.sectionid AND cm.course = ?
+             JOIN mdl_modules m ON m.id = cm.module AND m.name = \'face2face\'
+             WHERE sp.sessionid = ? AND cm.completion > 0
+             GROUP BY sp.sectionid',
+            [$course->id, $session->id]
+        );
+        foreach ($sectionStats as $s) {
+            $totalFace2faceSession += min($s->nb_plannings, $s->nb_face2face);
+        }
+    }
+    // Nombre total de modules avec completion tracking
+    $totalModulesWithCompletion = $totalElearningWithCompletion + $totalFace2faceSession;
 
     // Préchargement plannings
     $planningsMap = [];
@@ -1679,10 +1838,12 @@ ORDER BY u.lastname ASC';
 
         $membertable = [];
 
-        // Calcul progression depuis le cache préchargé
+        // Calcul progression : e-learning + face2face par user (cohérent avec adminteam.php)
         if ($totalModulesWithCompletion > 0) {
             $userCompletions = isset($completionsMap[$groupmember->id]) ? $completionsMap[$groupmember->id] : [];
-            $completedCount = count(array_filter($userCompletions, function($state) { return $state >= 1; }));
+            $completedElearning = count(array_filter($userCompletions, function($state) { return $state >= 1; }));
+            $completedFace2face = isset($face2faceCompletionsMap[$groupmember->id]) ? $face2faceCompletionsMap[$groupmember->id] : 0;
+            $completedCount = $completedElearning + min($completedFace2face, $totalFace2faceSession);
             $progression = number_format($completedCount / $totalModulesWithCompletion * 100, 2) . '%';
         } else {
             $progression = '0%';
@@ -1752,7 +1913,9 @@ ORDER BY u.lastname ASC';
         $allprog = 0;
         foreach ($groupmembers as $gm) {
             $userCompletions = isset($completionsMap[$gm->id]) ? $completionsMap[$gm->id] : [];
-            $completedCount = count(array_filter($userCompletions, function($state) { return $state >= 1; }));
+            $completedElearning = count(array_filter($userCompletions, function($state) { return $state >= 1; }));
+            $completedFace2face = isset($face2faceCompletionsMap[$gm->id]) ? $face2faceCompletionsMap[$gm->id] : 0;
+            $completedCount = $completedElearning + min($completedFace2face, $totalFace2faceSession);
             $allprog += $completedCount / $totalModulesWithCompletion * 100;
         }
         $teamProgressStr = floor($allprog / count($groupmembers)) . '%';
