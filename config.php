@@ -31,7 +31,7 @@ $THEME->name = 'remui';
 $THEME->editor_sheets = [];
 $THEME->editor_scss = ['editor'];
 // $THEME->usefallback = true;
-$THEME->scss = "./preset/remui";
+// $THEME->scss = "./preset/remui"; // disabled: scssphp fails on imports, use precompiled CSS
 // $THEME->scss = function($theme) {
 //     return theme_remui_get_main_scss_content($theme);
 // };
