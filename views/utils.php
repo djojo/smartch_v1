@@ -2861,69 +2861,92 @@ function getModulesStatus($courseid, $sessionid = null, $userid = null)
         $userid = $USER->id;
     }
 
-    //les activités 
-    $activities = getCourseActivitiesStats($courseid);
-    
-    $complete = 0;
-    foreach ($activities as $activity) {
-        if ($activity->id) {
-            $query = 'SELECT cmc.id, cmc.completionstate
-            FROM mdl_course_modules_completion cmc
-            WHERE cmc.userid = ' . $userid . ' AND cmc.coursemoduleid = ' . $activity->id;
-            $arr = $DB->get_records_sql($query, null);
-            $arrobject = reset($arr);
-            if ($arrobject) {
-                if ($arrobject->completionstate >= 1) {
-                    // L'activité est complétée
-                    $complete++;
-                }
-            }
-        }
-    }
+    $trackedActivityTypes = "'scorm','assign','resource','feedback','quiz','page','url','lesson','bigbluebuttonbn','book','data','forum','h5pactivity'";
+    $excludedActivityNames = ['Dossier de ligue', 'Devoir'];
+    $excludedNamesQuoted = implode(',', array_map(function($n) use ($DB) {
+        return "'" . $DB->sql_like_escape($n) . "'";
+    }, $excludedActivityNames));
+    $excludedByNameRows = $DB->get_records_sql("
+        SELECT cm.id FROM mdl_course_modules cm
+        JOIN mdl_modules m ON m.id = cm.module
+        LEFT JOIN (
+            SELECT id, name, 'assign' as acttype FROM mdl_assign
+            UNION ALL SELECT id, name, 'resource' FROM mdl_resource
+            UNION ALL SELECT id, name, 'feedback' FROM mdl_feedback
+            UNION ALL SELECT id, name, 'quiz' FROM mdl_quiz
+            UNION ALL SELECT id, name, 'scorm' FROM mdl_scorm
+            UNION ALL SELECT id, name, 'h5pactivity' FROM mdl_h5pactivity
+            UNION ALL SELECT id, name, 'bigbluebuttonbn' FROM mdl_bigbluebuttonbn
+            UNION ALL SELECT id, name, 'page' FROM mdl_page
+            UNION ALL SELECT id, name, 'url' FROM mdl_url
+            UNION ALL SELECT id, name, 'book' FROM mdl_book
+            UNION ALL SELECT id, name, 'lesson' FROM mdl_lesson
+            UNION ALL SELECT id, name, 'data' FROM mdl_data
+        ) act ON act.id = cm.instance AND act.acttype = m.name
+        WHERE cm.course = " . intval($courseid) . "
+        AND act.name IN (" . $excludedNamesQuoted . ")
+    ", null);
+    $excludedByNameSql = !empty($excludedByNameRows)
+        ? implode(',', array_map('intval', array_keys($excludedByNameRows)))
+        : '0';
 
-    $totalactivities = count($activities);
-    
+    $totalactivities = (int) $DB->count_records_sql(
+        'SELECT COUNT(cm.id) FROM mdl_course_modules cm
+         JOIN mdl_modules m ON m.id = cm.module
+         WHERE cm.course = ? AND cm.completion > 0
+         AND cm.deletioninprogress = 0
+         AND m.name IN (' . $trackedActivityTypes . ')
+         AND cm.id NOT IN (' . $excludedByNameSql . ')',
+        [$courseid]
+    );
+    $complete = (int) $DB->count_records_sql(
+        'SELECT COUNT(DISTINCT cm.id) FROM mdl_course_modules_completion cmc
+         JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
+         JOIN mdl_modules m ON m.id = cm.module
+         WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0
+         AND cm.deletioninprogress = 0
+         AND m.name IN (' . $trackedActivityTypes . ')
+         AND cm.id NOT IN (' . $excludedByNameSql . ')
+         AND cmc.completionstate >= 1',
+        [$userid, $courseid]
+    );
+
     if ($sessionid) {
-        //on va chercher les plannings
-        global $DB;
-        $plannings = $DB->get_records_sql('SELECT DISTINCT sp.id, sp.sectionid, sp.startdate, sp.enddate, sp.geforplanningid
-            FROM mdl_smartch_planning sp
-            JOIN mdl_smartch_session ss ON ss.id = sp.sessionid
-            JOIN mdl_groups g ON g.id = ss.groupid
-            JOIN mdl_course c ON c.id = g.courseid
-            WHERE c.id = ' . $courseid . ' AND sp.sessionid = ' . $sessionid . '
-            ORDER BY sp.startdate ASC', null);
-
-        
-
-        $planningactivities = 0;
-        $planningcomplete = 0;
-        foreach ($plannings as $planning) {
-            
-            $planningactivities++;
-            if ($planning->startdate < time()) {
-                $planningcomplete++;
-            }
+        $sectionStats = $DB->get_records_sql(
+            'SELECT sp.sectionid,
+                    COUNT(DISTINCT sp.id) as nb_plannings,
+                    COUNT(DISTINCT cm.id) as nb_face2face
+             FROM mdl_smartch_planning sp
+             JOIN mdl_course_modules cm ON cm.section = sp.sectionid AND cm.course = ?
+             JOIN mdl_modules m ON m.id = cm.module AND m.name = \'face2face\'
+             WHERE sp.sessionid = ? AND cm.completion > 0
+             GROUP BY sp.sectionid',
+            [$courseid, $sessionid]
+        );
+        foreach ($sectionStats as $s) {
+            $totalactivities += min($s->nb_plannings, $s->nb_face2face);
         }
 
-        //on va chercher le nombre d'activités de type planning dans le ruban
-        $activitiesplanning = getCourseActivitiesPlanningStats($courseid);
-        //on compte le nombre maximum d'activité planning qu'on peut rajouter
-        if($planningactivities > count($activitiesplanning)){
-            $planningactivities = count($activitiesplanning);
+        $sectionFinished = $DB->get_records_sql(
+            'SELECT sp.sectionid,
+                    COUNT(DISTINCT sp.id) as nb_plannings,
+                    COUNT(DISTINCT cm.id) as nb_face2face
+             FROM mdl_smartch_planning sp
+             JOIN mdl_course_modules cm ON cm.section = sp.sectionid AND cm.course = ?
+             JOIN mdl_modules m ON m.id = cm.module AND m.name = \'face2face\'
+             JOIN mdl_course_modules_completion cmc ON cmc.coursemoduleid = cm.id
+                  AND cmc.userid = ? AND cmc.completionstate >= 1
+             WHERE sp.sessionid = ? AND cm.completion > 0
+             GROUP BY sp.sectionid',
+            [$courseid, $userid, $sessionid]
+        );
+        foreach ($sectionFinished as $s) {
+            $complete += min($s->nb_plannings, $s->nb_face2face);
         }
-        //si le nombre de planning est le meme que que le ruban
-        if(count($plannings) == count($activitiesplanning)){
-            $complete += $planningcomplete;
-        }
-        $totalactivities += $planningactivities;
     }
 
     $modulesfinished = $complete;
-    $modulestocome = $totalactivities - $modulesfinished;
-    if($modulestocome < 0){
-        $modulestocome = 0;
-    }
+    $modulestocome = max(0, $totalactivities - $modulesfinished);
 
     return array($modulesfinished, $modulestocome);
 }

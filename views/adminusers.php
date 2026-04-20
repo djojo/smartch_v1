@@ -188,7 +188,7 @@ $users = $DB->get_records_sql($queryusers, null);
 // $users = $DB->get_recordset_sql($queryusers, null);
 // var_dump($users);
 
-$allusers = $DB->get_records('user', null);
+// $allusers = $DB->get_records('user', null); // supprimé : charge 68K users inutilement
 
 $result = $DB->get_records_sql($total_pages_sql, null);
 $total_rows = reset($result)->count;
