@@ -67,11 +67,10 @@ trait get_smartch_stats
         $activitiesdue = 0;
         $totalactivities = 0;
 
-        $querycourses = 'SELECT c.id, c.fullname FROM mdl_course c
-            JOIN mdl_role_assignments ra ON ra.userid = ' . $USER->id . '
-            JOIN mdl_context ct ON ct.id = ra.contextid AND c.id = ct.instanceid
-            JOIN mdl_role r ON r.id = ra.roleid
-            WHERE c.format != "site" AND c.visible = 1';
+        $querycourses = 'SELECT DISTINCT c.id, c.fullname FROM mdl_course c
+            JOIN mdl_user_enrolments ue ON ue.userid = ' . $USER->id . '
+            JOIN mdl_enrol e ON e.id = ue.enrolid AND e.courseid = c.id
+            WHERE c.format != "site" AND c.visible = 1 AND ue.status = 0';
         $courses = $DB->get_records_sql($querycourses, null);
 
         foreach ($courses as $key => $course) {
@@ -79,20 +78,20 @@ trait get_smartch_stats
             $totalactivities += (int) $DB->count_records_sql(
                 'SELECT COUNT(cm.id) FROM mdl_course_modules cm
                  JOIN mdl_modules m ON m.id = cm.module
-                 WHERE cm.course = ? AND cm.completion > 0
+                 WHERE cm.course = ? AND cm.completion > 0 AND cm.deletioninprogress = 0
                  AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\')',
                 [$course->id]
             );
             $activitiescomplete += (int) $DB->count_records_sql(
-                'SELECT COUNT(cmc.id) FROM mdl_course_modules_completion cmc
+                'SELECT COUNT(DISTINCT cmc.coursemoduleid) FROM mdl_course_modules_completion cmc
                  JOIN mdl_course_modules cm ON cm.id = cmc.coursemoduleid
                  JOIN mdl_modules m ON m.id = cm.module
-                 WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0
+                 WHERE cmc.userid = ? AND cm.course = ? AND cm.completion > 0 AND cm.deletioninprogress = 0
                  AND m.name NOT IN (\'face2face\', \'folder\', \'smartchfolder\') AND cmc.completionstate >= 1',
                 [$USER->id, $course->id]
             );
 
-            // séances présentielles
+            // séances présentielles : MIN(plannings, face2face complétés) par section
             $group = $DB->get_record_sql(
                 'SELECT g.id FROM mdl_groups g
                  JOIN mdl_groups_members gm ON gm.groupid = g.id
@@ -102,13 +101,36 @@ trait get_smartch_stats
             if ($group) {
                 $session = $DB->get_record('smartch_session', ['groupid' => $group->id]);
                 if ($session) {
-                    $plannings = $DB->get_records_sql(
-                        'SELECT id, startdate FROM mdl_smartch_planning WHERE sessionid = ?',
-                        [$session->id]
+                    $sectionStats = $DB->get_records_sql(
+                        'SELECT sp.sectionid,
+                                COUNT(DISTINCT sp.id) as nb_plannings,
+                                COUNT(DISTINCT cm.id) as nb_face2face
+                         FROM mdl_smartch_planning sp
+                         JOIN mdl_course_modules cm ON cm.section = sp.sectionid AND cm.course = ?
+                         JOIN mdl_modules m ON m.id = cm.module AND m.name = \'face2face\'
+                         WHERE sp.sessionid = ? AND cm.completion > 0
+                         GROUP BY sp.sectionid',
+                        [$course->id, $session->id]
                     );
-                    $totalactivities += count($plannings);
-                    foreach ($plannings as $planning) {
-                        if ($planning->startdate < time()) $activitiescomplete++;
+                    foreach ($sectionStats as $s) {
+                        $totalactivities += min($s->nb_plannings, $s->nb_face2face);
+                    }
+
+                    $sectionDone = $DB->get_records_sql(
+                        'SELECT sp.sectionid,
+                                COUNT(DISTINCT sp.id) as nb_plannings,
+                                COUNT(DISTINCT cm.id) as nb_face2face
+                         FROM mdl_smartch_planning sp
+                         JOIN mdl_course_modules cm ON cm.section = sp.sectionid AND cm.course = ?
+                         JOIN mdl_modules m ON m.id = cm.module AND m.name = \'face2face\'
+                         JOIN mdl_course_modules_completion cmc ON cmc.coursemoduleid = cm.id
+                              AND cmc.userid = ? AND cmc.completionstate >= 1
+                         WHERE sp.sessionid = ? AND cm.completion > 0
+                         GROUP BY sp.sectionid',
+                        [$course->id, $USER->id, $session->id]
+                    );
+                    foreach ($sectionDone as $s) {
+                        $activitiescomplete += min($s->nb_plannings, $s->nb_face2face);
                     }
                 }
             }
