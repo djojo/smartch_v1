@@ -47,34 +47,39 @@ class mod_quiz_renderer extends \mod_quiz_renderer {
         $courseid = $cm->course;
         $quizid   = $cm->instance;
 
-        // Find the most recently joined session-group for this user in this course.
-        // Each session = one unique group (mdl_groups.id). We use gm.timeadded
-        // as the boundary: an attempt is "for" this session if timestart >= timeadded.
-        // groupid DESC breaks ties when two groups are added in the same second.
-        $latestgroup = $DB->get_record_sql(
-            'SELECT gm.groupid, gm.timeadded
-             FROM {groups_members} gm
+        // Check if user belongs to any session-group for this course.
+        $hasanygroup = $DB->record_exists_sql(
+            'SELECT 1 FROM {groups_members} gm
              JOIN {groups} g ON g.id = gm.groupid
              JOIN {smartch_session} ss ON ss.groupid = g.id
-             WHERE gm.userid = :userid AND g.courseid = :courseid
-             ORDER BY gm.timeadded DESC, gm.groupid DESC
-             LIMIT 1',
+             WHERE gm.userid = :userid AND g.courseid = :courseid',
             ['userid' => $USER->id, 'courseid' => $courseid]
         );
 
-        if (!$latestgroup) {
+        if (!$hasanygroup) {
             return parent::start_attempt_button($buttontext, $url, $preflightcheckform, $popuprequired, $popupoptions);
         }
 
-        // Check if user already has a non-abandoned attempt since joining this session-group.
-        $hasattempt = $DB->record_exists_sql(
-            "SELECT 1 FROM {quiz_attempts}
+        // Find the timefinish of the last submitted attempt for this quiz.
+        $lastfinish = (int)$DB->get_field_sql(
+            "SELECT MAX(timefinish) FROM {quiz_attempts}
              WHERE userid = :userid AND quiz = :quizid
-               AND state <> 'abandoned' AND timefinish > 0 AND timestart >= :since",
-            ['userid' => $USER->id, 'quizid' => $quizid, 'since' => (int)$latestgroup->timeadded]
+               AND state <> 'abandoned' AND timefinish > 0",
+            ['userid' => $USER->id, 'quizid' => $quizid]
         );
 
-        if ($hasattempt) {
+        // Count session-groups added AFTER the last submitted attempt.
+        // Each new group = one new allowed attempt.
+        $newgroups = $DB->count_records_sql(
+            'SELECT COUNT(*) FROM {groups_members} gm
+             JOIN {groups} g ON g.id = gm.groupid
+             JOIN {smartch_session} ss ON ss.groupid = g.id
+             WHERE gm.userid = :userid AND g.courseid = :courseid
+               AND gm.timeadded > :since',
+            ['userid' => $USER->id, 'courseid' => $courseid, 'since' => $lastfinish]
+        );
+
+        if ($newgroups === 0) {
             return '<div class="smartch-quiz-attempt-done" style="
                         background: #f0f4ff;
                         border-left: 4px solid #004687;
