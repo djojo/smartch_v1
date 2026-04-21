@@ -70,7 +70,7 @@ class mod_quiz_renderer extends \mod_quiz_renderer {
         $hasattempt = $DB->record_exists_sql(
             "SELECT 1 FROM {quiz_attempts}
              WHERE userid = :userid AND quiz = :quizid
-               AND state <> 'abandoned' AND timestart >= :since",
+               AND state <> 'abandoned' AND timefinish > 0 AND timestart >= :since",
             ['userid' => $USER->id, 'quizid' => $quizid, 'since' => (int)$latestgroup->timeadded]
         );
 
