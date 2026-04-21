@@ -36,35 +36,45 @@ class mod_quiz_renderer extends \mod_quiz_renderer {
      * Override start attempt button: only 1 attempt per enrollment.
      * On re-enrollment, the latest enrollment date resets the counter.
      */
-    public function start_attempt_button($buttontext, \moodle_url $url, $backtoattempturl = null) {
+    public function start_attempt_button($buttontext, \moodle_url $url, ?\mod_quiz_preflight_check_form $preflightcheckform = null, $popuprequired = false, $popupoptions = null) {
         global $DB, $USER, $PAGE;
 
         $cm = $PAGE->cm;
         if (!$cm) {
-            return parent::start_attempt_button($buttontext, $url, $backtoattempturl);
+            return parent::start_attempt_button($buttontext, $url, $preflightcheckform, $popuprequired, $popupoptions);
         }
 
         $courseid = $cm->course;
         $quizid   = $cm->instance;
 
-        // Latest enrollment date for this user in this course
-        $enrolrow = $DB->get_record_sql(
-            'SELECT MAX(ue.timecreated) as latest
-             FROM mdl_user_enrolments ue
-             JOIN mdl_enrol e ON e.id = ue.enrolid
-             WHERE ue.userid = ? AND e.courseid = ?',
-            [$USER->id, $courseid]
-        );
-        $since = ($enrolrow && $enrolrow->latest) ? (int)$enrolrow->latest : 0;
-
-        // Count non-abandoned attempts started after latest enrollment
-        $attempts = (int)$DB->count_records_sql(
-            "SELECT COUNT(*) FROM mdl_quiz_attempts
-             WHERE userid = ? AND quiz = ? AND state <> 'abandoned' AND timestart >= ?",
-            [$USER->id, $quizid, $since]
+        // Find the most recently joined session-group for this user in this course.
+        // Each session = one unique group (mdl_groups.id). We use gm.timeadded
+        // as the boundary: an attempt is "for" this session if timestart >= timeadded.
+        // groupid DESC breaks ties when two groups are added in the same second.
+        $latestgroup = $DB->get_record_sql(
+            'SELECT gm.groupid, gm.timeadded
+             FROM {groups_members} gm
+             JOIN {groups} g ON g.id = gm.groupid
+             JOIN {smartch_session} ss ON ss.groupid = g.id
+             WHERE gm.userid = :userid AND g.courseid = :courseid
+             ORDER BY gm.timeadded DESC, gm.groupid DESC
+             LIMIT 1',
+            ['userid' => $USER->id, 'courseid' => $courseid]
         );
 
-        if ($attempts >= 1) {
+        if (!$latestgroup) {
+            return parent::start_attempt_button($buttontext, $url, $preflightcheckform, $popuprequired, $popupoptions);
+        }
+
+        // Check if user already has a non-abandoned attempt since joining this session-group.
+        $hasattempt = $DB->record_exists_sql(
+            "SELECT 1 FROM {quiz_attempts}
+             WHERE userid = :userid AND quiz = :quizid
+               AND state <> 'abandoned' AND timestart >= :since",
+            ['userid' => $USER->id, 'quizid' => $quizid, 'since' => (int)$latestgroup->timeadded]
+        );
+
+        if ($hasattempt) {
             return '<div class="smartch-quiz-attempt-done" style="
                         background: #f0f4ff;
                         border-left: 4px solid #004687;
@@ -88,7 +98,7 @@ class mod_quiz_renderer extends \mod_quiz_renderer {
                     </div>';
         }
 
-        return parent::start_attempt_button($buttontext, $url, $backtoattempturl);
+        return parent::start_attempt_button($buttontext, $url, $preflightcheckform, $popuprequired, $popupoptions);
     }
 
     /**
