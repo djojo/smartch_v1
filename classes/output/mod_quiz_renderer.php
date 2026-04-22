@@ -37,7 +37,7 @@ class mod_quiz_renderer extends \mod_quiz_renderer {
      * On re-enrollment, the latest enrollment date resets the counter.
      */
     public function start_attempt_button($buttontext, \moodle_url $url, ?\mod_quiz_preflight_check_form $preflightcheckform = null, $popuprequired = false, $popupoptions = null) {
-        global $DB, $USER, $PAGE;
+        global $DB, $USER, $PAGE, $SESSION;
 
         $cm = $PAGE->cm;
         if (!$cm) {
@@ -47,39 +47,48 @@ class mod_quiz_renderer extends \mod_quiz_renderer {
         $courseid = $cm->course;
         $quizid   = $cm->instance;
 
-        // Check if user belongs to any session-group for this course.
-        $hasanygroup = $DB->record_exists_sql(
-            'SELECT 1 FROM {groups_members} gm
-             JOIN {groups} g ON g.id = gm.groupid
-             JOIN {smartch_session} ss ON ss.groupid = g.id
-             WHERE gm.userid = :userid AND g.courseid = :courseid',
-            ['userid' => $USER->id, 'courseid' => $courseid]
-        );
+        // Determine which session-group to check against.
+        // formation.php stores the current sessionid in $SESSION when the user navigates from it.
+        $sessiongroup = null;
+        $sessionid = isset($SESSION->smartch_current_sessionid) ? (int)$SESSION->smartch_current_sessionid : 0;
+        if ($sessionid > 0) {
+            $sessiongroup = $DB->get_record_sql(
+                'SELECT gm.groupid, gm.timeadded
+                 FROM {groups_members} gm
+                 JOIN {groups} g ON g.id = gm.groupid
+                 JOIN {smartch_session} ss ON ss.groupid = g.id
+                 WHERE gm.userid = :userid AND g.courseid = :courseid AND ss.id = :sessionid',
+                ['userid' => $USER->id, 'courseid' => $courseid, 'sessionid' => $sessionid]
+            );
+        }
 
-        if (!$hasanygroup) {
+        // Fallback: use the most recently joined session-group.
+        if (!$sessiongroup) {
+            $sessiongroup = $DB->get_record_sql(
+                'SELECT gm.groupid, gm.timeadded
+                 FROM {groups_members} gm
+                 JOIN {groups} g ON g.id = gm.groupid
+                 JOIN {smartch_session} ss ON ss.groupid = g.id
+                 WHERE gm.userid = :userid AND g.courseid = :courseid
+                 ORDER BY gm.timeadded DESC, gm.groupid DESC
+                 LIMIT 1',
+                ['userid' => $USER->id, 'courseid' => $courseid]
+            );
+        }
+
+        if (!$sessiongroup) {
             return parent::start_attempt_button($buttontext, $url, $preflightcheckform, $popuprequired, $popupoptions);
         }
 
-        // Find the timefinish of the last submitted attempt for this quiz.
-        $lastfinish = (int)$DB->get_field_sql(
-            "SELECT MAX(timefinish) FROM {quiz_attempts}
+        // Block if user already has a submitted attempt since joining this specific session-group.
+        $hasattempt = $DB->record_exists_sql(
+            "SELECT 1 FROM {quiz_attempts}
              WHERE userid = :userid AND quiz = :quizid
-               AND state <> 'abandoned' AND timefinish > 0",
-            ['userid' => $USER->id, 'quizid' => $quizid]
+               AND state <> 'abandoned' AND timefinish > 0 AND timestart >= :since",
+            ['userid' => $USER->id, 'quizid' => $quizid, 'since' => (int)$sessiongroup->timeadded]
         );
 
-        // Count session-groups added AFTER the last submitted attempt.
-        // Each new group = one new allowed attempt.
-        $newgroups = $DB->count_records_sql(
-            'SELECT COUNT(*) FROM {groups_members} gm
-             JOIN {groups} g ON g.id = gm.groupid
-             JOIN {smartch_session} ss ON ss.groupid = g.id
-             WHERE gm.userid = :userid AND g.courseid = :courseid
-               AND gm.timeadded > :since',
-            ['userid' => $USER->id, 'courseid' => $courseid, 'since' => $lastfinish]
-        );
-
-        if ($newgroups === 0) {
+        if ($hasattempt) {
             return '<div class="smartch-quiz-attempt-done" style="
                         background: #f0f4ff;
                         border-left: 4px solid #004687;

@@ -29,6 +29,13 @@ $userid = optional_param('userid', '', PARAM_INT);
 $sectionid = optional_param('sectionid', null, PARAM_INT);
 $messagesent = optional_param('messagesent', null, PARAM_TEXT);
 
+// Store current sessionid in Moodle session so the quiz renderer can apply per-session attempt limits.
+$urlsessionid = optional_param('sessionid', 0, PARAM_INT);
+if ($urlsessionid) {
+    global $SESSION;
+    $SESSION->smartch_current_sessionid = $urlsessionid;
+}
+
 if (!$userid) {
     $userid = $USER->id;
 }
