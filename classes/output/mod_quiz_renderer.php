@@ -33,8 +33,29 @@ namespace theme_remui\output;
 class mod_quiz_renderer extends \mod_quiz_renderer {
 
     /**
-     * Override start attempt button: only 1 attempt per enrollment.
-     * On re-enrollment, the latest enrollment date resets the counter.
+     * When a quiz attempt page loads, record which session it belongs to.
+     * This allows start_attempt_button to block per-session accurately,
+     * even when a user is enrolled in multiple concurrent sessions.
+     */
+    public function attempt_page($attemptobj, $page, $accessmanager, $messages, $slots, $id, $nextpage) {
+        global $SESSION;
+        $sessionid = isset($SESSION->smartch_current_sessionid) ? (int)$SESSION->smartch_current_sessionid : 0;
+        if ($sessionid > 0) {
+            $quizid    = $attemptobj->get_quiz()->id;
+            $attemptid = $attemptobj->get_attempt()->id;
+            $stored    = (int)\get_user_preference('smartch_quiz_' . $quizid . '_s_' . $sessionid, 0);
+            if ($stored !== $attemptid) {
+                \set_user_preference('smartch_quiz_' . $quizid . '_s_' . $sessionid, $attemptid);
+            }
+        }
+        return parent::attempt_page($attemptobj, $page, $accessmanager, $messages, $slots, $id, $nextpage);
+    }
+
+    /**
+     * Override start attempt button: only 1 attempt per session enrollment.
+     * Uses user_preference to track which attempt belongs to which session.
+     * On re-enrollment (new sessionid), the preference key is different → fresh attempt allowed.
+     * If the stored attempt is deleted (admin reset), the preference is cleared automatically.
      */
     public function start_attempt_button($buttontext, \moodle_url $url, ?\mod_quiz_preflight_check_form $preflightcheckform = null, $popuprequired = false, $popupoptions = null) {
         global $DB, $USER, $PAGE, $SESSION;
@@ -79,44 +100,59 @@ class mod_quiz_renderer extends \mod_quiz_renderer {
             return parent::start_attempt_button($buttontext, $url, $preflightcheckform, $popuprequired, $popupoptions);
         }
 
-        // Block if user already has a submitted attempt since joining this specific session-group.
-        $hasattempt = $DB->record_exists_sql(
-            "SELECT 1 FROM {quiz_attempts}
-             WHERE userid = :userid AND quiz = :quizid
-               AND state <> 'abandoned' AND timestart >= :since",
-            ['userid' => $USER->id, 'quizid' => $quizid, 'since' => (int)$currentgroup->timeadded]
-        );
-
-        if ($hasattempt) {
-            return '<div class="smartch-quiz-attempt-done" style="
-                        background: #f0f4ff;
-                        border-left: 4px solid #004687;
-                        border-radius: 8px;
-                        padding: 20px 24px;
-                        margin: 16px 0;
-                        display: flex;
-                        align-items: flex-start;
-                        gap: 16px;">
-                        <svg style="min-width:24px;color:#004687;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-                        </svg>
-                        <div>
-                            <p style="margin:0 0 6px 0;font-family:FFF-Equipe-Bold,sans-serif;color:#004687;font-size:1rem;">
-                                Vous avez déjà effectué votre tentative pour cette session.
-                            </p>
-                            <p style="margin:0;color:#4c5a73;font-size:0.9rem;font-family:FFF-Equipe-Regular,sans-serif;">
-                                Une seule tentative est autorisée par inscription. Si vous êtes réinscrit(e) à une nouvelle session, vous pourrez accéder à nouveau à ce test.
-                            </p>
-                        </div>
-                    </div>';
+        // Check if this session already has a recorded attempt.
+        // The JOIN on groups_members ensures that if the user was removed and re-enrolled,
+        // an attempt made before the current gm.timeadded is not counted (timestart < timeadded).
+        $prefkey = 'smartch_quiz_' . $quizid . '_s_' . $sessionid;
+        $storedattemptid = (int)\get_user_preference($prefkey, 0);
+        if ($storedattemptid > 0) {
+            $hasattempt = $DB->record_exists_sql(
+                "SELECT 1 FROM {quiz_attempts} qa
+                 JOIN {groups_members} gm ON gm.userid = qa.userid
+                 JOIN {groups} g ON g.id = gm.groupid
+                 JOIN {smartch_session} ss ON ss.groupid = g.id
+                 WHERE qa.id = :id AND qa.userid = :userid AND qa.quiz = :quizid
+                   AND qa.state <> 'abandoned'
+                   AND ss.id = :sessionid
+                   AND qa.timestart >= gm.timeadded",
+                ['id' => $storedattemptid, 'userid' => $USER->id, 'quizid' => $quizid, 'sessionid' => $sessionid]
+            );
+            if ($hasattempt) {
+                return $this->smartch_blocked_message();
+            }
+            // Attempt absent or pre-dates current enrollment → clean preference so user can retry.
+            \unset_user_preference($prefkey);
         }
 
         return parent::start_attempt_button($buttontext, $url, $preflightcheckform, $popuprequired, $popupoptions);
     }
 
+    private function smartch_blocked_message() {
+        return '<div class="smartch-quiz-attempt-done" style="
+                    background: #f0f4ff;
+                    border-left: 4px solid #004687;
+                    border-radius: 8px;
+                    padding: 20px 24px;
+                    margin: 16px 0;
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 16px;">
+                    <svg style="min-width:24px;color:#004687;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                    </svg>
+                    <div>
+                        <p style="margin:0 0 6px 0;font-family:FFF-Equipe-Bold,sans-serif;color:#004687;font-size:1rem;">
+                            Vous avez déjà effectué votre tentative pour cette session.
+                        </p>
+                        <p style="margin:0;color:#4c5a73;font-size:0.9rem;font-family:FFF-Equipe-Regular,sans-serif;">
+                            Une seule tentative est autorisée par inscription. Si vous êtes réinscrit(e) à une nouvelle session, vous pourrez accéder à nouveau à ce test.
+                        </p>
+                    </div>
+                </div>';
+    }
+
     /**
      * Return the HTML of the quiz timer.
-     * @return string HTML content.
      */
     public function countdown_timer(\quiz_attempt $attemptobj, $timenow) {
 
@@ -126,8 +162,6 @@ class mod_quiz_renderer extends \mod_quiz_renderer {
             $ispreview = $attemptobj->is_preview();
             $timerstartvalue = $timeleft;
             if (!$ispreview) {
-                // Make sure the timer starts just above zero. If $timeleft was <= 0, then
-                // this will just have the effect of causing the quiz to be submitted immediately.
                 $timerstartvalue = max($timerstartvalue, 1);
             }
             $this->initialise_timer($timerstartvalue, $ispreview);
