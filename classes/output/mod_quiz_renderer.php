@@ -47,12 +47,26 @@ class mod_quiz_renderer extends \mod_quiz_renderer {
         $courseid = $cm->course;
         $quizid   = $cm->instance;
 
-        // Determine which session-group to check against.
-        // formation.php stores the current sessionid in $SESSION when the user navigates from it.
-        $sessiongroup = null;
+        // Get ALL session-groups for this user in this course, ordered by join time ASC.
+        $allgroups = $DB->get_records_sql(
+            'SELECT gm.groupid, gm.timeadded
+             FROM {groups_members} gm
+             JOIN {groups} g ON g.id = gm.groupid
+             JOIN {smartch_session} ss ON ss.groupid = g.id
+             WHERE gm.userid = :userid AND g.courseid = :courseid
+             ORDER BY gm.timeadded ASC, gm.groupid ASC',
+            ['userid' => $USER->id, 'courseid' => $courseid]
+        );
+
+        if (empty($allgroups)) {
+            return parent::start_attempt_button($buttontext, $url, $preflightcheckform, $popuprequired, $popupoptions);
+        }
+
+        // Determine the current session's group from $SESSION (set by formation.php).
+        $currentgroup = null;
         $sessionid = isset($SESSION->smartch_current_sessionid) ? (int)$SESSION->smartch_current_sessionid : 0;
         if ($sessionid > 0) {
-            $sessiongroup = $DB->get_record_sql(
+            $currentgroup = $DB->get_record_sql(
                 'SELECT gm.groupid, gm.timeadded
                  FROM {groups_members} gm
                  JOIN {groups} g ON g.id = gm.groupid
@@ -62,33 +76,41 @@ class mod_quiz_renderer extends \mod_quiz_renderer {
             );
         }
 
-        // Fallback: use the most recently joined session-group.
-        if (!$sessiongroup) {
-            $sessiongroup = $DB->get_record_sql(
-                'SELECT gm.groupid, gm.timeadded
-                 FROM {groups_members} gm
-                 JOIN {groups} g ON g.id = gm.groupid
-                 JOIN {smartch_session} ss ON ss.groupid = g.id
-                 WHERE gm.userid = :userid AND g.courseid = :courseid
-                 ORDER BY gm.timeadded DESC, gm.groupid DESC
-                 LIMIT 1',
-                ['userid' => $USER->id, 'courseid' => $courseid]
-            );
+        // Fallback: most recently joined group.
+        if (!$currentgroup) {
+            $allvalues = array_values($allgroups);
+            $currentgroup = end($allvalues);
         }
 
-        if (!$sessiongroup) {
+        // Find the rank (1-indexed) of the current group in the ordered list.
+        $rank = 0;
+        $i = 0;
+        foreach ($allgroups as $g) {
+            $i++;
+            if ($g->groupid == $currentgroup->groupid) {
+                $rank = $i;
+                break;
+            }
+        }
+
+        if (!$rank) {
             return parent::start_attempt_button($buttontext, $url, $preflightcheckform, $popuprequired, $popupoptions);
         }
 
-        // Block if user already has a submitted attempt since joining this specific session-group.
-        $hasattempt = $DB->record_exists_sql(
-            "SELECT 1 FROM {quiz_attempts}
+        // Use the earliest group join as cutoff so re-enrollment resets the counter.
+        $allvalues = array_values($allgroups);
+        $cutoff = (int)$allvalues[0]->timeadded;
+
+        // Count submitted attempts since the earliest join.
+        // Each session slot corresponds to a rank: if attempts >= rank, this slot is used.
+        $attemptcount = (int)$DB->count_records_sql(
+            "SELECT COUNT(*) FROM {quiz_attempts}
              WHERE userid = :userid AND quiz = :quizid
-               AND state <> 'abandoned' AND timefinish > 0 AND timestart >= :since",
-            ['userid' => $USER->id, 'quizid' => $quizid, 'since' => (int)$sessiongroup->timeadded]
+               AND state <> 'abandoned' AND timefinish > 0 AND timestart >= :cutoff",
+            ['userid' => $USER->id, 'quizid' => $quizid, 'cutoff' => $cutoff]
         );
 
-        if ($hasattempt) {
+        if ($attemptcount >= $rank) {
             return '<div class="smartch-quiz-attempt-done" style="
                         background: #f0f4ff;
                         border-left: 4px solid #004687;
