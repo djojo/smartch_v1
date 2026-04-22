@@ -112,7 +112,7 @@ class mod_quiz_renderer extends \mod_quiz_renderer {
                  JOIN {groups} g ON g.id = gm.groupid
                  JOIN {smartch_session} ss ON ss.groupid = g.id
                  WHERE qa.id = :id AND qa.userid = :userid AND qa.quiz = :quizid
-                   AND qa.state <> 'abandoned'
+                   AND qa.state = 'finished'
                    AND ss.id = :sessionid
                    AND qa.timestart >= gm.timeadded",
                 ['id' => $storedattemptid, 'userid' => $USER->id, 'quizid' => $quizid, 'sessionid' => $sessionid]
