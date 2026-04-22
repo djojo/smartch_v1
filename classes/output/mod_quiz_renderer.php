@@ -43,7 +43,7 @@ class mod_quiz_renderer extends \mod_quiz_renderer {
         if ($sessionid > 0) {
             $quizid    = $attemptobj->get_quiz()->id;
             $attemptid = $attemptobj->get_attempt()->id;
-            $stored    = (int)\get_user_preference('smartch_quiz_' . $quizid . '_s_' . $sessionid, 0);
+            $stored    = (int)\get_user_preferences('smartch_quiz_' . $quizid . '_s_' . $sessionid, 0);
             if ($stored !== $attemptid) {
                 \set_user_preference('smartch_quiz_' . $quizid . '_s_' . $sessionid, $attemptid);
             }
@@ -104,7 +104,7 @@ class mod_quiz_renderer extends \mod_quiz_renderer {
         // The JOIN on groups_members ensures that if the user was removed and re-enrolled,
         // an attempt made before the current gm.timeadded is not counted (timestart < timeadded).
         $prefkey = 'smartch_quiz_' . $quizid . '_s_' . $sessionid;
-        $storedattemptid = (int)\get_user_preference($prefkey, 0);
+        $storedattemptid = (int)\get_user_preferences($prefkey, 0);
         if ($storedattemptid > 0) {
             $hasattempt = $DB->record_exists_sql(
                 "SELECT 1 FROM {quiz_attempts} qa
