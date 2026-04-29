@@ -132,28 +132,22 @@ class mod_quiz_renderer extends \mod_quiz_renderer {
             }
         }
 
-        // Check if this session already has a recorded attempt.
-        // The JOIN on groups_members ensures that if the user was removed and re-enrolled,
-        // an attempt made before the current gm.timeadded is not counted (timestart < timeadded).
-        $prefkey = 'smartch_quiz_' . $quizid . '_s_' . $sessionid;
-        $storedattemptid = (int)\get_user_preferences($prefkey, 0);
-        if ($storedattemptid > 0) {
-            $hasattempt = $DB->record_exists_sql(
-                "SELECT 1 FROM {quiz_attempts} qa
-                 JOIN {groups_members} gm ON gm.userid = qa.userid
-                 JOIN {groups} g ON g.id = gm.groupid
-                 JOIN {smartch_session} ss ON ss.groupid = g.id
-                 WHERE qa.id = :id AND qa.userid = :userid AND qa.quiz = :quizid
-                   AND qa.state = 'finished'
-                   AND ss.id = :sessionid
-                   AND qa.timestart >= gm.timeadded",
-                ['id' => $storedattemptid, 'userid' => $USER->id, 'quizid' => $quizid, 'sessionid' => $sessionid]
-            );
-            if ($hasattempt) {
-                return $this->smartch_blocked_message();
-            }
-            // Attempt absent or pre-dates current enrollment → clean preference so user can retry.
-            \unset_user_preference($prefkey);
+        // Direct DB check: is there a finished attempt for this session?
+        // Works for all users regardless of navigation path or when the attempt was taken.
+        // The timestart >= gm.timeadded condition ensures re-enrollment creates a fresh attempt slot.
+        $hasattempt = $DB->record_exists_sql(
+            "SELECT 1 FROM {quiz_attempts} qa
+             JOIN {groups_members} gm ON gm.userid = qa.userid
+             JOIN {groups} g ON g.id = gm.groupid
+             JOIN {smartch_session} ss ON ss.groupid = g.id
+             WHERE qa.userid = :userid AND qa.quiz = :quizid
+               AND qa.state = 'finished'
+               AND ss.id = :sessionid
+               AND qa.timestart >= gm.timeadded",
+            ['userid' => $USER->id, 'quizid' => $quizid, 'sessionid' => $sessionid]
+        );
+        if ($hasattempt) {
+            return $this->smartch_blocked_message();
         }
 
         return parent::start_attempt_button($buttontext, $url, $preflightcheckform, $popuprequired, $popupoptions);

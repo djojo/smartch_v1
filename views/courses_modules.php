@@ -577,7 +577,8 @@ if (countCourseActivities($courseid) == 0) {
                                     if(count($usertotalsessions) > 0 && count($userattempts) < count($usertotalsessions)){
                                         // peut passer
                                     } else {
-                                        $urlactivity = "";
+                                        // Lien actif avec forceview=1 : le quiz renderer affichera le message de blocage.
+                                        $urlactivity = new moodle_url('/mod/quiz/view.php', ['id' => $activity->id, 'forceview' => 1]);
                                     }
 
 
