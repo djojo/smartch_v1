@@ -2408,24 +2408,9 @@ function checkUserCanPassAttempt($moduleid, $courseid, $userid){
 
     $coursetype = getCourseType($courseid);
 
-    //  CORRECTION : On applique la restriction UNIQUEMENT pour les Certifications Fédérales
-    if($coursetype == "Certifications Fédérales"){
-
-        // On compare le nombre total d'inscriptions (sessions) avec le nombre total de tentatives.
-        // Chaque réinscription (nouveau paiement) crée une nouvelle session dans mdl_smartch_session,
-        // ce qui débloque automatiquement une nouvelle tentative sans reset manuel.
-        $usersessions = getUserSessions($courseid, $userid);
-        $userattempts = getUserQuizAttempts($moduleid, $userid);
-
-        if(count($usersessions) > 0 && count($userattempts) < count($usersessions)){
-            return true;
-        } else {
-            return false;
-        }
-    } else {
-        // Pour toutes les autres formations (IEFF, etc.), autoriser l'accès
-        return true;
-    }
+    // Le blocage "1 tentative par session" est géré par mod_quiz_renderer.php (start_attempt_button).
+    // On laisse toujours accéder à la page du quiz afin que le renderer puisse afficher le message.
+    return true;
 }
 
 function generateGUID()
