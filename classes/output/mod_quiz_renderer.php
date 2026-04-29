@@ -38,8 +38,28 @@ class mod_quiz_renderer extends \mod_quiz_renderer {
      * even when a user is enrolled in multiple concurrent sessions.
      */
     public function attempt_page($attemptobj, $page, $accessmanager, $messages, $slots, $id, $nextpage) {
-        global $SESSION;
+        global $DB, $SESSION;
         $sessionid = isset($SESSION->smartch_current_sessionid) ? (int)$SESSION->smartch_current_sessionid : 0;
+
+        // Derive sessionid from the attempt's group if SESSION was not set (direct navigation).
+        if ($sessionid === 0) {
+            $quizid = $attemptobj->get_quiz()->id;
+            $userid = $attemptobj->get_attempt()->userid;
+            $courseid = $attemptobj->get_quiz()->course;
+            $derived = $DB->get_field_sql(
+                'SELECT ss.id FROM {smartch_session} ss
+                 JOIN {groups} g ON g.id = ss.groupid
+                 JOIN {groups_members} gm ON gm.groupid = g.id
+                 WHERE gm.userid = :userid AND g.courseid = :courseid
+                 ORDER BY gm.timeadded DESC, gm.groupid DESC
+                 LIMIT 1',
+                ['userid' => $userid, 'courseid' => $courseid]
+            );
+            if ($derived) {
+                $sessionid = (int)$derived;
+            }
+        }
+
         if ($sessionid > 0) {
             $quizid    = $attemptobj->get_quiz()->id;
             $attemptid = $attemptobj->get_attempt()->id;
@@ -98,6 +118,18 @@ class mod_quiz_renderer extends \mod_quiz_renderer {
 
         if (!$currentgroup) {
             return parent::start_attempt_button($buttontext, $url, $preflightcheckform, $popuprequired, $popupoptions);
+        }
+
+        // If SESSION did not carry a sessionid (direct navigation bypassing formation.php),
+        // derive it from the group so the preference key is consistent.
+        if ($sessionid === 0) {
+            $derived = $DB->get_field_sql(
+                'SELECT ss.id FROM {smartch_session} ss WHERE ss.groupid = :groupid',
+                ['groupid' => $currentgroup->groupid]
+            );
+            if ($derived) {
+                $sessionid = (int)$derived;
+            }
         }
 
         // Check if this session already has a recorded attempt.
